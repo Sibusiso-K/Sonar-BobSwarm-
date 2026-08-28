@@ -1,0 +1,11 @@
+# Mirrors .gitignore — keeps Bob from indexing/uploading secrets or generated files
+node_modules/
+.env
+.env.local
+*.pem
+*.key
+dist/
+build/
+__pycache__/
+.venv/
+venv/
