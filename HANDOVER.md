@@ -78,17 +78,17 @@ docs/
 | Bob mode config | Sibusiso | ✅ Done | `.bob/custom_modes.yaml` registered |
 | Orchestration skill | Sibusiso | ✅ Done | `.bob/skills/bobswarm/SKILL.md` ready |
 | Master system prompt | Sibusiso | ✅ Done | `orchestrator/system_prompt.md` complete |
-| Task decomposition | Farheen | 🟡 Template ready | `orchestrator/decompose.js` — needs real-world testing |
-| Agent personas (all 5) | Farheen | 🟡 Template ready | `agents/` — test each against sample project |
+| Task decomposition | Farheen | 🟡 Template ready | `orchestrator/decompose.js` — confirmed working via `execute_command` in Session 2; keyword coverage may need refinement |
+| Agent personas (all 5) | Farheen | 🟢 Live-tested | All 5 agents ran against `demo/sample-project` (Mmpoiemang Session 1) — literal evidence quotes confirmed; `record_progress`/`record_finding` tool calls not yet wired into personas |
 | MCP server | Lethabo | ✅ Done | `.bob/mcp.json` written; 12 tools confirmed via Node verification; `project_summary` returns correct JSON against `demo/sample-project` |
 | Git tools | Lethabo | 🟡 Registered, not Bob-session tested | 4 tools registered and confirmed in tool list; not yet called through a live Bob Agent session |
 | Filesystem tools | Lethabo | 🟡 Registered, not Bob-session tested | `project_summary` verified via direct Node invocation (real output captured); not yet called through Bob stdio transport |
 | Swarm events + findings | Lethabo | 🟢 Done, tested | `record_progress`/`record_finding`/`finalize_run`/`get_run_report` — store logic + HTTP endpoints smoke-tested (curl), not yet exercised by a real subagent |
-| Frontend dashboard | Arisha | 🟡 Skeleton ready | Simulation works; needs real SSE wiring |
+| Frontend dashboard | Arisha | 🟡 Skeleton ready | Simulation works; needs real SSE wiring per `docs/LIVE_EVENTS.md` |
 | Swarm visualisation | Arisha | 🟡 Skeleton ready | All 5 agent cards + timeline present |
 | Demo sample project | Mmpoiemang | ✅ Done | 7 bugs planted, `run_demo.sh` written |
-| Demo validation | Mmpoiemang | 🟡 In progress | `expected_output.md` written; needs live validation |
-| End-to-end test | Sibusiso | ⬜ Not started | Blocked until MCP + personas tested |
+| Demo validation | Mmpoiemang | ✅ Done | Full 5-agent swarm run completed; 12 defects found; HTML report + 4 screenshots in `docs/bob-sessions/mmpoiemang/`; Bobalytics metrics added |
+| End-to-end test | Sibusiso | 🟡 In progress | `.bob/mcp.json` created for `lovilocal.adm` machine — MCP server should now connect on next Bob startup. Remaining: system prompt update + live test |
 
 > **Update this table when your status changes. Be specific — "works on my machine" is not ✅ Done.**
 
@@ -102,12 +102,12 @@ docs/
 - Full repo scaffold and architecture docs
 
 ### What still needs doing
-- [ ] Run a live end-to-end test in Bob once the MCP server is up (switch to BobSwarm Orchestrator mode, fire the demo task)
-- [ ] Define the event schema for Lethabo → Arisha integration in `docs/architecture.md`
-  - What events does the backend emit? (`agent_started`, `agent_done`, `swarm_complete`)
-  - What payload does each carry?
-- [ ] Review Farheen's decompose.js output against 5+ real requests and adjust keyword coverage if needed
-- [ ] Final aggregation check: does the Unified Report format hold up when all 5 agents return?
+- [x] `.bob/mcp.json` created for `lovilocal.adm` machine — MCP server connects on next Bob startup
+- [x] Event schema defined by Lethabo — see `docs/LIVE_EVENTS.md` (signed off)
+- [x] System prompt updated to wire in `record_progress`, `record_finding`, `finalize_run` tool calls
+- [ ] **Run a live end-to-end test** — switch to BobSwarm Orchestrator mode, run the full demo task, verify the MCP panel shows `bobswarm` connected (green), confirm `record_finding` calls go through the stdio transport
+- [ ] Add your screenshots to `docs/bob-sessions/sibusiso/` — mandatory submission deliverable
+- [ ] Review `orchestrator/decompose.js` against 5+ varied requests and confirm keyword coverage
 
 ### Creative freedom
 The system prompt and skill are templates — you have full freedom to rewrite,

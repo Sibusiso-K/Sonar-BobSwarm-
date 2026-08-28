@@ -37,33 +37,54 @@ Available specialist agent types:
 | `onboarding` | onboard, new developer, getting started, explain the codebase |
 | `data_lineage` | data flow, lineage, pipeline, where does X come from, trace |
 
-### Step 3 — Dispatch Subagents
-Spawn all independent subagents **in parallel** using `spawn_subagent`.
+### Step 3 — Open a run and dispatch subagents
+
+Before spawning any subagent, create a run so the live dashboard can track it:
+1. Call `record_progress` with `status: "started"` for each agent you are about to spawn.
+   This opens the run in the store and fans out to the WebSocket dashboard.
+
+Then spawn all independent subagents **in parallel** using `spawn_subagent`.
 Pass each subagent:
 1. Its specialist persona prompt (from `agents/<type>.md`)
 2. The specific sub-task description
 3. Any relevant file paths or context
+4. The active `runId` so the subagent can call `record_finding` directly
+
+Each subagent **must**:
+- Call `record_progress` with `status: "started"` when it begins
+- Call `record_progress` with `status: "investigating"` while working
+- Call `record_finding` **once per distinct finding** — `evidence` must be a
+  literal quoted span from a file actually read via `read_project_file`, never
+  a summary or paraphrase. Severity must be exactly `"breaks"`, `"warns"`, or
+  `"informational"`.
+- Call `record_progress` with `status: "done"` when complete
 
 ```
-// Parallel dispatch pattern
-spawn_subagent(debugger_task)
-spawn_subagent(documenter_task)
-spawn_subagent(refactorer_task)
+// Parallel dispatch pattern — same turn
+spawn_subagent(debugger_task)    // passes runId
+spawn_subagent(documenter_task)  // passes runId
+spawn_subagent(refactorer_task)  // passes runId (sequential if depends on debugger)
 // Wait for all to return before Step 4
 ```
 
 Sequential dispatch is only used when one agent's output is required as input
 for the next (e.g., refactorer needs debugger's findings first).
 
-### Step 4 — Aggregate Results
-Collect all subagent reports. Merge them into the Unified Report format below.
-Resolve any conflicts or overlaps (e.g., a bug found by the debugger that the
-refactorer also flagged — report it once with both perspectives).
+### Step 4 — Finalize and aggregate results
+Once all subagents have called `record_progress` with `status: "done"`:
+1. Call `finalize_run` with the `runId` — this triggers deterministic sorting of
+   all findings by `(affectedPath, targetSymbol)` and emits the `run_complete`
+   WebSocket event to the dashboard.
+2. The return value of `finalize_run` is the structured `findingsByRole` JSON.
+   Use it as the source of truth for the Unified Report — do not re-summarise
+   from memory, use the actual returned data.
+3. Resolve any overlaps across agents (e.g., a bug the debugger and refactorer
+   both flagged — report it once with both perspectives noted).
 
 ### Step 5 — Deliver the Unified Report
 Return the structured report to the user. Always include:
 - An executive summary (3–5 sentences)
-- A per-agent findings section
+- A per-agent findings section drawn from `finalize_run`'s output
 - A prioritised action list
 
 ---
