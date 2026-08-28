@@ -33,8 +33,14 @@ function registerFilesystemTools(server) {
     },
     async ({ rootPath, pattern, ignore }) => {
       const files = await glob(pattern, { cwd: rootPath, ignore, nodir: true });
+      // Normalize to forward slashes: on Windows, glob returns native
+      // backslash separators for nested paths, which then mismatches any
+      // affected_path a subagent quotes in record_finding (LLM output tends
+      // toward forward slashes regardless of host OS), breaking exact-match
+      // validation against fixtures/expected_findings.json.
+      const normalized = files.map((f) => f.split(path.sep).join('/'));
       return {
-        content: [{ type: 'text', text: files.join('\n') }],
+        content: [{ type: 'text', text: normalized.join('\n') }],
       };
     }
   );
@@ -73,10 +79,13 @@ function registerFilesystemTools(server) {
         nodir: true,
       });
 
+      // Same normalization as list_project_files — see comment there.
+      const normalizedFiles = allFiles.map((f) => f.split(path.sep).join('/'));
+
       const byExt = {};
       let totalBytes = 0;
 
-      for (const file of allFiles) {
+      for (const file of normalizedFiles) {
         const ext = path.extname(file) || '(no ext)';
         byExt[ext] = (byExt[ext] || 0) + 1;
         try {
@@ -89,7 +98,7 @@ function registerFilesystemTools(server) {
 
       // Detect likely entry points
       const entryPointCandidates = ['index.js', 'index.ts', 'main.py', 'app.py', 'main.go', 'Main.java'];
-      const entryPoints = allFiles.filter((f) =>
+      const entryPoints = normalizedFiles.filter((f) =>
         entryPointCandidates.includes(path.basename(f))
       );
 
