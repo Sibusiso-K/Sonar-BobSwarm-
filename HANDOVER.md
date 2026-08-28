@@ -119,6 +119,9 @@ defined in `system_prompt.md`.
 
 ## 👤 Lethabo — Backend Engineer
 
+> Full runbook, tool contract, fallbacks, and the first concrete steps for a
+> fresh Bob session: [`docs/LETHABO_BACKEND_HANDOFF.md`](docs/LETHABO_BACKEND_HANDOFF.md)
+
 ### What's done
 - MCP server skeleton (`mcp-server/server.js`) using stdio transport
 - 8 tools written across `tools/git.js` and `tools/filesystem.js`
