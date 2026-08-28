@@ -26,6 +26,14 @@ export interface Run {
   createdAt: string;
 }
 
+/** Shape returned by GET /runs — Run plus history-list-only fields. */
+export interface RunSummary extends Run {
+  completedAt: string | null;
+  findingCount: number;
+  /** null while still running; backend computes this once completed. */
+  durationMs: number | null;
+}
+
 export interface Finding {
   id: string;
   subagentRole: AgentRole;

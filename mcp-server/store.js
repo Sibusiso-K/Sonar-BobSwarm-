@@ -48,6 +48,26 @@ function getRun(runId) {
   return run;
 }
 
+/**
+ * All runs, most recent first. Ties (identical createdAt, possible if two
+ * runs start in the same millisecond) break on id — determinism per doctrine,
+ * not just "probably fine."
+ */
+function listRuns() {
+  return Array.from(runs.values())
+    .map((run) => ({
+      ...run,
+      findingCount: (findingsByRun.get(run.id) || []).length,
+      durationMs: run.completedAt
+        ? Date.parse(run.completedAt) - Date.parse(run.createdAt)
+        : null,
+    }))
+    .sort((a, b) => {
+      const dateCmp = Date.parse(b.createdAt) - Date.parse(a.createdAt);
+      return dateCmp !== 0 ? dateCmp : b.id.localeCompare(a.id);
+    });
+}
+
 function recordProgress(runId, subagentRole, status, detail) {
   const run = getRun(runId);
   if (run.status === 'pending') {
@@ -221,6 +241,7 @@ function armTimeout(runId) {
 module.exports = {
   createRun,
   getRun,
+  listRuns,
   recordProgress,
   recordFinding,
   finalizeRun,

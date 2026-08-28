@@ -78,6 +78,10 @@ function startEventsServer() {
         return sendJson(res, 201, run);
       }
 
+      if (req.method === 'GET' && parts[0] === 'runs' && parts.length === 1) {
+        return sendJson(res, 200, store.listRuns());
+      }
+
       if (req.method === 'GET' && parts[0] === 'runs' && parts.length === 2) {
         return sendJson(res, 200, store.getRun(parts[1]));
       }

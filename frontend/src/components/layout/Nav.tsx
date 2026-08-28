@@ -29,6 +29,9 @@ export function Nav() {
             <a href="#report" className="transition-colors hover:text-paper">
               Report
             </a>
+            <a href="#history" className="transition-colors hover:text-paper">
+              History
+            </a>
           </nav>
           <a
             href="https://github.com"

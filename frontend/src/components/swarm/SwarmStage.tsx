@@ -1,8 +1,16 @@
 import { motion } from "framer-motion";
 import { RoleCard } from "./RoleCard";
 import { Timeline } from "./Timeline";
+import { useElapsedTime } from "../../hooks/useElapsedTime";
 import type { RoleState } from "../../hooks/useSwarmRun";
 import type { Run, TimelineEntry } from "../../lib/types";
+
+function formatElapsed(ms: number): string {
+  const seconds = ms / 1000;
+  if (seconds < 60) return `${seconds.toFixed(1)}s`;
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}m ${Math.round(seconds % 60)}s`;
+}
 
 export function SwarmStage({
   run,
@@ -16,6 +24,12 @@ export function SwarmStage({
   connState: "idle" | "connecting" | "open" | "closed" | "error";
 }) {
   const roleList = Object.values(roles);
+  // Tick from the moment a run is dispatched, not just once the backend
+  // flips status to "running" (that only happens on the first
+  // record_progress call — waiting for it would delay the clock starting
+  // exactly when a user watching it would expect it to).
+  const isActive = run !== null && run.status !== "complete" && run.status !== "error";
+  const elapsedMs = useElapsedTime(run?.createdAt ?? null, isActive);
 
   return (
     <section id="swarm" className="relative border-t border-line px-6 py-24 sm:px-10">
@@ -39,6 +53,7 @@ export function SwarmStage({
                 }`}
               />
               run {run.id.slice(0, 8)} · {connState}
+              {isActive && <span className="text-gold-soft">· {formatElapsed(elapsedMs)}</span>}
             </div>
           )}
         </div>
