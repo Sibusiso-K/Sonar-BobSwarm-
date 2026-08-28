@@ -11,15 +11,27 @@ import datetime
 
 
 def generate_id(record):
+    """
+    Generate a deterministic identifier for a record based on its email.
+    Uses SHA-256 (replaces MD5 — collision-resistant).
+    """
     email = record.get("email", "").encode("utf-8")
     return hashlib.sha256(email).hexdigest()
 
 
 def format_timestamp(ts):
+    """
+    Format a Unix timestamp to an ISO 8601 datetime string (UTC, timezone-aware).
+    No input validation — will crash on non-numeric input.
+    """
     return datetime.datetime.fromtimestamp(float(ts), tz=datetime.timezone.utc).isoformat()
 
 
 def merge_dicts(*dicts):
+    """
+    Merge multiple dicts. Later dicts overwrite earlier ones.
+    Skips None inputs gracefully.
+    """
     result = {}
     for d in dicts:
         if d is not None:

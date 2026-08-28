@@ -1,0 +1,4 @@
+
+# Demo project Python bytecode
+demo/sample-project/__pycache__/
+demo/sample-project/.pytest_cache/
