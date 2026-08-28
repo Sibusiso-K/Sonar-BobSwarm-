@@ -1,4 +1,4 @@
-import type { Run, SwarmEvent } from "./types";
+import type { Run, RunSummary, SwarmEvent } from "./types";
 
 const API_BASE = import.meta.env.VITE_BOBSWARM_API ?? "http://localhost:8787";
 const WS_BASE = API_BASE.replace(/^http/, "ws");
@@ -32,6 +32,20 @@ export async function createRun(input: {
   }
 
   return (await res.json()) as Run;
+}
+
+export async function listRuns(): Promise<RunSummary[]> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/runs`);
+  } catch {
+    throw new BackendUnreachableError();
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `Failed to list runs (${res.status})`);
+  }
+  return (await res.json()) as RunSummary[];
 }
 
 export interface SubscribeHandlers {
