@@ -13,6 +13,34 @@ const fs = require('fs/promises');
 const path = require('path');
 const { glob } = require('glob');
 
+// Path-traversal boundary. Every filesystem tool call is LLM-directed (Bob or
+// a subagent supplies the path), so a confused or adversarial call — e.g.
+// filePath: "../../../../Windows/System32/..." — must not be able to read or
+// write outside the project tree. Default root is this repo's own root
+// (two levels up from mcp-server/tools/); override with BOBSWARM_ALLOWED_ROOT
+// if a task ever needs to point at a target repo cloned elsewhere on disk.
+const ALLOWED_ROOT = path.resolve(
+  process.env.BOBSWARM_ALLOWED_ROOT || path.join(__dirname, '..', '..')
+);
+
+/**
+ * Resolves candidatePath and throws if it falls outside ALLOWED_ROOT.
+ * Returns the resolved absolute path on success, so callers use the
+ * validated path, not the raw input.
+ */
+function resolveWithinAllowedRoot(candidatePath) {
+  const resolved = path.resolve(ALLOWED_ROOT, candidatePath);
+  // Trailing sep check avoids a false-positive prefix match, e.g.
+  // ALLOWED_ROOT "/project" must not accept "/project-evil".
+  if (resolved !== ALLOWED_ROOT && !resolved.startsWith(ALLOWED_ROOT + path.sep)) {
+    throw new Error(
+      `path escapes the allowed project root: "${candidatePath}" resolved to "${resolved}", ` +
+      `which is outside "${ALLOWED_ROOT}". Refusing.`
+    );
+  }
+  return resolved;
+}
+
 /**
  * Registers all filesystem tools on the given MCP server instance.
  * @param {import('@modelcontextprotocol/sdk/server/mcp.js').McpServer} server
@@ -32,7 +60,8 @@ function registerFilesystemTools(server) {
       },
     },
     async ({ rootPath, pattern, ignore }) => {
-      const files = await glob(pattern, { cwd: rootPath, ignore, nodir: true });
+      const safeRoot = resolveWithinAllowedRoot(rootPath);
+      const files = await glob(pattern, { cwd: safeRoot, ignore, nodir: true });
       // Normalize to forward slashes: on Windows, glob returns native
       // backslash separators for nested paths, which then mismatches any
       // affected_path a subagent quotes in record_finding (LLM output tends
@@ -56,7 +85,8 @@ function registerFilesystemTools(server) {
       },
     },
     async ({ filePath, encoding }) => {
-      const content = await fs.readFile(filePath, { encoding });
+      const safePath = resolveWithinAllowedRoot(filePath);
+      const content = await fs.readFile(safePath, { encoding });
       return {
         content: [{ type: 'text', text: content }],
       };
@@ -73,8 +103,9 @@ function registerFilesystemTools(server) {
       },
     },
     async ({ rootPath }) => {
+      const safeRoot = resolveWithinAllowedRoot(rootPath);
       const allFiles = await glob('**/*', {
-        cwd: rootPath,
+        cwd: safeRoot,
         ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/__pycache__/**'],
         nodir: true,
       });
@@ -89,7 +120,7 @@ function registerFilesystemTools(server) {
         const ext = path.extname(file) || '(no ext)';
         byExt[ext] = (byExt[ext] || 0) + 1;
         try {
-          const stat = await fs.stat(path.join(rootPath, file));
+          const stat = await fs.stat(path.join(safeRoot, file));
           totalBytes += stat.size;
         } catch {
           // skip unreadable files
@@ -126,10 +157,11 @@ function registerFilesystemTools(server) {
       },
     },
     async ({ outputPath, content }) => {
-      await fs.mkdir(path.dirname(outputPath), { recursive: true });
-      await fs.writeFile(outputPath, content, 'utf-8');
+      const safePath = resolveWithinAllowedRoot(outputPath);
+      await fs.mkdir(path.dirname(safePath), { recursive: true });
+      await fs.writeFile(safePath, content, 'utf-8');
       return {
-        content: [{ type: 'text', text: `Report written to: ${outputPath}` }],
+        content: [{ type: 'text', text: `Report written to: ${safePath}` }],
       };
     }
   );
