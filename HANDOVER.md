@@ -80,9 +80,9 @@ docs/
 | Master system prompt | Sibusiso | ✅ Done | `orchestrator/system_prompt.md` complete |
 | Task decomposition | Farheen | 🟡 Template ready | `orchestrator/decompose.js` — needs real-world testing |
 | Agent personas (all 5) | Farheen | 🟡 Template ready | `agents/` — test each against sample project |
-| MCP server | Lethabo | 🟢 Extended + verified | `npm install` clean (0 vuln); swarm-lifecycle tools + live events added (PR #1, merged) |
-| Git tools | Lethabo | 🟡 Skeleton ready | 4 tools written, not yet tested live against a real Bob session |
-| Filesystem tools | Lethabo | 🟡 Skeleton ready | 4 tools written, not yet tested live against a real Bob session |
+| MCP server | Lethabo | ✅ Done | `.bob/mcp.json` written; 12 tools confirmed via Node verification; `project_summary` returns correct JSON against `demo/sample-project` |
+| Git tools | Lethabo | 🟡 Registered, not Bob-session tested | 4 tools registered and confirmed in tool list; not yet called through a live Bob Agent session |
+| Filesystem tools | Lethabo | 🟡 Registered, not Bob-session tested | `project_summary` verified via direct Node invocation (real output captured); not yet called through Bob stdio transport |
 | Swarm events + findings | Lethabo | 🟢 Done, tested | `record_progress`/`record_finding`/`finalize_run`/`get_run_report` — store logic + HTTP endpoints smoke-tested (curl), not yet exercised by a real subagent |
 | Frontend dashboard | Arisha | 🟡 Skeleton ready | Simulation works; needs real SSE wiring |
 | Swarm visualisation | Arisha | 🟡 Skeleton ready | All 5 agent cards + timeline present |

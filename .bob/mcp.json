@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "bobswarm": {
+      "command": "node",
+      "args": ["mcp-server/server.js"],
+      "cwd": "C:\\Users\\USER\\Desktop\\IBM 2.0\\bobswarm-repo",
+      "alwaysAllow": [
+        "git_status",
+        "git_log",
+        "git_diff",
+        "git_blame",
+        "list_project_files",
+        "read_project_file",
+        "project_summary",
+        "write_swarm_report",
+        "record_progress",
+        "record_finding",
+        "finalize_run",
+        "get_run_report"
+      ]
+    }
+  }
+}

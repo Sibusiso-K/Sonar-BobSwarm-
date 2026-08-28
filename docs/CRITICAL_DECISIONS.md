@@ -1,6 +1,7 @@
 # Critical Decisions — Read Before Building Further
 
 > **Compiled/updated by:** Lethabo (Backend Engineer)
+> **Last updated:** 2026-08-28 — §5a resolved in live Bob session; MCP registration confirmed working.
 
 Full verbatim backing for everything here: [`RULES_SPEC.md`](RULES_SPEC.md).
 
@@ -72,6 +73,73 @@ not polish.
 - [ ] Repo: public link + **every team member's** Bob task-session screenshots
       (`docs/bob-sessions/<name>/`, not yet created — set this up early) + the
       exported Bob task/session report. Produce both artifacts, not just one.
+
+## 5a. Bob MCP Registration — **RESOLVED** (was the biggest unknown)
+
+> Previously listed as "unconfirmed" in the handoff doc and HANDOVER.md.
+> Confirmed in the first live Bob session on 2026-08-28.
+
+**How Bob exposes MCP server registration:**
+
+Bob provides two config file paths — no settings UI required, though there is
+one (Settings → MCP tab → "Edit Project MCP" / "Edit Global MCP"):
+
+| Level | File | Scope |
+|---|---|---|
+| Project | `.bob/mcp.json` in repo root | This workspace only — team-shareable via git ✅ |
+| Global | `~/.bob/mcp.json` | All workspaces on this machine |
+
+Project-level takes precedence when names conflict. **We use project-level** so
+the config lives in the repo and every team member gets it automatically on pull.
+
+**The config that was written (`.bob/mcp.json`):**
+```json
+{
+  "mcpServers": {
+    "bobswarm": {
+      "command": "node",
+      "args": ["mcp-server/server.js"],
+      "cwd": "C:\\Users\\USER\\Desktop\\IBM 2.0\\bobswarm-repo",
+      "alwaysAllow": [
+        "git_status", "git_log", "git_diff", "git_blame",
+        "list_project_files", "read_project_file", "project_summary",
+        "write_swarm_report", "record_progress", "record_finding",
+        "finalize_run", "get_run_report"
+      ]
+    }
+  }
+}
+```
+
+The `cwd` path is Windows-absolute and must match the local clone location on
+each machine. If a team member clones to a different path, they update `cwd`.
+The `alwaysAllow` list covers all 12 tools — eliminates per-call approval
+prompts, which would break the automated swarm flow.
+
+**What the handoff doc §5a guessed:** shape was correct (same as Claude Desktop).
+File name was the only unknown — confirmed as `.bob/mcp.json`, not `settings.json`.
+
+**12 tools confirmed visible (live Node verification):**
+`git_status`, `git_log`, `git_diff`, `git_blame`, `list_project_files`,
+`read_project_file`, `project_summary`, `write_swarm_report`,
+`record_progress`, `record_finding`, `finalize_run`, `get_run_report`
+
+**`project_summary` against `demo/sample-project` — actual output:**
+```json
+{
+  "totalFiles": 3,
+  "totalSizeKB": 7,
+  "filesByExtension": { ".py": 2, ".json": 1 },
+  "likelyEntryPoints": ["app.py"]
+}
+```
+
+**What still needs live-session verification (now unblocked):**
+- Tool calls from inside an actual Bob Agent session (not just direct Node invocation)
+- Parallel subagent tool calls through the BobSwarm Orchestrator mode
+- `record_finding` evidence quality from real subagents
+
+---
 
 ## 5. Bobcoins
 
