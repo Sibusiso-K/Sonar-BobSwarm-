@@ -1,6 +1,6 @@
 """
 BobSwarm Demo — Sample Project (Intentionally Broken)
-Owner: Mmpoiemang (Data / QA Engineer)
+Owner: Mmopiemang (Data / QA Engineer)
 
 This is the intentionally flawed codebase used in the BobSwarm demo.
 The BobSwarm orchestrator will dispatch subagents to:
@@ -33,8 +33,8 @@ def load_records(filepath):
 
 
 def validate_email(email):
-    # BUG 5: regex matches empty string — re.match returns truthy for ""
-    pattern = r"[^@]*@[^@]*"
+    # Fixed: require at least one character on both sides of @
+    pattern = r"[^@\s]+@[^@\s]+"
     return re.match(pattern, email) is not None
 
 
@@ -43,12 +43,9 @@ def validate_email(email):
 def process_records(records):
     """
     Process a list of records and return validated ones.
+    Returns a new list — does not mutate the input.
     """
-    # BUG 2: mutates the input list directly
-    for i, record in enumerate(records):
-        if not validate_email(record.get('email', '')):
-            records.remove(record)  # mutates caller's list, also skips elements
-    return records
+    return [r for r in records if validate_email(r.get('email', ''))]
 
 
 def enrich_record(record, api_url):
@@ -67,8 +64,8 @@ def enrich_record(record, api_url):
 
 
 def calculate_average(values):
-    # BUG 1: ZeroDivisionError when values is empty
-    return sum(values) / len(values)
+    # Fixed: return 0.0 for empty list instead of ZeroDivisionError
+    return sum(values) / len(values) if values else 0.0
 
 
 def transform_record(record):
