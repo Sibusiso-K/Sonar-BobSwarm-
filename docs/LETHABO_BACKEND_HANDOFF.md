@@ -5,7 +5,14 @@
 > here is stale by the time you read it, trust the actual code over this doc
 > and update this doc to match — same rule as `HANDOVER.md`.
 >
-> Last updated: 2026-08-28, 18:44 SAST, after PR #1 merged into `main`.
+> **Also read [`docs/BACKEND_CONCEPTS_AND_VALUE_PROP.md`](BACKEND_CONCEPTS_AND_VALUE_PROP.md)**
+> — the *why* behind MCP, the API/filesystem/background-task design choices,
+> two scoped "wow factor" ideas worth considering if time allows, the
+> sharpened problem statement for D2/D3, and the git pull/push workflow this
+> session should follow automatically (§7 there) — pull before starting,
+> commit and push after each meaningful unit of work, not just at the end.
+>
+> Last updated: 2026-08-28, 19:24 SAST.
 
 ---
 
