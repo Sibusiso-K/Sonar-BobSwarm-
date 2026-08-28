@@ -322,3 +322,70 @@ node -e "
 3. **Don't break the demo path.** The files in `demo/sample-project/` are the demo target — don't fix the bugs in them.
 4. **Coordinate on integration points** before changing tool names, event shapes, or report formats.
 5. **Creative freedom within your area** — templates exist to save time, not to cage you. Make your part great.
+
+---
+
+## 📝 D3 — Bob Usage Statement Paragraphs
+
+> **What this section is for:**
+> The hackathon requires a written statement (D3) describing how and where the team used IBM Bob — tool calls made, decisions Bob took, outputs produced. Each team member writes their own paragraph here. **Sibusiso assembles all 5 into the final D3 field on the submission form.**
+>
+> **What your paragraph should cover:**
+> - The literal task/prompt you gave Bob
+> - Which tools Bob called (e.g. `read_file`, `execute_command`, `apply_diff`, `spawn_subagent`)
+> - What Bob decided or discovered during the session
+> - What it produced (files changed, tests run, findings returned)
+> - Be specific — vague claims like "Bob helped me build the backend" don't satisfy the rules
+
+---
+
+### Submission tracker
+
+| Member | Role | Paragraph added? |
+|---|---|---|
+| Sibusiso | Lead / Orchestrator | ⬜ |
+| Lethabo | Backend Engineer | ⬜ |
+| Arisha | Frontend Engineer | ⬜ |
+| Farheen | AI/ML Engineer | ✅ |
+| Mmpoiemang | Data / QA Engineer | ⬜ |
+
+---
+
+### Farheen — AI/ML Engineer
+
+This session, I had Bob finish up the leftover AI/ML engineering work from the handover doc.
+
+Bob started by reading `HANDOVER.md`, `README.md`, `orchestrator/decompose.js`, all 5 agent persona files, and `docs/agent_personas.md`, all in parallel, before touching anything. Wanted to get the full picture first instead of guessing.
+
+Then Bob ran `decompose.js` against 14 different plain-language requests to see how it handled them. Turned out things like `"security audit the application"`, `"explain the architecture"`, and `"how does the data transformation work"` weren't routing to the right agents — they were just falling back to a full audit. So Bob went into `KEYWORD_MAP` and added 15 new keywords across the 5 agents, without messing with the existing logic.
+
+After that, Bob built the stretch goal: a `computeConfidence()` function that scores each sub-task from 0.0 to 1.0 based on how strong the keyword match is, and added that as a `confidence` field on every sub-task.
+
+Bob also checked the Refactorer dependency rule with live tests — confirmed that when both `fix` and `refactor` show up, refactorer gets `parallel=false` and depends on the debugger, and when `refactor` shows up alone it just runs on its own.
+
+Last thing, Bob ran three rounds of checks on all 5 persona files, checking 43 required sections, 17 anti-pattern rules, output format matching `system_prompt.md`, and full prompt assembly (prompts came out between 2275–2914 characters per agent). Everything passed, and no leftover scripts in the project.
+
+---
+
+### Sibusiso — Lead / Orchestrator
+
+> ⬜ *Paragraph not yet added — paste yours here.*
+
+---
+
+### Lethabo — Backend Engineer
+
+> ⬜ *Paragraph not yet added — paste yours here.*
+
+---
+
+### Arisha — Frontend Engineer
+
+> ⬜ *Paragraph not yet added — paste yours here.*
+
+---
+
+### Mmpoiemang — Data / QA Engineer
+
+> ⬜ *Paragraph not yet added — paste yours here.*
+
