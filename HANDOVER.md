@@ -307,6 +307,30 @@ node -e "
 "
 ```
 
+**Sample output (verified):**
+```json
+[
+  {
+    "agent": "debugger",
+    "task": "Analyse the provided codebase for bugs, errors, and unexpected behaviour.\nOriginal request context: \"find bugs and document the API\"\nDeliverable: A numbered list of issues found, each with file path, line reference, root cause, and suggested fix.",
+    "context": ["demo/sample-project/app.py"],
+    "parallel": true,
+    "dependsOn": [],
+    "confidence": 0.07
+  },
+  {
+    "agent": "documenter",
+    "task": "Generate comprehensive documentation for the provided codebase.\nOriginal request context: \"find bugs and document the API\"\nDeliverable: Inline code comments, a public API reference, and a high-level module overview.",
+    "context": ["demo/sample-project/app.py"],
+    "parallel": true,
+    "dependsOn": [],
+    "confidence": 0.07
+  }
+]
+```
+
+> **Why `dependsOn` is empty:** The dependency rule only applies to the **refactorer** — it depends on debugger when both are triggered. This request has no `refactor`/`clean`/`improve` keyword so refactorer is never matched. Debugger and documenter are always independent of each other, so both run in parallel with no dependencies. Expected behaviour. ✅
+
 ### Full end-to-end (Sibusiso)
 1. Ensure MCP server is registered in Bob's config
 2. Switch Bob to **BobSwarm Orchestrator** mode
