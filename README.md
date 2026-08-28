@@ -53,10 +53,10 @@ BobSwarm/
 │       ├── git.js                 # Git integration tools (Lethabo)
 │       └── filesystem.js          # File system tools (Lethabo)
 │
-├── frontend/
-│   ├── index.html                 # Swarm dashboard (Arisha)
-│   ├── style.css                  # Styling (Arisha)
-│   └── app.js                    # Real-time swarm visualisation (Arisha)
+├── frontend/                       # React + TypeScript + Vite (Arisha)
+│   ├── src/components/             # Nav, Hero/TaskForm, SwarmStage/RoleCard, ReportView
+│   ├── src/hooks/useSwarmRun.ts    # Run lifecycle: dispatch, WS subscribe, live state
+│   └── src/lib/                    # api.ts (REST/WS client), types.ts (shared contract)
 │
 ├── demo/
 │   ├── sample-project/            # Sample broken codebase for demo (Mmpoiemang)
