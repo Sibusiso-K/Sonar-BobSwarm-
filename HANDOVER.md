@@ -84,8 +84,8 @@ docs/
 | Git tools | Lethabo | ✅ Done | All 4 tools (`git_status`, `git_log`, `git_diff`, `git_blame`) confirmed live through MCP stdio transport in Session 4 — raw output captured, zero errors |
 | Filesystem tools | Lethabo | ✅ Done | `project_summary`, `read_project_file`, `list_project_files` all confirmed live via MCP transport across Sessions 3–4 |
 | Swarm events + findings | Lethabo | ✅ Done | Full 5-agent swarm confirmed via MCP tools in Session 4: 42 findings across 5 roles, all evidence verbatim quotes, `finalize_run` returns deterministically sorted report |
-| Frontend dashboard | Arisha | 🟡 Skeleton ready | Simulation works; needs real SSE wiring per `docs/LIVE_EVENTS.md` |
-| Swarm visualisation | Arisha | 🟡 Skeleton ready | All 5 agent cards + timeline present |
+| Frontend dashboard | Arisha | 🟢 Real, wired, live-verified | Real React build (not simulation), real WebSocket, confirmed receiving live events from an actual Bob MCP session. Remaining: font-loading bug + polish, see `docs/ARISHA_FRONTEND_POLISH.md` |
+| Swarm visualisation | Arisha | ✅ Done | All 5 agent cards + timeline + run history + live timer, all live-data-driven |
 | Demo sample project | Mmpoiemang | ✅ Done | 7 bugs planted, `run_demo.sh` written |
 | Demo validation | Mmpoiemang | ✅ Done | Full 5-agent swarm run completed; 12 defects found; HTML report + 4 screenshots in `docs/bob-sessions/mmpoiemang/`; Bobalytics metrics added |
 | End-to-end test | Sibusiso | ✅ Done | Full 5-agent swarm run completed (Session 1, 2026-08-28) — 8 bugs, 15 docstrings, 7 refactorings, 10 lineage risks, 1 onboarding guide. Report in `docs/bob-sessions/sibusiso/` |
@@ -185,19 +185,39 @@ integration now runs over a separate HTTP+WS side-channel
 
 ## 👤 Arisha — Frontend Engineer
 
-### What's done
-- Full dashboard HTML (`frontend/index.html`) with agent cards, task input, results panel, timeline
-- Dark amber theme CSS (`frontend/style.css`)
-- Swarm simulation in `frontend/app.js` — `simulateSwarm()` mirrors the real agent lifecycle
+> **This section was stale** (still described the old `simulateSwarm()`
+> placeholder that caused real confusion in team chat — corrected 2026-08-28
+> 23:23 SAST). Current status and full polish plan:
+> [`docs/ARISHA_FRONTEND_POLISH.md`](docs/ARISHA_FRONTEND_POLISH.md). If
+> you're seeing a connection error locally, check
+> [`docs/LAUNCH_GUIDE.md`](docs/LAUNCH_GUIDE.md) first — it's almost always
+> the backend not running, not a wiring problem.
+
+### What's actually done
+- **Full React 19 + TypeScript + Vite build**, replacing the old placeholder
+  entirely (merged PR #3, pulled in via `git subtree` for future updates —
+  see `docs/architecture.md`). Real, not simulated.
+- **Wired to the real WebSocket** — `src/lib/api.ts` + `src/hooks/
+  useSwarmRun.ts` connect to `mcp-server/events-server.js` on `:8787`,
+  handling `progress`/`finding`/`run_complete` events exactly per
+  `docs/LIVE_EVENTS.md`. Verified live twice: once via a manual test run,
+  once via a real Bob MCP session with real findings rendering.
+- Task input → `POST /runs` → real run created, dashboard subscribes to its
+  own WebSocket automatically.
+- **Run history panel + live elapsed timer** — the stretch goal from the
+  old list, done (added on top of her build, PR #4).
+- Ambient `SwarmField` background (hand-rolled animated SVG), warm dark
+  design system (Fraunces/IBM Plex Mono/Inter, gold accent, grain texture).
 
 ### What still needs doing
-- [ ] Open `frontend/index.html` in a browser and verify the simulation looks right end-to-end
-- [ ] Replace `simulateSwarm()` with real event listener once Lethabo's event schema is confirmed
-  - Listen for: `agent_started`, `agent_done`, `swarm_complete`
-  - Update agent card state + timeline on each event
-- [ ] Wire the task input to actually send the request to the orchestrator (HTTP POST or direct Bob integration)
-- [ ] Make sure the **Copy Report** button works on the final unified report
-- [ ] (Stretch) Add a run history panel — list of past swarm runs with timestamps
+- [ ] **Font loading bug** — the 3 custom fonts are declared in CSS but
+      never actually loaded (no `<link>`/`@font-face` anywhere) — every
+      browser has been silently falling back to system fonts. Fix + full
+      polish plan (positioning, wording, flow) in
+      `docs/ARISHA_FRONTEND_POLISH.md`, with a ready-to-paste Bob prompt at
+      the bottom of that doc.
+- [ ] A few additive polish items (evidence code-styling, severity visual
+      weight, zero-findings empty state, full-run-ID copy button) — same doc.
 
 ### Creative freedom
 The UI template gives you the structure and the colour palette (dark theme, amber).
