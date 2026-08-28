@@ -79,7 +79,7 @@ docs/
 | Orchestration skill | Sibusiso | ✅ Done | `.bob/skills/bobswarm/SKILL.md` ready |
 | Master system prompt | Sibusiso | ✅ Done | `orchestrator/system_prompt.md` complete |
 | Task decomposition | Farheen | ✅ Done | `orchestrator/decompose.js` — tested against 14 varied requests; keyword coverage refined; confidence score added to every sub-task |
-| Agent personas (all 5) | Farheen | 🟢 Live-tested | All 5 agents ran against `demo/sample-project` (Mmpoiemang Session 1) — literal evidence quotes confirmed; `record_progress`/`record_finding` tool calls not yet wired into personas |
+| Agent personas (all 5) | Farheen | ✅ Done | All 5 personas verified: required sections (43 checks), anti-patterns (17 checks), output format alignment with `system_prompt.md`, end-to-end prompt assembly (2275–2914 chars each) — all pass |
 | MCP server | Lethabo | ✅ Done | `.bob/mcp.json` written; 12 tools confirmed via Node verification; `project_summary` returns correct JSON against `demo/sample-project` |
 | Git tools | Lethabo | ✅ Done | All 4 tools (`git_status`, `git_log`, `git_diff`, `git_blame`) confirmed live through MCP stdio transport in Session 4 — raw output captured, zero errors |
 | Filesystem tools | Lethabo | ✅ Done | `project_summary`, `read_project_file`, `list_project_files` all confirmed live via MCP transport across Sessions 3–4 |
@@ -211,8 +211,12 @@ and the **Unified Report panel** must remain visible and functional for the demo
 ## 👤 Farheen — AI/ML Engineer
 
 ### What's done
-- All 5 agent persona files written (`agents/`)
+- All 5 agent persona files written (`agents/`) and fully verified: required sections, anti-patterns, output format alignment with `system_prompt.md`, end-to-end prompt assembly — all pass
 - Task decomposition logic written (`orchestrator/decompose.js`) with keyword-to-agent mapping and dependency rules
+- `KEYWORD_MAP` expanded across all 5 agents (15 new keywords added) based on 14-request test run
+- `computeConfidence()` added — scores each sub-task 0.0–1.0; every `SubTask` carries a `confidence` field
+- Refactorer dependency rule verified via live assertions
+- Bob session screenshots + `CONTRIBUTIONS.md` added to `docs/bob-sessions/farheen/`
 
 ### What still needs doing
 - [x] Test `decompose.js` against 14 varied requests — run `node orchestrator/_test_decompose.js`
