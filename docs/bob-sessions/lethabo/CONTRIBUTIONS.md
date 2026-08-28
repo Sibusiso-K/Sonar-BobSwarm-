@@ -621,3 +621,73 @@ Lethabo to confirm on your end from the screen recording.
   future orchestration: do NOT pre-brief subagents on expected findings, even with
   the intent of helping them skip false positives. Give them the tool sequence and
   the file paths; let them report what they read.
+
+---
+
+### Session 6 — Live Dashboard Run (frontend-supplied runId) — 2026-08-28
+
+**Task given to Bob:**
+> "Use existing runId 827af00d-9bf3-4aad-8343-40821ca4a115 created by the frontend.
+> Do not create a second run. Dispatch the full 5-agent swarm against this runId so
+> the already-open dashboard receives events live."
+
+**What Bob actually did:**
+
+1. **Pulled origin/main** — already up to date.
+
+2. **Verified the run exists in the store before touching it:**
+   ```
+   GET http://localhost:8787/runs/827af00d-9bf3-4aad-8343-40821ca4a115
+   → {"id":"827af00d...","status":"pending","createdAt":"2026-08-28T20:46:58.696Z"}
+   ```
+   Confirmed pending, not already running or complete. Did NOT call POST /runs.
+
+3. **Opened the run with first MCP progress event:**
+   `orchestrator → started` at `20:51:18.043Z` — this transitions status from `pending` to `running` in the store and fans out to the frontend's WebSocket subscriber.
+
+4. **Dispatched all 5 agents in the same `spawn_subagent` turn (parallel).**
+   No pre-briefing on expected findings — clean prompts with tool sequence only.
+
+5. **All 5 agents completed using only bobswarm MCP tools.**
+
+6. **`finalize_run` called at `20:52:52.253Z`:**
+   - `run_complete` WebSocket event published to all subscribers on this runId
+   - `summary`: `"41 findings across 5 specialists — 4 breaks, 28 warns, 9 informational"`
+
+**Timing — confirming parallel execution:**
+| Agent | First finding createdAt |
+|-------|------------------------|
+| refactorer | 20:52:10.567Z |
+| documenter | 20:52:18.006Z |
+| debugger | 20:52:17.710Z |
+| data_lineage | 20:52:08.373Z |
+| onboarding | 20:52:23.454Z |
+
+All 5 overlapping within a ~15-second window (`20:52:08` to `20:52:23`). Parallel.
+
+**Event sequence published to the frontend WebSocket (what the dashboard received):**
+1. `progress` — orchestrator/started (`20:51:18`)
+2–6. `progress` — all 5 agents/started (overlapping, ~`20:51:18–20:51:20`)
+7–11. `progress` — all 5 agents/investigating (overlapping)
+12–52. `finding` × 41 — interleaved across all 5 roles as findings arrived
+53–57. `progress` — all 5 agents/done
+58. `progress` — orchestrator/done (`20:52:52`)
+59. `run_complete` — full report with `summary` + `findingsByRole` (`20:52:52`)
+
+**Frontend rendering — what should have been visible live:**
+- Agent role cards: each card should have transitioned `waiting → started → investigating → done`
+- Timeline: each `finding` event adds a row with `targetSymbol` and severity tone
+- Report section: populated on `run_complete` with 41 findings sorted by role, each showing `severity` badge + `affectedPath` + `targetSymbol` + `evidence` paragraph
+- Summary line: `"41 findings across 5 specialists — 4 breaks, 28 warns, 9 informational"`
+
+**Evidence quality — all 41 stored findings are verbatim quotes.**
+Selected samples from the finalized store JSON:
+- debugger/`enrich_record`: `"    except Exception:\n        # BUG 3: silently returns None — caller assumes a dict\n        return None"` — exact `app.py:61-63`
+- data_lineage/`run_pipeline`: `"result = enrich_record(record, enrich_api_url)\n        enriched.append(result)  # BUG 3 consequence..."` — exact `app.py:102-105`
+- onboarding/`input.json id=004`: `"{ \"id\": \"004\", \"name\": \"dave brown\",  \"email\": \"dave@example.com\",  \"scores\": [] }"` — exact JSON line
+- documenter/`process_records`: full 6-line function body verbatim
+
+Zero paraphrases. Zero `record_finding` rejections.
+
+**Anything that went wrong:** Nothing. Clean run from probe → dispatch → finalize.
+The pre-briefing issue from Session 5 was avoided by giving agents only tool-sequence instructions, not expected findings. All 5 dispatched and returned correctly on first attempt.
