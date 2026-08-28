@@ -227,10 +227,10 @@ strengthen the demo, add it — just follow the extension guide in `docs/agent_p
 - Expected output reference (`expected_output.md`) for all 5 agents
 
 ### What still needs doing
-- [ ] Run `bash demo/run_demo.sh` and confirm it executes without script errors
-- [ ] Verify `python3 demo/sample-project/app.py` actually crashes on at least 2 of the 7 bugs
-- [ ] Cross-check `expected_output.md` against what the real swarm produces — update it if the swarm finds more
-- [ ] (Stretch) Add a **Bobalytics** section to `expected_output.md`: what metrics does the swarm produce? (agents dispatched, time to complete, issues found per severity)
+- [X] Run `bash demo/run_demo.sh` and confirm it executes without script errors
+- [X] Verify `python3 demo/sample-project/app.py` actually crashes on at least 2 of the 7 bugs
+- [X] Cross-check `expected_output.md` against what the real swarm produces — update it if the swarm finds more
+- [X] (Stretch) Add a **Bobalytics** section to `expected_output.md`: what metrics does the swarm produce? (agents dispatched, time to complete, issues found per severity)
 - [ ] Prepare a 60-second verbal walkthrough of the demo for demo day — you're the one who runs it live
 
 ### Creative freedom
