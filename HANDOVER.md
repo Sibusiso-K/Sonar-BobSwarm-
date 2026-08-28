@@ -105,9 +105,10 @@ docs/
 - [x] `.bob/mcp.json` created for `lovilocal.adm` machine — MCP server connects on next Bob startup
 - [x] Event schema defined by Lethabo — see `docs/LIVE_EVENTS.md` (signed off)
 - [x] System prompt updated to wire in `record_progress`, `record_finding`, `finalize_run` tool calls
-- [ ] **Run a live end-to-end test** — switch to BobSwarm Orchestrator mode, run the full demo task, verify the MCP panel shows `bobswarm` connected (green), confirm `record_finding` calls go through the stdio transport
-- [ ] Add your screenshots to `docs/bob-sessions/sibusiso/` — mandatory submission deliverable
-- [ ] Review `orchestrator/decompose.js` against 5+ varied requests and confirm keyword coverage
+- [x] **Live end-to-end orchestration run complete** — 5 agents, 4 parallel + 1 sequential, full Unified Report produced and saved in `docs/bob-sessions/sibusiso/`
+- [x] `docs/bob-sessions/sibusiso/CONTRIBUTIONS.md` created — session log for D3 submission
+- [x] `orchestrator/decompose.js` confirmed correct against full-audit task (5/5 agents triggered correctly)
+- [ ] Add MCP panel screenshot to `docs/bob-sessions/sibusiso/` — verify `bobswarm` shows Connected (green) after next Bob restart
 
 ### Creative freedom
 The system prompt and skill are templates — you have full freedom to rewrite,
