@@ -1,6 +1,6 @@
 """
 BobSwarm Demo — Utility functions (sample project)
-Owner: Mmpoiemang (Data / QA Engineer)
+Owner: Mmopiemang (Data / QA Engineer)
 
 Additional utility functions for the demo sample project.
 Contains further issues for the swarm to discover.
@@ -11,27 +11,31 @@ import datetime
 
 
 def generate_id(record):
-    """Generate a deterministic ID for a record based on its email."""
-    # Uses MD5 — flagged as weak hashing by security-aware agents
-    return hashlib.md5(record.get("email", "").encode()).hexdigest()
+    """
+    Generate a deterministic identifier for a record based on its email.
+    Uses SHA-256 (replaces MD5 — collision-resistant).
+    """
+    email = record.get("email", "").encode("utf-8")
+    return hashlib.sha256(email).hexdigest()
 
 
 def format_timestamp(ts):
     """
-    Format a Unix timestamp to ISO 8601.
+    Format a Unix timestamp to an ISO 8601 datetime string (UTC, timezone-aware).
     No input validation — will crash on non-numeric input.
     """
-    return datetime.datetime.utcfromtimestamp(ts).isoformat()
+    return datetime.datetime.fromtimestamp(float(ts), tz=datetime.timezone.utc).isoformat()
 
 
 def merge_dicts(*dicts):
     """
     Merge multiple dicts. Later dicts overwrite earlier ones.
-    Does not handle None inputs gracefully.
+    Skips None inputs gracefully.
     """
     result = {}
     for d in dicts:
-        result.update(d)  # crashes if d is None (from enrich_record bug)
+        if d is not None:
+            result.update(d)
     return result
 
 

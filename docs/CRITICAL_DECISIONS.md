@@ -193,6 +193,87 @@ MCP tab, or reopen the project folder to force a fresh spawn.
   subagent, through the MCP path specifically
 - Live dashboard receiving real events (currently untestable until the above happens)
 
+**Update — session count and one discrepancy worth correcting before D3 is
+written:** Sibusiso ran a full 5-agent live session (`docs/bob-sessions/sibusiso/`,
+20:55 SAST) — genuinely strong output (8 bugs, 7 refactor recs, full lineage
+map, all evidence-backed). Sibusiso's own log still lists "verify record_finding
+flows through stdio to the dashboard" as open, consistent with everything
+above. **Separately, Mmopiemang's session log (`docs/bob-sessions/mmpoiemang/`,
+pushed 20:11–20:26 SAST) states subagents "called `record_finding` for their
+domain."** Checked this against the timeline and the generated report:
+
+- The commit that actually wires MCP tool calls into the orchestrator's
+  system prompt (`efa72d2`, "wire MCP tool calls into system prompt") landed
+  at **20:45 SAST — after** Mmopiemang's session was already pushed.
+- The generated `demo/bobswarm-report-demo-sample-project.html` from that
+  session contains **zero** occurrences of `record_finding`, `record_progress`,
+  `MCP`, `mcp-server`, or `stdio` anywhere in the file.
+
+Most likely explanation: this session also ran via Bob's native tools (same
+pattern as every other session so far), and the "called `record_finding`"
+line describes what the **persona instructions** say a subagent should do,
+not something independently verified to have happened. Not raised as an
+accusation — flagging because if this line goes into D3 unchanged, it's an
+unverified claim about tool usage, and D3 is exactly the deliverable the
+rules say must be "specific." **Mmopiemang should either verify this against
+an actual MCP-connected session, or soften the log entry to match what's
+demonstrable** — the swarm's actual output quality doesn't need the MCP claim
+to be impressive on its own.
+
+## 5b. MCP verification — RESOLVED, real evidence, not native fallback this time
+
+The gap flagged repeatedly above (5a's "still open" list) is closed. A live
+Bob session confirmed the actual stdio MCP path, not the native-tools
+fallback every prior session used:
+
+- `record_progress` called with `runId: "probe-test"` correctly round-tripped
+  to `store.js`'s real error path (`Error: unknown run_id: probe-test`) —
+  proves the call reached the actual store code, not a simulated response.
+- `project_summary` returned the real JSON through the MCP tool call
+  specifically (not a direct Node invocation).
+- A full run (`runId: 20c55607-...`) dispatched two subagents in parallel —
+  confirmed by overlapping `createdAt` timestamps in the stored findings
+  (19:03:27 and 19:03:46, both mid-run, not sequential).
+- Every stored `evidence` value checked against source: character-for-character
+  literal quotes, including a 3-line verbatim span and a full docstring line.
+  Zero paraphrases through the actual tool-call interface.
+
+This resolves the open item tracked since 5a's first draft. The MCP layer is
+real and working, not just designed to work.
+
+**One real gap this session found, fixed:** `store.js`'s `finalizeRun` never
+sent a `summary` field, but the frontend's `Report` type expected one
+(`ReportView` would have rendered `undefined`). Fixed: `finalizeRun` and
+`getReport` both now generate a deterministic one-line summary (counts only,
+no LLM involved — "3 findings across 2 specialists — 1 breaks, 1 warns, 1
+informational"). Also fixed in the same pass: `getReport` on an
+already-complete run was skipping the sort `finalizeRun` applies, so the two
+code paths could return findings in different order for the same run — now
+identical (verified: `JSON.stringify` equal).
+
+## 5c. Demo target has lost most of its planted bugs — needs a team decision
+
+Checked `demo/sample-project/app.py`/`utils.py` directly against the original
+findings list. Of ~7-8 planted bugs, **5 are now fixed** — kept intentionally
+so `test_app.py`'s new tests pass (div-by-zero, list mutation, email regex,
+MD5, `merge_dicts` None-crash). Only **2-3 genuinely remain**: `enrich_record`'s
+None-propagation crash (still real, still crashes `transform_record`
+downstream) and the two unclosed file handles. `app.py`'s own header comment
+still lists 5 "planted" bugs as present — 3 of them are not, right below that
+comment.
+
+This is `demo/`, Mmopiemang's owned area — not edited here. Needs a decision
+before the demo recording:
+- **Option A (fast, safe):** accept a smaller, honest 2-3-bug demo. Update
+  the header comment and `expected_output.md` to match reality. Tests stay
+  green, no more code changes needed.
+- **Option B:** re-plant 2-3 replacement bugs elsewhere in the file to
+  restore richness without touching the tested functions.
+- **Option C (more work):** revert the fixes entirely, move `test_app.py` to
+  test against a separate fixed-reference copy instead of the demo target.
+
+No option is obviously wrong — this is a product/demo-design call, not a bug.
+
 ---
 
 ## 5. Bobcoins

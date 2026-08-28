@@ -121,6 +121,7 @@ function finalizeRun(runId) {
   const report = {
     runId,
     generatedAt: run.completedAt,
+    summary: buildSummary(findings, Object.keys(sortedByRole)),
     findingsByRole: sortedByRole,
   };
   publish(runId, { type: 'run_complete', runId, report, at: run.completedAt });
@@ -136,12 +137,49 @@ function finalizeRunIfNeeded(runId) {
   if (run.status !== 'complete') {
     return finalizeRun(runId);
   }
+  // Already complete: rebuild the same deterministic shape finalizeRun
+  // produces (sorted findings, generated summary) rather than a second,
+  // less-complete code path -- a GET here must match the run_complete
+  // event's shape exactly, not just approximate it.
   const findings = findingsByRun.get(runId) || [];
   const byRole = {};
   for (const f of findings) {
     (byRole[f.subagentRole] ||= []).push(f);
   }
-  return { runId, generatedAt: run.completedAt, findingsByRole: byRole };
+  for (const role of Object.keys(byRole)) {
+    byRole[role].sort((a, b) => {
+      const pathCmp = a.affectedPath.localeCompare(b.affectedPath);
+      return pathCmp !== 0 ? pathCmp : a.targetSymbol.localeCompare(b.targetSymbol);
+    });
+  }
+  const sortedByRole = Object.fromEntries(
+    Object.entries(byRole).sort(([a], [b]) => a.localeCompare(b))
+  );
+  return {
+    runId,
+    generatedAt: run.completedAt,
+    summary: buildSummary(findings, Object.keys(sortedByRole)),
+    findingsByRole: sortedByRole,
+  };
+}
+
+/**
+ * One-line, deterministic summary -- counts only, no LLM involved, so it
+ * can't hallucinate and needs no doctrine caveat. Severity order is fixed
+ * (breaks, warns, informational) regardless of arrival order.
+ */
+function buildSummary(findings, roles) {
+  const bySeverity = { breaks: 0, warns: 0, informational: 0 };
+  for (const f of findings) {
+    if (f.severity in bySeverity) bySeverity[f.severity] += 1;
+  }
+  const roleCount = roles.length;
+  const roleWord = roleCount === 1 ? 'specialist' : 'specialists';
+  const parts = ['breaks', 'warns', 'informational']
+    .filter((sev) => bySeverity[sev] > 0)
+    .map((sev) => `${bySeverity[sev]} ${sev}`);
+  const severityPart = parts.length > 0 ? ` — ${parts.join(', ')}` : '';
+  return `${findings.length} finding${findings.length === 1 ? '' : 's'} across ${roleCount} ${roleWord}${severityPart}`;
 }
 
 // ── pub/sub for the WebSocket bridge (events-server.js) ─────────────────────

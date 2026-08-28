@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================
 # BobSwarm Demo Script
-# Owner: Mmpoiemang (Data / QA Engineer)
+# Owner: Mmopiemang (Data / QA Engineer)
 #
 # Runs the full BobSwarm demo against the sample broken project.
 # Validates that the swarm output matches the expected findings.
