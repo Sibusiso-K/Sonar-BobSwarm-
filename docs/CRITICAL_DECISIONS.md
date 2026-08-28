@@ -86,11 +86,11 @@ one (Settings → MCP tab → "Edit Project MCP" / "Edit Global MCP"):
 
 | Level | File | Scope |
 |---|---|---|
-| Project | `.bob/mcp.json` in repo root | This workspace only — team-shareable via git ✅ |
+| Project | `.bob/mcp.json` in repo root | This workspace only |
 | Global | `~/.bob/mcp.json` | All workspaces on this machine |
 
-Project-level takes precedence when names conflict. **We use project-level** so
-the config lives in the repo and every team member gets it automatically on pull.
+Project-level takes precedence when names conflict. **We use project-level** —
+but `.bob/mcp.json` itself is **not** committed (see below), only its template.
 
 **The config that was written (`.bob/mcp.json`):**
 ```json
@@ -111,10 +111,23 @@ the config lives in the repo and every team member gets it automatically on pull
 }
 ```
 
-The `cwd` path is Windows-absolute and must match the local clone location on
-each machine. If a team member clones to a different path, they update `cwd`.
+**Updated after first commit:** the `cwd` path is absolute and machine-specific
+— committing it as-is would silently break every other team member's session
+the moment they pull `main` (their local clone almost certainly isn't at
+`C:\Users\USER\Desktop\IBM 2.0\bobswarm-repo`). Fixed the same way `.env` is
+handled: `.bob/mcp.json` is now git-ignored, and `.bob/mcp.json.example` is
+committed instead with a placeholder `cwd`.
+
+**Every team member, once, before opening Bob:**
+```bash
+cp .bob/mcp.json.example .bob/mcp.json
+# then edit .bob/mcp.json and replace the placeholder cwd with your own
+# absolute path to this repo's local clone
+```
 The `alwaysAllow` list covers all 12 tools — eliminates per-call approval
-prompts, which would break the automated swarm flow.
+prompts, which would break the automated swarm flow. Don't remove entries from
+it without telling the team; a tool silently requiring per-call approval mid-
+demo is a bad live moment.
 
 **What the handoff doc §5a guessed:** shape was correct (same as Claude Desktop).
 File name was the only unknown — confirmed as `.bob/mcp.json`, not `settings.json`.

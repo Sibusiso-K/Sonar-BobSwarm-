@@ -3,7 +3,7 @@
     "bobswarm": {
       "command": "node",
       "args": ["mcp-server/server.js"],
-      "cwd": "C:\\Users\\USER\\Desktop\\IBM 2.0\\bobswarm-repo",
+      "cwd": "<ABSOLUTE_PATH_TO_YOUR_LOCAL_CLONE_OF_THIS_REPO>",
       "alwaysAllow": [
         "git_status",
         "git_log",

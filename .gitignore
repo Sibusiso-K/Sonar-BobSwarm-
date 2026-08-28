@@ -24,3 +24,8 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Bob MCP registration — machine-specific absolute cwd path, one per clone
+# location. Commit .bob/mcp.json.example instead; each person copies it and
+# fills in their own path (see docs/CRITICAL_DECISIONS.md §5a).
+.bob/mcp.json
