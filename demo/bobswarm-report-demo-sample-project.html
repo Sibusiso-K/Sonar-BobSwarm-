@@ -1,0 +1,533 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BobSwarm Report — demo/sample-project</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.6; color: #1f2328; background: #fff; }
+  .page { max-width: 760px; margin: 0 auto; padding: 32px 24px 48px; }
+
+  /* Header */
+  .report-header { border-bottom: 2px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 28px; }
+  .report-header h1 { font-size: 22px; font-weight: 700; color: #1f2328; }
+  .report-header .meta { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 16px; }
+  .meta-item { font-size: 12px; color: #57606a; }
+  .meta-item strong { color: #1f2328; }
+
+  /* Section */
+  section { margin-bottom: 36px; }
+  h2 { font-size: 16px; font-weight: 700; color: #1f2328; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 14px; }
+  h3 { font-size: 14px; font-weight: 600; margin: 18px 0 8px; color: #1f2328; }
+  h4 { font-size: 13px; font-weight: 600; margin: 14px 0 6px; color: #1f2328; }
+  p { margin-bottom: 10px; color: #1f2328; }
+
+  /* Executive summary */
+  .exec-summary { background: #f7f8fa; border: 1px solid #e5e7eb; border-left: 4px solid #3b82d4; border-radius: 4px; padding: 16px 18px; margin-bottom: 28px; }
+  .exec-summary p { margin-bottom: 6px; }
+  .exec-summary p:last-child { margin-bottom: 0; }
+
+  /* Badge */
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .badge-critical { background: #fee2e2; color: #991b1b; }
+  .badge-high     { background: #ffedd5; color: #92400e; }
+  .badge-medium   { background: #fef9c3; color: #713f12; }
+  .badge-low      { background: #f0fdf4; color: #166534; }
+  .badge-info     { background: #eff6ff; color: #1e40af; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 14px; }
+  th { background: #f7f8fa; text-align: left; font-weight: 600; padding: 7px 10px; border-bottom: 2px solid #e5e7eb; }
+  td { padding: 6px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f7f8fa; }
+
+  /* Code */
+  code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 12px; background: #f7f8fa; padding: 1px 5px; border-radius: 3px; color: #1f2328; }
+  pre { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 4px; padding: 12px 14px; font-size: 12px; overflow-x: auto; margin: 8px 0 12px; line-height: 1.5; }
+  pre code { background: none; padding: 0; }
+  .diff-add { color: #166534; }
+  .diff-del { color: #9a1313; }
+
+  /* Issue cards */
+  .issue { border: 1px solid #e5e7eb; border-radius: 6px; padding: 14px 16px; margin-bottom: 12px; }
+  .issue-title { font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+  .issue dl { display: grid; grid-template-columns: 90px 1fr; gap: 4px 10px; font-size: 12px; }
+  .issue dt { color: #57606a; font-weight: 600; }
+  .issue dd { color: #1f2328; }
+
+  /* Action list */
+  .action-list { list-style: none; }
+  .action-list li { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+  .action-list li:last-child { border-bottom: none; }
+  .action-num { font-weight: 700; color: #57606a; min-width: 20px; }
+
+  /* API ref */
+  .api-entry { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 4px; padding: 12px 14px; margin-bottom: 10px; }
+  .api-sig { font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; font-weight: 600; color: #3b82d4; margin-bottom: 6px; }
+  .api-desc { font-size: 13px; margin-bottom: 8px; }
+  .api-warning { font-size: 12px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 3px; padding: 5px 8px; color: #92400e; margin-top: 6px; }
+
+  /* Lineage flow */
+  .flow-diagram { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 4px; padding: 16px; margin-bottom: 14px; }
+  .flow-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+  .flow-arrow { color: #57606a; font-size: 18px; text-align: center; width: 24px; flex-shrink: 0; padding-top: 2px; }
+  .flow-box { flex: 1; background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; padding: 7px 10px; font-size: 12px; }
+  .flow-box strong { display: block; font-size: 12px; margin-bottom: 2px; }
+  .flow-box .note { font-size: 11px; color: #57606a; }
+  .flow-error { background: #fee2e2; border-color: #fca5a5; }
+  .flow-source { background: #eff6ff; border-color: #bfdbfe; }
+  .flow-sink { background: #f0fdf4; border-color: #bbf7d0; }
+
+  /* Onboarding */
+  .onboard-section { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 4px; padding: 14px 16px; margin-bottom: 12px; }
+  .onboard-section h4 { margin-top: 0; }
+  .gotcha { display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+  .gotcha:last-child { border-bottom: none; }
+  .gotcha-icon { flex-shrink: 0; font-size: 14px; }
+
+  /* Divider */
+  hr { border: none; border-top: 1px solid #e5e7eb; margin: 28px 0; }
+
+  /* Footer */
+  footer { border-top: 1px solid #e5e7eb; margin-top: 40px; padding-top: 12px; text-align: center; font-size: 12px; color: #57606a; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  
+  <div class="report-header">
+    <h1>🐝 BobSwarm Report</h1>
+    <div class="meta">
+      <div class="meta-item"><strong>Task:</strong> Analyse codebase at demo/sample-project</div>
+      <div class="meta-item"><strong>Agents:</strong> Debugger · Documenter · Refactorer · Onboarding · Data Lineage</div>
+      <div class="meta-item"><strong>Files analysed:</strong> app.py · utils.py · data/input.json</div>
+    </div>
+  </div>
+
+  
+  <div class="exec-summary">
+    <h2 style="border:none;padding:0;margin-bottom:10px">Executive Summary</h2>
+    <p>The <code>demo/sample-project</code> pipeline is a five-step JSON record processor (load → validate → enrich → transform → save) that is <strong>not safe to run against the provided sample data</strong> in its current state. Eight concrete defects were found across both files, two of which will crash the entire pipeline on the first real record: an unchecked <code>None</code> return from <code>enrich_record()</code> that propagates into <code>transform_record()</code>, and a <code>ZeroDivisionError</code> in <code>calculate_average()</code> triggered by record 004's empty <code>scores</code> list.</p>
+    <p>Nine refactoring improvements were identified — three at HIGH priority — that would eliminate the mutation and resource-leak patterns while making the pipeline significantly more testable. The public API across both files lacks adequate documentation on its failure modes, particularly around functions that return <code>None</code> or mutate their inputs silently.</p>
+    <p>The six utility functions in <code>utils.py</code> are entirely disconnected from <code>app.py</code> (no imports, no calls), representing either planned extension points or orphaned code — all of which carry their own risks if wired in naively. The immediate priority is to fix the two crash-inducing bugs before any further development occurs.</p>
+  </div>
+
+  <hr />
+
+  
+  <section id="debugger">
+    <h2>🐛 Debugger — 8 Issues Found</h2>
+
+    <div class="issue">
+      <div class="issue-title"><span class="badge badge-critical">Critical</span>  BUG-01 — MD5 used for identity generation</div>
+      <dl>
+        <dt>File</dt><dd><code>utils.py:16</code></dd>
+        <dt>Root cause</dt><dd><code>hashlib.md5()</code> is cryptographically broken — collision-prone, reversible via rainbow tables, and unsuitable for any identity or security use.</dd>
+        <dt>Symptom</dt><dd>Two different emails can produce the same ID; the hash can be reversed to reveal the original email (PII exposure).</dd>
+        <dt>Fix</dt><dd><code>hashlib.md5(...)</code> → <code>hashlib.sha256(...)</code></dd>
+      </dl>
+    </div>
+
+    <div class="issue">
+      <div class="issue-title"><span class="badge badge-high">High</span>  BUG-02 — ZeroDivisionError on empty <code>scores</code> list</div>
+      <dl>
+        <dt>File</dt><dd><code>app.py:71</code>, <code>app.py:93</code></dd>
+        <dt>Root cause</dt><dd><code>sum(values) / len(values)</code> — no guard for empty list. Triggered immediately by record 004 (<code>"scores": []</code>).</dd>
+        <dt>Symptom</dt><dd>Pipeline crashes with <code>ZeroDivisionError</code>; no output file is written.</dd>
+        <dt>Fix</dt><dd><code>return sum(values) / len(values) if values else 0.0</code></dd>
+      </dl>
+    </div>
+
+    <div class="issue">
+      <div class="issue-title"><span class="badge badge-high">High</span>  BUG-03 — <code>enrich_record</code> silently returns <code>None</code>, crashing pipeline</div>
+      <dl>
+        <dt>File</dt><dd><code>app.py:64–66</code> (source), <code>app.py:106</code> (consequence)</dd>
+        <dt>Root cause</dt><dd><code>except Exception: return None</code> swallows all errors. The caller appends <code>None</code> unconditionally; <code>transform_record(None)</code> then raises <code>TypeError</code>.</dd>
+        <dt>Symptom</dt><dd>Any API timeout, HTTP error, or invalid JSON response crashes the entire pipeline with no log output.</dd>
+        <dt>Fix</dt><dd>In <code>run_pipeline</code>: <code>if result is not None: enriched.append(result)</code></dd>
+      </dl>
+    </div>
+
+    <div class="issue">
+      <div class="issue-title"><span class="badge badge-high">High</span>  BUG-04 — <code>process_records</code> mutates input list mid-iteration</div>
+      <dl>
+        <dt>File</dt><dd><code>app.py:48–51</code></dd>
+        <dt>Root cause</dt><dd><code>records.remove(record)</code> inside a <code>for</code> loop over the same list shortens the list, causing the iterator to skip the element that shifts into the removed slot.</dd>
+        <dt>Symptom</dt><dd>Consecutive invalid records are silently retained in the output. Caller's list is also modified in place.</dd>
+        <dt>Fix</dt><dd><code>return [r for r in records if validate_email(r.get('email', ''))]</code></dd>
+      </dl>
+    </div>
+
+    <div class="issue">
+      <div class="issue-title"><span class="badge badge-medium">Medium</span>  BUG-05 — <code>validate_email</code> regex accepts malformed addresses</div>
+      <dl>
+        <dt>File</dt><dd><code>app.py:37–38</code></dd>
+        <dt>Root cause</dt><dd>Pattern <code>[^@]*@[^@]*</code> requires only an <code>@</code> character. Accepts <code>@</code>, <code>x@</code>, <code>@y</code>, and even whitespace-only strings with <code>@</code>.</dd>
+        <dt>Fix</dt><dd><code>r"[^@\s]+@[^@\s]+"</code></dd>
+      </dl>
+    </div>
+
+    <div class="issue">
+      <div class="issue-title"><span class="badge badge-medium">Medium</span>  BUG-06 — Unclosed file handles in <code>load_records</code> and <code>save_results</code></div>
+      <dl>
+        <dt>File</dt><dd><code>app.py:30</code>, <code>app.py:85</code></dd>
+        <dt>Root cause</dt><dd>Both functions call <code>open()</code> without a <code>with</code> statement. The file descriptor is never explicitly closed.</dd>
+        <dt>Symptom</dt><dd>OS file descriptor leak on every pipeline run; output buffer may not flush on write.</dd>
+        <dt>Fix</dt><dd>Replace with <code>with open(...) as f:</code> in both functions.</dd>
+      </dl>
+    </div>
+
+    <div class="issue">
+      <div class="issue-title"><span class="badge badge-medium">Medium</span>  BUG-07 — <code>merge_dicts</code> crashes on <code>None</code> input</div>
+      <dl>
+        <dt>File</dt><dd><code>utils.py:34</code></dd>
+        <dt>Root cause</dt><dd><code>result.update(d)</code> with no <code>None</code> guard — direct downstream consequence of BUG-03 if <code>merge_dicts</code> is ever wired to use enriched records.</dd>
+        <dt>Fix</dt><dd><code>if d is not None: result.update(d)</code></dd>
+      </dl>
+    </div>
+
+    <div class="issue">
+      <div class="issue-title"><span class="badge badge-low">Low</span>  BUG-08 — <code>format_timestamp</code> has no input validation</div>
+      <dl>
+        <dt>File</dt><dd><code>utils.py:24</code></dd>
+        <dt>Root cause</dt><dd><code>utcfromtimestamp(ts)</code> with no type coercion — raises <code>TypeError</code> on string input, <code>OverflowError</code> on extreme values.</dd>
+        <dt>Fix</dt><dd>Add <code>ts = float(ts)</code> before the call.</dd>
+      </dl>
+    </div>
+  </section>
+
+  <hr />
+
+  
+  <section id="documenter">
+    <h2>📝 Documenter — Public API Reference</h2>
+
+    <h3>Module Overviews</h3>
+    <div class="onboard-section">
+      <h4><code>app.py</code></h4>
+      <p>The main pipeline module. Orchestrates a five-step data-processing flow: loading raw JSON records from disk, filtering records with invalid email addresses, enriching each record via a configurable external HTTP API, applying business-logic transformations (name normalisation, score averaging), and writing the results to a JSON output file. Exposes nine public functions; <code>run_pipeline()</code> is the primary entry point. Contains five known defects (file handle leaks, list mutation, silent <code>None</code> return, division-by-zero, and a permissive email regex) that are intentionally present in this demo.</p>
+    </div>
+    <div class="onboard-section">
+      <h4><code>utils.py</code></h4>
+      <p>A collection of six general-purpose utility helpers. Provides: deterministic record ID generation via MD5 hashing, Unix-timestamp formatting, shallow dict merging, list chunking, one-level list flattening, and safe nested dict traversal. None of these functions are currently imported by <code>app.py</code>; they represent planned extension points. Notable limitations: <code>generate_id</code> uses MD5 (not collision-safe), <code>merge_dicts</code> crashes on <code>None</code> input, and <code>flatten</code> only handles one level of nesting.</p>
+    </div>
+
+    <h3>API Reference — <code>app.py</code></h3>
+
+    <div class="api-entry">
+      <div class="api-sig">load_records(filepath: str) → list[dict]</div>
+      <div class="api-desc">Opens the file at <code>filepath</code>, parses it as JSON, and returns the resulting list of record dicts. No schema validation is performed on the loaded data.</div>
+      <div class="api-warning">⚠ Resource leak: the file handle is never closed. Use <code>with open()</code> instead.</div>
+    </div>
+
+    <div class="api-entry">
+      <div class="api-sig">validate_email(email: str) → bool</div>
+      <div class="api-desc">Returns <code>True</code> if <code>email</code> contains an <code>@</code> character with at least one character on each side (per regex <code>[^@]*@[^@]*</code>). Returns <code>False</code> otherwise.</div>
+      <div class="api-warning">⚠ Permissive: accepts <code>@</code>, <code>x@</code>, <code>@y</code>, and other degenerate forms. Does not reject empty strings with <code>@</code>.</div>
+    </div>
+
+    <div class="api-entry">
+      <div class="api-sig">process_records(records: list[dict]) → list[dict]</div>
+      <div class="api-desc">Iterates over <code>records</code> and removes entries whose <code>"email"</code> field fails <code>validate_email</code>. Returns the same list object.</div>
+      <div class="api-warning">⚠ Mutates its input: modifies the caller's list in place. Also skips consecutive invalid records due to iterator invalidation. Always pass a copy.</div>
+    </div>
+
+    <div class="api-entry">
+      <div class="api-sig">enrich_record(record: dict, api_url: str) → dict | None</div>
+      <div class="api-desc">Sends a GET request to <code>{api_url}/enrich?id={record["id"]}</code>. On success, adds an <code>"enriched"</code> key to <code>record</code> containing the parsed response JSON and returns the modified record.</div>
+      <div class="api-warning">⚠ Returns <code>None</code> on any exception (network error, HTTP error, JSON parse failure). Callers must always check for <code>None</code>. Also mutates <code>record</code> in place before the raise_for_status check.</div>
+    </div>
+
+    <div class="api-entry">
+      <div class="api-sig">calculate_average(values: list[int | float]) → float</div>
+      <div class="api-desc">Returns the arithmetic mean of <code>values</code> as a float.</div>
+      <div class="api-warning">⚠ Raises <code>ZeroDivisionError</code> on empty list. Always validate input before calling.</div>
+    </div>
+
+    <div class="api-entry">
+      <div class="api-sig">transform_record(record: dict) → dict</div>
+      <div class="api-desc">Applies two transformations to <code>record</code> in place: normalises <code>"name"</code> to title-case, and sets <code>"score"</code> to the average of the <code>"scores"</code> list. Returns the modified record.</div>
+      <div class="api-warning">⚠ Crashes with <code>ZeroDivisionError</code> if <code>record["scores"]</code> is an empty list. Crashes with <code>TypeError</code> if <code>record</code> is <code>None</code>.</div>
+    </div>
+
+    <div class="api-entry">
+      <div class="api-sig">save_results(records: list[dict], output_path: str) → None</div>
+      <div class="api-desc">Serialises <code>records</code> as indented JSON and writes to <code>output_path</code>.</div>
+      <div class="api-warning">⚠ Resource leak: file handle never closed; output buffer may not flush on crash.</div>
+    </div>
+
+    <div class="api-entry">
+      <div class="api-sig">get_results_summary(records: list[dict]) → dict</div>
+      <div class="api-desc">Returns a summary dict <code>{"total": int, "avg_score": float}</code> over the provided records. Each record must have a <code>"score"</code> key.</div>
+      <div class="api-warning">⚠ Raises <code>ZeroDivisionError</code> if <code>records</code> is empty.</div>
+    </div>
+
+    <div class="api-entry">
+      <div class="api-sig">run_pipeline(input_path: str, output_path: str, enrich_api_url: str) → dict</div>
+      <div class="api-desc">Orchestrates the full pipeline: load → validate → enrich → transform → save → summarise. Returns the result of <code>get_results_summary()</code>.</div>
+      <div class="api-warning">⚠ Propagates all unhandled exceptions from sub-functions. Will crash on empty <code>scores</code> lists or API failures (see BUG-02, BUG-03).</div>
+    </div>
+
+    <h3>API Reference — <code>utils.py</code></h3>
+
+    <div class="api-entry">
+      <div class="api-sig">generate_id(record: dict) → str</div>
+      <div class="api-desc">Returns the MD5 hex digest of the UTF-8 encoded value of <code>record["email"]</code> (defaults to <code>""</code> if missing).</div>
+      <div class="api-warning">⚠ MD5 is not collision-resistant. Not suitable for security or uniqueness-critical use.</div>
+    </div>
+
+    <div class="api-entry">
+      <div class="api-sig">format_timestamp(ts: int | float) → str</div>
+      <div class="api-desc">Converts a Unix timestamp to an ISO 8601 string in UTC.</div>
+      <div class="api-warning">⚠ No input validation. Raises <code>TypeError</code> on non-numeric input, <code>OverflowError</code> on extreme values. <code>utcfromtimestamp</code> is deprecated in Python 3.12+.</div>
+    </div>
+
+    <div class="api-entry">
+      <div class="api-sig">merge_dicts(*dicts: dict) → dict</div>
+      <div class="api-desc">Merges any number of dicts left-to-right. Later keys overwrite earlier ones. Returns a new dict.</div>
+      <div class="api-warning">⚠ Raises <code>TypeError</code> if any argument is <code>None</code>.</div>
+    </div>
+
+    <div class="api-entry">
+      <div class="api-sig">chunk_list(lst: list, size: int) → list[list]</div>
+      <div class="api-desc">Splits <code>lst</code> into sublists each of at most <code>size</code> elements. The last chunk may be shorter.</div>
+    </div>
+
+    <div class="api-entry">
+      <div class="api-sig">flatten(nested_list: list[list]) → list</div>
+      <div class="api-desc">Flattens a one-level nested list into a single list.</div>
+      <div class="api-warning">⚠ Only flattens one level of nesting. Deeper nesting is silently left nested.</div>
+    </div>
+
+    <div class="api-entry">
+      <div class="api-sig">safe_get(d: dict, *keys, default=None) → any</div>
+      <div class="api-desc">Traverses a nested dict using the given key sequence. Returns <code>default</code> if any key is missing or if a non-dict node is encountered before the path is exhausted.</div>
+    </div>
+  </section>
+
+  <hr />
+
+  
+  <section id="refactorer">
+    <h2>🔧 Refactorer — 9 Improvements</h2>
+
+    <table>
+      <thead>
+        <tr><th>#</th><th>File</th><th>Priority</th><th>Change</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>①</td><td><code>app.py:43</code></td><td><span class="badge badge-high">High</span></td><td>Replace <code>process_records</code> mutation loop with list comprehension</td></tr>
+        <tr><td>②</td><td><code>app.py:103</code></td><td><span class="badge badge-high">High</span></td><td>Filter <code>None</code> results from <code>enrich_record</code> inline in <code>run_pipeline</code></td></tr>
+        <tr><td>③</td><td><code>app.py:28,83</code></td><td><span class="badge badge-high">High</span></td><td>Replace bare <code>open()</code> with <code>with open() as f</code> context managers</td></tr>
+        <tr><td>④</td><td><code>app.py:99</code></td><td><span class="badge badge-medium">Medium</span></td><td>Extract enrich loop into <code>enrich_records()</code> helper for testability</td></tr>
+        <tr><td>⑤</td><td><code>app.py:35</code></td><td><span class="badge badge-medium">Medium</span></td><td>Compile <code>_EMAIL_RE</code> once at module level instead of per-call</td></tr>
+        <tr><td>⑥</td><td><code>app.py:114</code></td><td><span class="badge badge-medium">Medium</span></td><td>Move <code>import sys</code> to top-level imports (PEP 8)</td></tr>
+        <tr><td>⑦</td><td><code>utils.py:27</code></td><td><span class="badge badge-high">High</span></td><td>Replace <code>merge_dicts</code> loop with dict comprehension one-liner</td></tr>
+        <tr><td>⑧</td><td><code>utils.py:19</code></td><td><span class="badge badge-medium">Medium</span></td><td>Replace deprecated <code>utcfromtimestamp</code> with timezone-aware <code>fromtimestamp(tz=utc)</code></td></tr>
+        <tr><td>⑨</td><td><code>utils.py:13</code></td><td><span class="badge badge-low">Low</span></td><td>Rename <code>generate_id</code> → <code>generate_md5_id</code> to expose weak hash at call site</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Key Diffs</h3>
+    <h4>① process_records — eliminate mutation</h4>
+    <pre><code><span class="diff-del">- def process_records(records):</span>
+<span class="diff-del">-     for i, record in enumerate(records):</span>
+<span class="diff-del">-         if not validate_email(record.get('email', '')):</span>
+<span class="diff-del">-             records.remove(record)</span>
+<span class="diff-del">-     return records</span>
+<span class="diff-add">+ def process_records(records):</span>
+<span class="diff-add">+     return [r for r in records if validate_email(r.get('email', ''))]</span></code></pre>
+
+    <h4>③ File handles — use context managers</h4>
+    <pre><code><span class="diff-del">- def load_records(filepath):</span>
+<span class="diff-del">-     f = open(filepath, 'r')</span>
+<span class="diff-del">-     data = json.load(f)</span>
+<span class="diff-del">-     return data</span>
+<span class="diff-add">+ def load_records(filepath):</span>
+<span class="diff-add">+     with open(filepath, 'r') as f:</span>
+<span class="diff-add">+         return json.load(f)</span>
+
+<span class="diff-del">- def save_results(records, output_path):</span>
+<span class="diff-del">-     f = open(output_path, 'w')</span>
+<span class="diff-del">-     json.dump(records, f, indent=2)</span>
+<span class="diff-add">+ def save_results(records, output_path):</span>
+<span class="diff-add">+     with open(output_path, 'w') as f:</span>
+<span class="diff-add">+         json.dump(records, f, indent=2)</span></code></pre>
+
+    <h4>⑧ format_timestamp — non-deprecated, timezone-aware</h4>
+    <pre><code><span class="diff-del">- return datetime.datetime.utcfromtimestamp(ts).isoformat()</span>
+<span class="diff-add">+ return datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc).isoformat()</span></code></pre>
+  </section>
+
+  <hr />
+
+  
+  <section id="lineage">
+    <h2>🔍 Data Lineage</h2>
+
+    <h3>Data Sources</h3>
+    <table>
+      <thead><tr><th>ID</th><th>Type</th><th>Location</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>DS-1</td><td>File read (JSON)</td><td><code>data/input.json</code></td><td>Array of raw record dicts — fields: <code>id</code>, <code>name</code>, <code>email</code>, <code>scores</code></td></tr>
+        <tr><td>DS-2</td><td>HTTP GET (external)</td><td><code>{api}/enrich?id=X</code></td><td>Per-record enrichment data; response is arbitrary JSON. Also an egress point (record <code>id</code> is sent out).</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Transformation Pipeline</h3>
+    <div class="flow-diagram">
+      <div class="flow-step">
+        <div class="flow-box flow-source"><strong>DS-1: data/input.json</strong><span class="note">5 records · id, name, email, scores[]</span></div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-arrow">↓</div>
+        <div class="flow-box"><strong>T-1: load_records() — app.py:28</strong><span class="note">Deserialise JSON → list[dict]. ⚠ File never closed.</span></div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-arrow">↓</div>
+        <div class="flow-box"><strong>T-2: process_records() — app.py:43</strong><span class="note">Filter invalid emails. ⚠ Mutates input list; skips consecutive invalids. Record 003 ("not-an-email") removed. Record 005 ("") removed — but may be skipped due to mutation bug.</span></div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-arrow">↓</div>
+        <div class="flow-box"><strong>T-3: enrich_record() — app.py:54</strong><span class="note">GET {api}/enrich?id=X. Adds "enriched" key. ⚠ Returns None on any failure.</span></div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-arrow">↓</div>
+        <div class="flow-box flow-error"><strong>⚠ Error path: None in enriched list — app.py:106</strong><span class="note">None appended without guard. Next step crashes with TypeError.</span></div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-arrow">↓</div>
+        <div class="flow-box"><strong>T-4: transform_record() — app.py:74</strong><span class="note">Titlecase name, compute avg score. ⚠ Crashes on None input (BUG-03) or empty scores[] (BUG-02).</span></div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-arrow">↓</div>
+        <div class="flow-box"><strong>T-5: get_results_summary() — app.py:89</strong><span class="note">Aggregates total count + avg_score. ⚠ Crashes if list is empty.</span></div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-arrow">↓</div>
+        <div class="flow-box flow-sink"><strong>SK-1: save_results() → output.json</strong><span class="note">JSON write. ⚠ File never closed.</span></div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-arrow">↓</div>
+        <div class="flow-box flow-sink"><strong>SK-2: run_pipeline() return value</strong><span class="note">Summary dict {"total": int, "avg_score": float} returned to caller / printed to stdout.</span></div>
+      </div>
+    </div>
+
+    <h3>Data Quality Risks</h3>
+    <table>
+      <thead><tr><th>ID</th><th>Sev.</th><th>Location</th><th>Risk</th></tr></thead>
+      <tbody>
+        <tr><td>DQ-1</td><td><span class="badge badge-critical">Critical</span></td><td><code>app.py:106</code></td><td><code>None</code> from <code>enrich_record</code> appended without guard; crashes entire pipeline in <code>transform_record</code>. No record is written to output.</td></tr>
+        <tr><td>DQ-2</td><td><span class="badge badge-critical">Critical</span></td><td><code>app.py:71</code></td><td>Record 004 has <code>"scores": []</code>; <code>calculate_average([])</code> → <code>ZeroDivisionError</code> on first run.</td></tr>
+        <tr><td>DQ-3</td><td><span class="badge badge-high">High</span></td><td><code>app.py:48</code></td><td>List mutation during iteration silently retains some invalid records (skip-every-other bug).</td></tr>
+        <tr><td>DQ-4</td><td><span class="badge badge-high">High</span></td><td><code>app.py:37</code></td><td>Permissive email regex passes <code>x@</code>, <code>@y</code>, and other degenerate addresses into the pipeline.</td></tr>
+        <tr><td>DQ-5</td><td><span class="badge badge-medium">Medium</span></td><td><code>app.py:30,85</code></td><td>File handle leaks on every run; output buffer may not flush.</td></tr>
+        <tr><td>DQ-6</td><td><span class="badge badge-medium">Medium</span></td><td><code>app.py:62</code></td><td><code>enrich_record</code> mutates <code>record</code> before <code>raise_for_status</code> — partial mutation on HTTP error.</td></tr>
+        <tr><td>DQ-7</td><td><span class="badge badge-medium">Medium</span></td><td><code>app.py:93</code></td><td><code>get_results_summary</code> crashes with <code>ZeroDivisionError</code> on empty transformed list.</td></tr>
+        <tr><td>DQ-8</td><td><span class="badge badge-low">Low</span></td><td><code>utils.py</code></td><td>All 6 utility functions are unused — orphaned code or unintegrated extension points.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr />
+
+  
+  <section id="onboarding">
+    <h2>🧭 Onboarding Guide</h2>
+
+    <div class="onboard-section">
+      <h4>1. What This Project Does</h4>
+      <p>A command-line data-processing pipeline that reads a JSON file of user records, validates and filters them by email, enriches each record via an external HTTP API, normalises names and computes a score average, then writes the results to a new JSON file.</p>
+      <pre><code>python app.py data/input.json data/output.json http://localhost:8080</code></pre>
+      <table>
+        <thead><tr><th>Argument</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>input.json</code></td><td>JSON array of records (see schema below)</td></tr>
+          <tr><td><code>output.json</code></td><td>Path where processed results will be written</td></tr>
+          <tr><td><code>enrich_api_url</code></td><td>Base URL of the enrichment API (e.g. <code>http://localhost:8080</code>)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="onboard-section">
+      <h4>2. Setup</h4>
+      <p><strong>Prerequisites:</strong> Python 3.10+ (no virtual env config exists yet; create one manually)</p>
+      <pre><code>pip install requests</code></pre>
+      <p>No <code>requirements.txt</code> exists — the only external dependency is <code>requests</code>. All other imports (<code>json</code>, <code>re</code>, <code>hashlib</code>, <code>datetime</code>) are stdlib.</p>
+    </div>
+
+    <div class="onboard-section">
+      <h4>3. Key Files</h4>
+      <table>
+        <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>app.py</code></td><td>Main pipeline — all 5 stages live here. Start reading from <code>run_pipeline()</code>.</td></tr>
+          <tr><td><code>utils.py</code></td><td>Six standalone utility helpers — not yet connected to <code>app.py</code>.</td></tr>
+          <tr><td><code>data/input.json</code></td><td>Sample input with 5 representative records, including edge cases (empty scores, invalid email, empty name).</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="onboard-section">
+      <h4>4. Record Schema</h4>
+      <table>
+        <thead><tr><th>Key</th><th>Type</th><th>Present at</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>str</td><td>Input</td><td>Unique record identifier</td></tr>
+          <tr><td><code>name</code></td><td>str</td><td>Input</td><td>User's name (raw, may be any case)</td></tr>
+          <tr><td><code>email</code></td><td>str</td><td>Input</td><td>Used for validation filter</td></tr>
+          <tr><td><code>scores</code></td><td>list[int]</td><td>Input</td><td>List of numeric scores; can be empty</td></tr>
+          <tr><td><code>enriched</code></td><td>dict</td><td>After T-3</td><td>API response body, added by <code>enrich_record()</code></td></tr>
+          <tr><td><code>score</code></td><td>float</td><td>After T-4</td><td>Average of <code>scores</code>, computed by <code>transform_record()</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="onboard-section">
+      <h4>5. Common Tasks</h4>
+      <p><strong>Add a new transformation step:</strong> Write a function <code>my_transform(record: dict) → dict</code>, then call it inside the list comprehension in <code>run_pipeline()</code>.</p>
+      <p><strong>Wire in a utility helper:</strong> Add <code>from utils import &lt;function&gt;</code> at the top of <code>app.py</code>.</p>
+      <p><strong>Write your first test:</strong> No test suite exists yet. Start with <code>pytest</code>. The first test to write: <code>test_calculate_average_empty_list_returns_zero</code> — it will fail, confirming BUG-02.</p>
+      <p><strong>Run against sample data</strong> (note: will crash on record 004 due to BUG-02):</p>
+      <pre><code>python app.py demo/sample-project/data/input.json /tmp/out.json http://localhost:8080</code></pre>
+    </div>
+
+    <div class="onboard-section">
+      <h4>6. Gotchas — Read Before You Commit</h4>
+      <div class="gotcha"><span class="gotcha-icon">🔴</span><div><strong>process_records() mutates its input</strong> — passing the list from <code>load_records()</code> directly means the original list is destroyed. Always test with a copy: <code>process_records(list(records))</code>.</div></div>
+      <div class="gotcha"><span class="gotcha-icon">🔴</span><div><strong>enrich_record() returns None on any failure</strong> — there is no logging, no retry, no exception message. If the API is down, every record silently becomes <code>None</code> and the pipeline crashes at the transform step.</div></div>
+      <div class="gotcha"><span class="gotcha-icon">🔴</span><div><strong>Empty scores list crashes the pipeline</strong> — any record with <code>"scores": []</code> will raise <code>ZeroDivisionError</code> in <code>calculate_average()</code>. Record 004 in the sample data demonstrates this.</div></div>
+      <div class="gotcha"><span class="gotcha-icon">🟡</span><div><strong>validate_email accepts empty string with @</strong> — a record with email <code>"@"</code> passes validation and reaches <code>enrich_record()</code>. Record 005 (<code>""</code>) is correctly filtered out (no <code>@</code>), but <code>"x@"</code> or <code>" @y"</code> would pass.</div></div>
+      <div class="gotcha"><span class="gotcha-icon">🟡</span><div><strong>utils.py is entirely disconnected</strong> — none of its functions are imported by <code>app.py</code>. Don't expect them to run as part of the pipeline without wiring them in explicitly.</div></div>
+      <div class="gotcha"><span class="gotcha-icon">🟡</span><div><strong>No tests, no requirements.txt, no linter config</strong> — set these up before extending the project. The bugs in the sample data will serve as your first test cases.</div></div>
+    </div>
+  </section>
+
+  <hr />
+
+  
+  <section id="actions">
+    <h2>⚡ Prioritised Action List</h2>
+    <ol class="action-list">
+      <li><div class="action-num">1</div><div><span class="badge badge-critical">Critical</span>  Replace <code>hashlib.md5</code> in <code>generate_id()</code> with <code>sha256</code> — security vulnerability (PII exposure via rainbow tables). <code>utils.py:16</code></div></li>
+      <li><div class="action-num">2</div><div><span class="badge badge-high">High</span>  Fix <code>run_pipeline()</code> to skip <code>None</code> results from <code>enrich_record()</code> — currently crashes entire pipeline on any API failure. <code>app.py:106</code></div></li>
+      <li><div class="action-num">3</div><div><span class="badge badge-high">High</span>  Fix <code>calculate_average()</code> to return <code>0.0</code> on empty list — triggered by record 004 in sample data, crashes pipeline. <code>app.py:71</code></div></li>
+      <li><div class="action-num">4</div><div><span class="badge badge-high">High</span>  Replace <code>process_records()</code> mutation loop with list comprehension — eliminates silent data loss from iterator invalidation. <code>app.py:43</code></div></li>
+      <li><div class="action-num">5</div><div><span class="badge badge-high">High</span>  Replace bare <code>open()</code> calls with <code>with open() as f</code> in <code>load_records()</code> and <code>save_results()</code>. <code>app.py:30,85</code></div></li>
+      <li><div class="action-num">6</div><div><span class="badge badge-medium">Medium</span>  Tighten the email regex to <code>[^@\s]+@[^@\s]+</code> to reject degenerate addresses. <code>app.py:37</code></div></li>
+      <li><div class="action-num">7</div><div><span class="badge badge-medium">Medium</span>  Add <code>None</code> guard to <code>merge_dicts()</code> in <code>utils.py</code>. <code>utils.py:34</code></div></li>
+      <li><div class="action-num">8</div><div><span class="badge badge-medium">Medium</span>  Add <code>requirements.txt</code> (<code>requests</code>) and scaffold a <code>pytest</code> test suite covering all 8 bugs as regression tests.</div></li>
+      <li><div class="action-num">9</div><div><span class="badge badge-medium">Medium</span>  Migrate <code>format_timestamp()</code> from deprecated <code>utcfromtimestamp</code> to timezone-aware <code>fromtimestamp(tz=utc)</code>. <code>utils.py:24</code></div></li>
+      <li><div class="action-num">10</div><div><span class="badge badge-medium">Medium</span>  Extract <code>enrich_records()</code> helper and compile <code>_EMAIL_RE</code> at module level — improves testability and performance. <code>app.py:35,99</code></div></li>
+      <li><div class="action-num">11</div><div><span class="badge badge-low">Low</span>  Rename <code>generate_id()</code> → <code>generate_md5_id()</code> to make the weak algorithm visible at call sites. <code>utils.py:13</code></div></li>
+      <li><div class="action-num">12</div><div><span class="badge badge-low">Low</span>  Move <code>import sys</code> to top-level imports (PEP 8 compliance). <code>app.py:114</code></div></li>
+    </ol>
+  </section>
+
+  <footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

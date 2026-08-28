@@ -1,6 +1,6 @@
 # BobSwarm Demo — Expected Swarm Output
 
-> **Owner:** Mmpoiemang (Data / QA Engineer)
+> **Owner:** Mmopiemang (Data / QA Engineer)
 > **Purpose:** Reference document for validating the live demo. The BobSwarm output should match or exceed these findings.
 
 ---
