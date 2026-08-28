@@ -43,7 +43,7 @@ Three message types arrive as JSON:
   }, "at": "ISO timestamp" }
 
 // run finished — findings are already grouped by role and deterministically sorted, don't re-sort client-side
-{ "type": "run_complete", "runId": "...", "report": { "runId": "...", "generatedAt": "...", "findingsByRole": { "debugger": [...], "...": [...] } }, "at": "ISO timestamp" }
+{ "type": "run_complete", "runId": "...", "report": { "runId": "...", "generatedAt": "...", "summary": "3 findings across 2 specialists — 1 breaks, 1 warns, 1 informational", "findingsByRole": { "debugger": [...], "...": [...] } }, "at": "ISO timestamp" }
 ```
 
 ## Reading a report without subscribing
