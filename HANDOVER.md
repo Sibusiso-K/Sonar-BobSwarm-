@@ -80,9 +80,10 @@ docs/
 | Master system prompt | Sibusiso | ✅ Done | `orchestrator/system_prompt.md` complete |
 | Task decomposition | Farheen | 🟡 Template ready | `orchestrator/decompose.js` — needs real-world testing |
 | Agent personas (all 5) | Farheen | 🟡 Template ready | `agents/` — test each against sample project |
-| MCP server | Lethabo | 🟡 Skeleton ready | `mcp-server/` — needs `npm install` + local test |
-| Git tools | Lethabo | 🟡 Skeleton ready | 4 tools written, not yet tested live |
-| Filesystem tools | Lethabo | 🟡 Skeleton ready | 4 tools written, not yet tested live |
+| MCP server | Lethabo | 🟢 Extended + verified | `npm install` clean (0 vuln); swarm-lifecycle tools + live events added (PR #1, merged) |
+| Git tools | Lethabo | 🟡 Skeleton ready | 4 tools written, not yet tested live against a real Bob session |
+| Filesystem tools | Lethabo | 🟡 Skeleton ready | 4 tools written, not yet tested live against a real Bob session |
+| Swarm events + findings | Lethabo | 🟢 Done, tested | `record_progress`/`record_finding`/`finalize_run`/`get_run_report` — store logic + HTTP endpoints smoke-tested (curl), not yet exercised by a real subagent |
 | Frontend dashboard | Arisha | 🟡 Skeleton ready | Simulation works; needs real SSE wiring |
 | Swarm visualisation | Arisha | 🟡 Skeleton ready | All 5 agent cards + timeline present |
 | Demo sample project | Mmpoiemang | ✅ Done | 7 bugs planted, `run_demo.sh` written |
@@ -121,26 +122,43 @@ defined in `system_prompt.md`.
 ### What's done
 - MCP server skeleton (`mcp-server/server.js`) using stdio transport
 - 8 tools written across `tools/git.js` and `tools/filesystem.js`
+- `npm install` verified clean (0 vulnerabilities)
+- **Event schema defined and implemented** (was listed as Sibusiso-to-define,
+  Lethabo+Arisha-to-implement in the Integration Points table below — went
+  ahead and shipped a first version so nobody's blocked; open to revising it
+  if Sibusiso/Arisha want changes): `progress` / `finding` / `run_complete`,
+  full contract in [`docs/LIVE_EVENTS.md`](docs/LIVE_EVENTS.md)
+- New MCP tools: `record_progress`, `record_finding` (rejects empty evidence —
+  no paraphrased/unsupported findings), `finalize_run`, `get_run_report`
+  (`mcp-server/tools/swarm.js`)
+- Live events bridge: `mcp-server/events-server.js`, HTTP+WS side-channel so
+  the frontend can listen for real swarm activity instead of
+  `simulateSwarm()`. Store logic + HTTP endpoints smoke-tested directly
+  (run creation, progress, finding validation, deterministic report
+  aggregation, WS upgrade path) — **not yet exercised by a real Bob subagent
+  session**, that's next
+- Merged: PR #1, `feat(mcp): add live swarm events, structured findings, and hackathon rules docs`
+- Also added `.gitignore`/`.bobignore` (neither existed) and
+  `docs/RULES_SPEC.md` + `docs/CRITICAL_DECISIONS.md` (full hackathon rules
+  extraction — flagging the 12.5/20 qualifying floor, which is only in the
+  Official Rules PDF, not on either web page)
 
 ### What still needs doing
-- [ ] `cd mcp-server && npm install` — install dependencies
-- [ ] Test each tool locally:
-  ```bash
-  node -e "require('./server.js')"
-  # Then call each tool manually and verify output
-  ```
-- [ ] Register the MCP server in Bob's MCP config so the orchestrator can call tools
-- [ ] Add a `write_swarm_report` call at the end of a swarm run to persist the report
-- [ ] (Stretch) Emit SSE events as agents complete — coordinate the event schema with Sibusiso and Arisha
+- [ ] Register the MCP server in Bob's MCP config so the orchestrator can call tools — **blocked on confirming Bob's actual session-trigger/MCP-registration mechanism**, see `docs/CRITICAL_DECISIONS.md`
+- [ ] Test `git.js`/`filesystem.js`/`swarm.js` tools live, from inside a real Bob Agent-mode session, not just directly in Node
+- [ ] Pair with Sibusiso on the first end-to-end dry run once MCP is registered
+- [ ] Confirm with Arisha that `docs/LIVE_EVENTS.md`'s event contract is what she actually needs before she wires `frontend/app.js` against it
+- [ ] `write_swarm_report` (existing tool, writes markdown to disk) vs. `finalize_run` (new tool, returns structured JSON report) — decide whether both stay or `write_swarm_report` gets removed/repurposed now that structured findings exist
 
 ### Creative freedom
-The 8 tools are a starting point. If you find the orchestrator needs something the
-current tools don't provide (e.g. a `search_in_files` tool, a `run_tests` tool),
-add it. Just update `docs/architecture.md` with the new tool name and description
-so Sibusiso and Arisha know it exists.
+The 8 original tools are a starting point. If you find the orchestrator needs
+something the current tools don't provide (e.g. a `search_in_files` tool, a
+`run_tests` tool), add it. Just update `docs/architecture.md` with the new
+tool name and description so Sibusiso and Arisha know it exists.
 
-The MCP server transport is stdio by default. If you want to switch to HTTP/SSE
-for the frontend integration, that's your call — just document it.
+The MCP server transport is stdio by default (Bob-facing). The frontend
+integration now runs over a separate HTTP+WS side-channel
+(`events-server.js`) rather than stdio — documented in `docs/LIVE_EVENTS.md`.
 
 ---
 
@@ -229,7 +247,7 @@ These are the seams where components connect. **Coordinate before changing these
 |---|---|---|---|
 | Agent persona format | Farheen → Sibusiso | The output structure each agent returns | Farheen (already templated) |
 | MCP tool names | Lethabo → Sibusiso | The exact tool names the orchestrator calls | Lethabo |
-| Event schema | Lethabo → Arisha | `agent_started / agent_done / swarm_complete` payload | Sibusiso to define, Lethabo + Arisha to implement |
+| Event schema | Lethabo → Arisha | `progress` / `finding` / `run_complete` payload (v1 shipped, open to revision) | Implemented by Lethabo — see `docs/LIVE_EVENTS.md`. Confirm with Arisha before she wires against it |
 | Report format | Sibusiso → Arisha | The markdown structure of the Unified Report | Sibusiso (already defined in `system_prompt.md`) |
 | Demo input | Mmpoiemang → everyone | The files the swarm runs against | Mmpoiemang |
 
@@ -242,6 +260,10 @@ These are the seams where components connect. **Coordinate before changing these
 cd mcp-server
 npm install
 node server.js
+# Also starts the live-events HTTP+WS bridge on http://localhost:8787
+# (override port with BOBSWARM_EVENTS_PORT). To run just that side-channel
+# standalone for frontend dev without a Bob session attached:
+node events-server.js
 ```
 
 ### Frontend (Arisha)
