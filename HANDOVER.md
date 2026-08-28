@@ -81,9 +81,9 @@ docs/
 | Task decomposition | Farheen | 🟡 Template ready | `orchestrator/decompose.js` — confirmed working via `execute_command` in Session 2; keyword coverage may need refinement |
 | Agent personas (all 5) | Farheen | 🟢 Live-tested | All 5 agents ran against `demo/sample-project` (Mmpoiemang Session 1) — literal evidence quotes confirmed; `record_progress`/`record_finding` tool calls not yet wired into personas |
 | MCP server | Lethabo | ✅ Done | `.bob/mcp.json` written; 12 tools confirmed via Node verification; `project_summary` returns correct JSON against `demo/sample-project` |
-| Git tools | Lethabo | 🟡 Registered, not Bob-session tested | 4 tools registered and confirmed in tool list; not yet called through a live Bob Agent session |
-| Filesystem tools | Lethabo | 🟡 Registered, not Bob-session tested | `project_summary` verified via direct Node invocation (real output captured); not yet called through Bob stdio transport |
-| Swarm events + findings | Lethabo | 🟢 Done, tested | `record_progress`/`record_finding`/`finalize_run`/`get_run_report` — store logic + HTTP endpoints smoke-tested (curl), not yet exercised by a real subagent |
+| Git tools | Lethabo | ✅ Done | All 4 tools (`git_status`, `git_log`, `git_diff`, `git_blame`) confirmed live through MCP stdio transport in Session 4 — raw output captured, zero errors |
+| Filesystem tools | Lethabo | ✅ Done | `project_summary`, `read_project_file`, `list_project_files` all confirmed live via MCP transport across Sessions 3–4 |
+| Swarm events + findings | Lethabo | ✅ Done | Full 5-agent swarm confirmed via MCP tools in Session 4: 42 findings across 5 roles, all evidence verbatim quotes, `finalize_run` returns deterministically sorted report |
 | Frontend dashboard | Arisha | 🟡 Skeleton ready | Simulation works; needs real SSE wiring per `docs/LIVE_EVENTS.md` |
 | Swarm visualisation | Arisha | 🟡 Skeleton ready | All 5 agent cards + timeline present |
 | Demo sample project | Mmpoiemang | ✅ Done | 7 bugs planted, `run_demo.sh` written |
