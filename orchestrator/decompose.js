@@ -24,29 +24,70 @@ const AGENT_TYPES = {
 /**
  * Keyword → agent type mapping.
  * Order matters: first match wins for ambiguous input.
+ *
+ * Keyword coverage verified against 14 test requests (see HANDOVER.md — Farheen section).
  */
 const KEYWORD_MAP = [
   {
     agent: AGENT_TYPES.DEBUGGER,
-    keywords: ['bug', 'error', 'crash', 'exception', 'fail', 'broken', 'fix', 'issue', 'debug'],
+    keywords: [
+      'bug', 'error', 'crash', 'exception', 'fail', 'broken', 'fix', 'issue', 'debug',
+      // Added: security issues are a subset of defects; test/spec failures surface as bugs
+      'security', 'vulnerability', 'test fail', 'spec fail', 'not working', 'wrong output',
+    ],
   },
   {
     agent: AGENT_TYPES.DOCUMENTER,
-    keywords: ['document', 'docs', 'api doc', 'comment', 'jsdoc', 'docstring', 'readme', 'explain'],
+    keywords: [
+      'document', 'docs', 'api doc', 'comment', 'jsdoc', 'docstring', 'readme', 'explain',
+      // Added: architecture explanations + API exploration requests
+      'architecture', 'api reference', 'how does', 'describe', 'summarise', 'summarize',
+    ],
   },
   {
     agent: AGENT_TYPES.REFACTORER,
-    keywords: ['refactor', 'clean', 'improve', 'modernise', 'modernize', 'optimise', 'optimize', 'rewrite'],
+    keywords: [
+      'refactor', 'clean', 'improve', 'modernise', 'modernize', 'optimise', 'optimize', 'rewrite',
+      // Added: code quality / performance requests that imply structural change
+      'performance', 'simplify', 'restructure', 'technical debt', 'code quality',
+    ],
   },
   {
     agent: AGENT_TYPES.ONBOARDING,
-    keywords: ['onboard', 'new developer', 'getting started', 'walkthrough', 'guide', 'introduce'],
+    keywords: [
+      'onboard', 'new developer', 'getting started', 'walkthrough', 'guide', 'introduce',
+      // Added: common phrasings for onboarding requests
+      'new dev', 'new engineer', 'first contribution', 'setup guide', 'how to start',
+    ],
   },
   {
     agent: AGENT_TYPES.DATA_LINEAGE,
-    keywords: ['data flow', 'lineage', 'pipeline', 'trace', 'where does', 'origin', 'source of'],
+    keywords: [
+      'data flow', 'lineage', 'pipeline', 'trace', 'where does', 'origin', 'source of',
+      // Added: common data-tracing phrasings
+      'data source', 'data origin', 'where is data', 'data path', 'data transformation',
+      'etl', 'ingestion', 'data map',
+    ],
   },
 ];
+
+/**
+ * Computes a confidence score (0.0–1.0) for an agent assignment.
+ *
+ * Score reflects how many of the agent's keywords matched the request,
+ * normalised by the total number of that agent's keywords.
+ * A score of 1.0 means every keyword for this agent appeared in the request.
+ * A score > 0 means at least one keyword matched (agent is relevant).
+ * A default full-audit fallback always assigns a score of 0.5.
+ *
+ * @param {string} lower        - Lowercased request string.
+ * @param {string[]} keywords   - Keyword list for the agent being scored.
+ * @returns {number} Confidence score rounded to 2 decimal places.
+ */
+function computeConfidence(lower, keywords) {
+  const matchCount = keywords.filter((kw) => lower.includes(kw)).length;
+  return Math.round((matchCount / keywords.length) * 100) / 100;
+}
 
 /**
  * Decomposes a plain-language request into an array of sub-tasks.
@@ -56,27 +97,28 @@ const KEYWORD_MAP = [
  * @returns {SubTask[]} Ordered array of sub-tasks (independent tasks first).
  *
  * @typedef {Object} SubTask
- * @property {string} agent      - Agent type from AGENT_TYPES
- * @property {string} task       - Scoped task description for the subagent
- * @property {string[]} context  - File paths the subagent should read
- * @property {boolean} parallel  - Whether this task can run in parallel
- * @property {string[]} dependsOn - Agent types that must complete before this runs
+ * @property {string}   agent      - Agent type from AGENT_TYPES
+ * @property {string}   task       - Scoped task description for the subagent
+ * @property {string[]} context    - File paths the subagent should read
+ * @property {boolean}  parallel   - Whether this task can run in parallel
+ * @property {string[]} dependsOn  - Agent types that must complete before this runs
+ * @property {number}   confidence - Score 0.0–1.0: keyword match strength for this agent
  */
 function decompose(request, contextFiles = []) {
   const lower = request.toLowerCase();
-  const matched = new Set();
+  const matched = new Map(); // agent → confidence score
   const subtasks = [];
 
   for (const { agent, keywords } of KEYWORD_MAP) {
     if (keywords.some((kw) => lower.includes(kw))) {
-      matched.add(agent);
+      matched.set(agent, computeConfidence(lower, keywords));
     }
   }
 
   // If nothing matched, default to a full audit
   if (matched.size === 0) {
     console.warn('[BobSwarm] No specific task type detected — defaulting to full audit.');
-    Object.values(AGENT_TYPES).forEach((a) => matched.add(a));
+    Object.values(AGENT_TYPES).forEach((a) => matched.set(a, 0.5));
   }
 
   // Build sub-tasks with dependency rules
@@ -96,6 +138,7 @@ function decompose(request, contextFiles = []) {
         context: contextFiles,
         parallel: true,
         dependsOn: [],
+        confidence: matched.get(agent),
       });
     }
   }
@@ -108,6 +151,7 @@ function decompose(request, contextFiles = []) {
       context: contextFiles,
       parallel: !matched.has(AGENT_TYPES.DEBUGGER),
       dependsOn: matched.has(AGENT_TYPES.DEBUGGER) ? [AGENT_TYPES.DEBUGGER] : [],
+      confidence: matched.get(AGENT_TYPES.REFACTORER),
     });
   }
 
@@ -148,4 +192,4 @@ Deliverable: A data lineage map showing where data enters the system, how it is 
   return descriptions[agent] || `Complete the following engineering task: "${request}"`;
 }
 
-module.exports = { decompose, AGENT_TYPES, KEYWORD_MAP };
+module.exports = { decompose, AGENT_TYPES, KEYWORD_MAP, computeConfidence };

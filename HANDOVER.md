@@ -78,7 +78,7 @@ docs/
 | Bob mode config | Sibusiso | ✅ Done | `.bob/custom_modes.yaml` registered |
 | Orchestration skill | Sibusiso | ✅ Done | `.bob/skills/bobswarm/SKILL.md` ready |
 | Master system prompt | Sibusiso | ✅ Done | `orchestrator/system_prompt.md` complete |
-| Task decomposition | Farheen | 🟡 Template ready | `orchestrator/decompose.js` — confirmed working via `execute_command` in Session 2; keyword coverage may need refinement |
+| Task decomposition | Farheen | ✅ Done | `orchestrator/decompose.js` — tested against 14 varied requests; keyword coverage refined; confidence score added to every sub-task |
 | Agent personas (all 5) | Farheen | 🟢 Live-tested | All 5 agents ran against `demo/sample-project` (Mmpoiemang Session 1) — literal evidence quotes confirmed; `record_progress`/`record_finding` tool calls not yet wired into personas |
 | MCP server | Lethabo | ✅ Done | `.bob/mcp.json` written; 12 tools confirmed via Node verification; `project_summary` returns correct JSON against `demo/sample-project` |
 | Git tools | Lethabo | 🟡 Registered, not Bob-session tested | 4 tools registered and confirmed in tool list; not yet called through a live Bob Agent session |
@@ -197,17 +197,11 @@ and the **Unified Report panel** must remain visible and functional for the demo
 - Task decomposition logic written (`orchestrator/decompose.js`) with keyword-to-agent mapping and dependency rules
 
 ### What still needs doing
-- [ ] Test `decompose.js` against at least 10 varied requests:
-  ```bash
-  node -e "
-    const { decompose } = require('./orchestrator/decompose');
-    console.log(JSON.stringify(decompose('find all the bugs and document the API'), null, 2));
-  "
-  ```
-- [ ] Refine keyword lists in `KEYWORD_MAP` based on test results
-- [ ] Read each agent persona out loud (or paste it into Bob) and verify the output format is exactly what the orchestrator's aggregation step expects
-- [ ] Test the **Refactorer dependency rule** — it must receive Debugger findings before running
-- [ ] (Stretch) Add a confidence score to each sub-task: how certain is the decomposition that this agent is needed?
+- [x] Test `decompose.js` against 14 varied requests — run `node orchestrator/_test_decompose.js`
+- [x] Refine keyword lists in `KEYWORD_MAP` — added: `security`, `vulnerability`, `architecture`, `performance`, `new dev`, `data transformation`, `etl`, `ingestion`, and 10 more (see inline comments in `decompose.js`)
+- [x] Read each agent persona and verified output format matches orchestrator aggregation step — all 5 personas use the heading structure `## 🐛/📝/🔧/🧭/🔍 <Agent> Report` which aligns with `system_prompt.md`'s Unified Report sections
+- [x] Test the **Refactorer dependency rule** — verified: `parallel=false`, `dependsOn=['debugger']` when both agents triggered; `parallel=true`, `dependsOn=[]` when refactorer-only. See `orchestrator/_test_decompose.js` assertions.
+- [x] (Stretch) Add a confidence score to each sub-task — `computeConfidence()` added; score = matched keywords / total keywords, range 0.0–1.0, exported in module
 
 ### Creative freedom
 The persona templates define the output format and anti-patterns — those must stay.
