@@ -147,10 +147,51 @@ File name was the only unknown — confirmed as `.bob/mcp.json`, not `settings.j
 }
 ```
 
-**What still needs live-session verification (now unblocked):**
-- Tool calls from inside an actual Bob Agent session (not just direct Node invocation)
-- Parallel subagent tool calls through the BobSwarm Orchestrator mode
-- `record_finding` evidence quality from real subagents
+**Update — second live session, still not connected, but the swarm ran anyway:**
+MCP tools were confirmed *not* in Bob's active tool list this session (verified
+honestly — Bob reported this rather than fabricating a tool call). Yet the
+BobSwarm Orchestrator mode still successfully decomposed the task, spawned
+`SwarmDebugger` and `SwarmDataLineage` **in parallel** (same tool-call turn,
+matching `decompose.js`'s `parallel: true` for both), and every finding used a
+**literal, verbatim, line-accurate quote** from the actual source file — zero
+paraphrases across all findings checked.
+
+**What this means, precisely:** the swarm ran via Bob's *native*
+`spawn_subagent` and built-in file reading, not through this repo's MCP
+tools (`get_repo_snapshot`, `record_finding`, etc.) — the exact fallback path
+described above ("Bob's Agent mode can call read_project_file-equivalent
+actions using its own built-in file tools, and subagents can report findings
+in a fixed markdown format in chat instead of via record_finding"). This is
+genuinely good news for the demo's core value — orchestration, parallelism,
+and evidence discipline all work — **but it means the MCP layer (structured
+storage, live dashboard, deterministic aggregation) has not yet been
+exercised by a live swarm run.** Don't write D3 claiming the MCP tools power
+the live demo until a run has actually gone through them — say what's true at
+the time of the final demo, not what was designed to be true.
+
+Diagnosed why MCP still isn't connecting: not the same port-conflict bug (port
+8787 confirmed free; `server.js` starts and logs cleanly when run directly
+outside Bob). Most likely cause: Bob spawned the MCP server process once when
+this session began, before the port-conflict fix and path-traversal fix
+landed, and is holding a stale failed connection rather than retrying against
+current code. Next action: use the refresh/reconnect control in Settings →
+MCP tab, or reopen the project folder to force a fresh spawn.
+
+**Findings vs. `demo/expected_output.md` (from this session, evidence-checked):**
+- Debugger: 7 found, 7 expected — exact match.
+- Data Lineage: 9 found, only 3 documented. Six additional real risks
+  surfaced (SSRF via unchecked `api_url`, `get_results_summary` double-crash,
+  undocumented depth-limit in `flatten`, deprecated API in `format_timestamp`,
+  a `chunk_list` contract gap). **Mmopiemang should update
+  `demo/expected_output.md`** — flagged, not edited directly (their owned
+  file per `docs/CONTRIBUTING.md`).
+
+**What still needs live-session verification (still open):**
+- MCP tool calls from inside an actual Bob Agent session (not direct Node
+  invocation, and not yet via Bob's native tools either — see above)
+- `record_finding`'s structured schema actually being populated by a real
+  subagent, through the MCP path specifically
+- Live dashboard receiving real events (currently untestable until the above happens)
 
 ---
 
