@@ -1,0 +1,7 @@
+[
+  { "id": "001", "name": "alice smith", "email": "alice@example.com", "scores": [85, 90, 78] },
+  { "id": "002", "name": "BOB JONES",   "email": "bob@example.com",   "scores": [70, 65, 80] },
+  { "id": "003", "name": "carol white", "email": "not-an-email",      "scores": [95, 88, 92] },
+  { "id": "004", "name": "dave brown",  "email": "dave@example.com",  "scores": [] },
+  { "id": "005", "name": "",            "email": "",                   "scores": [50, 60] }
+]

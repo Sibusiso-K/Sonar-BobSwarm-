@@ -1,0 +1,21 @@
+{
+  "name": "bobswarm-mcp-server",
+  "version": "1.0.0",
+  "description": "BobSwarm MCP server — exposes Git and filesystem tools to the BobSwarm orchestrator",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "simple-git": "^3.26.0",
+    "glob": "^11.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "Lethabo (Backend Engineer)",
+  "license": "MIT"
+}

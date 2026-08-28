@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  BobSwarm — Swarm Dashboard
+  Owner: Arisha (Frontend Engineer)
+
+  Real-time swarm visualisation and result display.
+  This single-file dashboard is served locally during a BobSwarm run.
+  It polls the orchestrator for agent status and renders findings as they arrive.
+-->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BobSwarm — Swarm Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ── Header ─────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header__inner">
+      <div class="header__brand">
+        <span class="header__logo">🐝</span>
+        <span class="header__title">BobSwarm</span>
+        <span class="header__subtitle">Multi-Agent Orchestrator</span>
+      </div>
+      <div class="header__status" id="orchestrator-status">
+        <span class="status-dot status-dot--idle"></span>
+        <span id="status-label">Idle</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Task Input ─────────────────────────────────────────── -->
+  <section class="task-input-section">
+    <div class="container">
+      <label class="input-label" for="task-input">Describe your engineering task</label>
+      <div class="input-row">
+        <textarea
+          id="task-input"
+          class="task-textarea"
+          rows="3"
+          placeholder="e.g. Analyse this codebase, find all bugs, document the public API, and create an onboarding guide for a new developer."
+        ></textarea>
+        <button id="run-btn" class="btn btn--primary" onclick="startSwarm()">
+          Run Swarm
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Swarm Visualisation ────────────────────────────────── -->
+  <section class="swarm-section">
+    <div class="container">
+      <h2 class="section-title">Agent Swarm</h2>
+      <div class="swarm-grid" id="swarm-grid">
+
+        <div class="agent-card" id="agent-debugger" data-agent="debugger">
+          <div class="agent-card__icon">🐛</div>
+          <div class="agent-card__name">Debugger</div>
+          <div class="agent-card__status">Waiting</div>
+          <div class="agent-card__progress">
+            <div class="progress-bar" id="progress-debugger"></div>
+          </div>
+        </div>
+
+        <div class="agent-card" id="agent-documenter" data-agent="documenter">
+          <div class="agent-card__icon">📝</div>
+          <div class="agent-card__name">Documenter</div>
+          <div class="agent-card__status">Waiting</div>
+          <div class="agent-card__progress">
+            <div class="progress-bar" id="progress-documenter"></div>
+          </div>
+        </div>
+
+        <div class="agent-card" id="agent-refactorer" data-agent="refactorer">
+          <div class="agent-card__icon">🔧</div>
+          <div class="agent-card__name">Refactorer</div>
+          <div class="agent-card__status">Waiting</div>
+          <div class="agent-card__progress">
+            <div class="progress-bar" id="progress-refactorer"></div>
+          </div>
+        </div>
+
+        <div class="agent-card" id="agent-onboarding" data-agent="onboarding">
+          <div class="agent-card__icon">🧭</div>
+          <div class="agent-card__name">Onboarding</div>
+          <div class="agent-card__status">Waiting</div>
+          <div class="agent-card__progress">
+            <div class="progress-bar" id="progress-onboarding"></div>
+          </div>
+        </div>
+
+        <div class="agent-card" id="agent-data_lineage" data-agent="data_lineage">
+          <div class="agent-card__icon">🔍</div>
+          <div class="agent-card__name">Data Lineage</div>
+          <div class="agent-card__status">Waiting</div>
+          <div class="agent-card__progress">
+            <div class="progress-bar" id="progress-data_lineage"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Results Panel ──────────────────────────────────────── -->
+  <section class="results-section" id="results-section" style="display:none;">
+    <div class="container">
+      <div class="results-header">
+        <h2 class="section-title">Unified Report</h2>
+        <button class="btn btn--secondary" onclick="copyReport()">Copy Report</button>
+      </div>
+      <div class="report-card" id="report-output">
+        <!-- Populated by app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Timeline ───────────────────────────────────────────── -->
+  <section class="timeline-section">
+    <div class="container">
+      <h2 class="section-title">Swarm Timeline</h2>
+      <div class="timeline" id="timeline">
+        <div class="timeline__empty">No swarm run yet. Submit a task above.</div>
+      </div>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
