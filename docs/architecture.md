@@ -95,16 +95,22 @@ A lightweight Node.js MCP server exposing filesystem and Git tools to the orches
 Transport: MCP stdio (Bob's default).
 
 ### Frontend Dashboard (`frontend/`)
-A single-page, zero-dependency HTML/CSS/JS dashboard that visualises the swarm in real time.
+React 19 + TypeScript + Vite, pulled in via `git subtree` from Arisha's own
+repo (github.com/Arisha004/frontend) — real code, not a placeholder. See
+`frontend/README.md` for its own structure/stack details.
 
-| File | Purpose |
-|---|---|
-| `index.html` | Dashboard layout — agent cards, task input, results panel, timeline |
-| `style.css` | Dark-theme, bee-amber palette, responsive grid |
-| `app.js` | Swarm simulation / live SSE integration, report rendering |
+Connects live to the backend's WebSocket events bridge
+(`mcp-server/events-server.js`, `ws://localhost:8787/runs/:id/events` by
+default, override with `VITE_BOBSWARM_API`) — verified end-to-end: a real
+`POST /runs` followed by a forced `run_complete` event rendered live in the
+UI with no page refresh. Event contract: `docs/LIVE_EVENTS.md`.
 
-In production: `simulateSwarm()` is replaced by a Server-Sent Events or WebSocket
-listener connected to the orchestrator backend.
+**Pulling Arisha's future updates:**
+```bash
+git subtree pull --prefix=frontend arisha-frontend main --squash
+```
+(the `arisha-frontend` remote already points at her repo; add it if missing:
+`git remote add arisha-frontend https://github.com/Arisha004/frontend.git`)
 
 ### Bob Configuration (`.bob/`)
 | File | Purpose |
@@ -145,5 +151,6 @@ The only sequential dependency is:
 To add a new agent type:
 1. Create `agents/<new_agent>.md` with the persona prompt
 2. Add the agent to the `KEYWORD_MAP` in `orchestrator/decompose.js`
-3. Add the agent card to `frontend/index.html`
+3. Add the agent's card to `frontend/src/components/swarm/RoleCard.tsx` (and
+   the role list in `frontend/src/hooks/useSwarmRun.ts`)
 4. Update the aggregation logic in the orchestrator system prompt
