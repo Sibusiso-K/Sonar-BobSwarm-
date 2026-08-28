@@ -2,6 +2,7 @@ import { Nav } from "./components/layout/Nav";
 import { Hero } from "./components/hero/Hero";
 import { SwarmStage } from "./components/swarm/SwarmStage";
 import { ReportView } from "./components/report/ReportView";
+import { RunHistory } from "./components/history/RunHistory";
 import { useSwarmRun } from "./hooks/useSwarmRun";
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
             </div>
           </section>
         )}
+        <RunHistory />
       </main>
       <footer className="border-t border-line px-6 py-10 text-center font-mono text-xs text-stone-dim sm:px-10">
         BobSwarm — five specialists, one report.

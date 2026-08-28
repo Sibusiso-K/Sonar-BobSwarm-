@@ -4,9 +4,17 @@ import { Check, Copy } from "lucide-react";
 import { RoleCard } from "./RoleCard";
 import { Timeline } from "./Timeline";
 import { LivingSwarmField, type SwarmAnchor } from "../field/LivingSwarmField";
+import { useElapsedTime } from "../../hooks/useElapsedTime";
 import type { RoleState } from "../../hooks/useSwarmRun";
 import type { ConnState } from "../../lib/types";
 import type { Run, TimelineEntry } from "../../lib/types";
+
+function formatElapsed(ms: number): string {
+  const seconds = ms / 1000;
+  if (seconds < 60) return `${seconds.toFixed(1)}s`;
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}m ${Math.round(seconds % 60)}s`;
+}
 
 const STATUS_ENERGY: Record<RoleState["status"], { energy: number; intensity: number; color: SwarmAnchor["color"] }> = {
   waiting: { energy: 0.04, intensity: 0.05, color: "stone" },
@@ -42,6 +50,11 @@ export function SwarmStage({
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [anchors, setAnchors] = useState<SwarmAnchor[]>([]);
   const [copied, setCopied] = useState(false);
+  // Ticks from dispatch (not from status flipping to "running", which only
+  // happens on the first record_progress call) through anything short of
+  // complete/error.
+  const isActive = run !== null && run.status !== "complete" && run.status !== "error";
+  const elapsedMs = useElapsedTime(run?.createdAt ?? null, isActive);
 
   const copyRunId = () => {
     if (!run) return;
@@ -116,6 +129,7 @@ export function SwarmStage({
             <div className="flex items-center gap-2 font-mono text-xs text-stone">
               <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />
               run {run.id.slice(0, 8)} · {CONN_LABEL[connState]}
+              {isActive && <span className="text-gold-soft">· {formatElapsed(elapsedMs)}</span>}
               <button
                 type="button"
                 onClick={copyRunId}
