@@ -88,7 +88,7 @@ docs/
 | Swarm visualisation | Arisha | 🟡 Skeleton ready | All 5 agent cards + timeline present |
 | Demo sample project | Mmpoiemang | ✅ Done | 7 bugs planted, `run_demo.sh` written |
 | Demo validation | Mmpoiemang | ✅ Done | Full 5-agent swarm run completed; 12 defects found; HTML report + 4 screenshots in `docs/bob-sessions/mmpoiemang/`; Bobalytics metrics added |
-| End-to-end test | Sibusiso | 🟡 In progress | `.bob/mcp.json` created for `lovilocal.adm` machine — MCP server should now connect on next Bob startup. Remaining: system prompt update + live test |
+| End-to-end test | Sibusiso | ✅ Done | Full 5-agent swarm run completed (Session 1, 2026-08-28) — 8 bugs, 15 docstrings, 7 refactorings, 10 lineage risks, 1 onboarding guide. Report in `docs/bob-sessions/sibusiso/` |
 
 > **Update this table when your status changes. Be specific — "works on my machine" is not ✅ Done.**
 
