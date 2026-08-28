@@ -252,3 +252,147 @@ is what achieved literal quotes here.
 - The stash/stash-pop false-positive is a known Git/Windows behaviour: `git stash`
   uses `core.autocrlf` conversion which can make git think working tree = index even
   when the content differs. Resolved without data loss; noted here for future sessions.
+
+---
+
+### Session 3 — First Full MCP Transport Run + Frontend Contract Audit — 2026-08-28
+
+**Task given to Bob:**
+> "Reconnect the bobswarm MCP server and confirm it shows Connected. Run the same
+> task again — 'Analyse demo/sample-project for bugs and trace how data flows through
+> it' — but this time using the bobswarm MCP tools explicitly (record_finding,
+> record_progress, finalize_run), not native file reading and chat output. Tell me
+> exactly which MCP tool each subagent called, in what order, and whether
+> record_finding's evidence field held up (literal quote) through the tool-call
+> interface. Also check the new Arisha frontend once it lands."
+
+**What Bob actually did:**
+
+1. **Pulled origin/main** — found a merge conflict from the frontend squash (PR #3).
+   Conflict was in `.gitignore` (Vite boilerplate vs project rules) and `README.md`
+   (Vite boilerplate vs project README). Resolved: kept the full project `.gitignore`
+   (added `dist-ssr/` and `*.local` from the frontend's Vite config) and kept the
+   full project README entirely. Rebased cleanly to `3fba26b`.
+
+2. **Confirmed MCP connectivity directly** — called `record_progress` with a
+   nonexistent runId. Got back `Error: unknown run_id: probe-test` — that is exactly
+   the error `store.js:getRun()` throws when `runs.get(runId)` returns undefined.
+   The tool was called, it reached the store, it returned a meaningful error. The
+   bobswarm MCP server IS connected in this session.
+
+3. **Called `project_summary` through the MCP tool** (not Node directly) against
+   `demo/sample-project`. Result through the stdio transport:
+   ```json
+   {"totalFiles":3,"totalSizeKB":7,"filesByExtension":{".py":2,".json":1},"likelyEntryPoints":["app.py"]}
+   ```
+   First confirmed live `project_summary` call through Bob's MCP stdio pipe.
+
+4. **Confirmed events bridge alive** — `netstat` showed port 8787 LISTENING on
+   PID 28628. `Invoke-WebRequest GET /runs/nonexistent-probe` returned HTTP 400
+   with `{"error":"unknown run_id: nonexistent-probe"}` — expected health-check
+   response. Note: `curl` and `Invoke-WebRequest POST` hung (Windows networking
+   issue with chunked body); used `System.Net.WebClient.UploadString` to POST
+   successfully.
+
+5. **Created run via HTTP POST to events bridge:**
+   ```
+   POST http://localhost:8787/runs
+   → runId: 20c55607-9702-46e2-b954-0209e4536805
+   ```
+
+6. **Called `record_progress` via MCP for orchestrator start** — confirmed the
+   store accepted it and returned the full event JSON.
+
+7. **Dispatched debugger and data_lineage subagents in parallel** (same
+   `spawn_subagent` turn). Both instructed to use ONLY bobswarm MCP tools.
+
+**MCP tool call sequences (per subagent, in order):**
+
+SwarmDebugger (run through MCP tools):
+1. `mcp__bobswarm__record_progress` — status: `started`
+2. `mcp__bobswarm__read_project_file` — `demo/sample-project/app.py`
+3. `mcp__bobswarm__read_project_file` — `demo/sample-project/utils.py`
+4. `mcp__bobswarm__record_progress` — status: `investigating`, "app.py"
+5. `mcp__bobswarm__record_progress` — status: `investigating`, "utils.py"
+6. `mcp__bobswarm__record_finding` × 9 (6 from app.py, 3 from utils.py)
+7. `mcp__bobswarm__record_progress` — status: `done`, "9 findings recorded"
+
+SwarmDataLineage (run through MCP tools):
+1. `mcp__bobswarm__record_progress` — status: `started`
+2. `mcp__bobswarm__read_project_file` — `demo/sample-project/app.py`
+3. `mcp__bobswarm__record_progress` — status: `investigating`
+4. `mcp__bobswarm__read_project_file` — `demo/sample-project/utils.py`
+5. `mcp__bobswarm__read_project_file` — `demo/sample-project/data/input.json`
+6. `mcp__bobswarm__record_finding` × 12
+7. `mcp__bobswarm__record_progress` — status: `done`, "12 risks recorded"
+
+Orchestrator (direct, not via subagent):
+- `mcp__bobswarm__project_summary` — discovery
+- `mcp__bobswarm__record_progress` — started, investigating
+- `mcp__bobswarm__record_progress` — done, aggregating
+- `mcp__bobswarm__finalize_run` — final structured report returned
+
+**Parallelism:** YES. Both `spawn_subagent` calls were in the same tool-invocation
+turn. Their `createdAt` timestamps in the finalized report confirm overlapping
+execution: debugger's first finding at `19:03:27.141Z`, data_lineage's first
+finding at `19:03:46.549Z` — both completing within the same ~20-second window.
+
+**Evidence quality through the MCP tool-call interface:**
+
+All 21 `record_finding` calls used literal quoted source text. Selected examples
+from the final report JSON (these are the actual values stored in the in-memory
+store, not what the subagent said it would use):
+
+| Finding | Stored evidence | Assessment |
+|---------|----------------|------------|
+| `calculate_average` (debugger) | `    return sum(values) / len(values)` | ✅ exact line from app.py:71 |
+| `enrich_record` (debugger) | `        return None` | ✅ exact line from app.py:66 |
+| `process_records` (debugger) | `            records.remove(record)  # mutates caller's list, also skips elements` | ✅ exact line from app.py:50 |
+| `run_pipeline/None-propagation` (data_lineage) | `        result = enrich_record(record, enrich_api_url)\n        enriched.append(result)  # BUG 3 consequence...` | ✅ multi-line verbatim |
+| `format_timestamp` (data_lineage) | full docstring block including `No input validation — will crash on non-numeric input.` | ✅ verbatim docstring (comment text IS source text) |
+
+No evidence field was paraphrased. The store's `evidence.trim().length === 0` check
+was never triggered. The discipline held through the actual tool-call interface, not
+just in chat output.
+
+**Frontend contract gap found (flagged for Arisha):**
+
+[`frontend/src/lib/types.ts:40`](../../../frontend/src/lib/types.ts) expects:
+```typescript
+export interface Report {
+  runId: string;
+  summary: string;          // ← frontend expects this
+  findingsByRole: Record<string, Finding[]>;
+}
+```
+
+[`mcp-server/store.js`](../../../mcp-server/store.js) `finalizeRun()` returns:
+```json
+{ "runId": "...", "generatedAt": "...", "findingsByRole": { ... } }
+```
+No `summary` field. The frontend `ReportView` renders `{f.evidence}` as a paragraph
+below each finding (correct — `evidence` is in the `Finding` shape which matches),
+but the `summary` field will be `undefined` wherever the UI tries to use it. Fix
+options: (a) add a generated summary string to `finalizeRun()` in `store.js`, or
+(b) make `summary` optional in the frontend type. Flagging to Arisha — this is
+her type definition, and the fix direction (generate summary server-side vs. drop
+from type) needs her input.
+
+**What still needs doing:**
+- The frontend did NOT receive the live WebSocket events from this run — the
+  frontend app was not open in a browser during the swarm. This remains the final
+  end-to-end chain to prove: browser open → swarm runs → WS events arrive → agent
+  cards update live. All the plumbing is confirmed working; this just needs someone
+  to run both sides simultaneously.
+- The `summary` contract gap needs resolution before the demo.
+
+**Anything that went wrong:**
+- `git pull --rebase origin main` produced a merge conflict (`.gitignore` and
+  `README.md` conflicting with the frontend squash commit). Resolved cleanly by
+  keeping project content and adding Vite-specific patterns from the frontend's
+  `.gitignore`. No data loss.
+- `curl` and PowerShell `Invoke-WebRequest POST` both timed out against
+  localhost:8787 — root cause unclear (possibly Windows localhost routing with
+  IPv4/IPv6 mismatch under load). `System.Net.WebClient.UploadString` worked
+  immediately. Noted for future sessions: use `WebClient` or a node-based HTTP
+  call script to POST to the events bridge, not curl/Invoke-WebRequest.
