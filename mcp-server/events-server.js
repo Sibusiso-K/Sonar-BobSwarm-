@@ -116,6 +116,27 @@ function startEventsServer() {
     });
   });
 
+  // Critical: a failure here must NOT crash the whole process. server.js
+  // starts this alongside the MCP stdio transport that Bob actually depends
+  // on — if this server's port is already taken (a stray process from an
+  // earlier session, another team member's server, etc.) and this throws
+  // unhandled, it kills the entire MCP connection, not just the live-events
+  // dashboard feed. Confirmed this exact failure mode directly: EADDRINUSE
+  // on an unhandled 'error' event took down the whole process before Bob's
+  // stdio transport could even connect.
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(
+        `[BobSwarm events] port ${PORT} already in use — live dashboard events ` +
+        `will not be available this session, but MCP tools (git/filesystem/swarm) ` +
+        `still work normally. Free the port and restart to get live events back: ` +
+        `find the process holding it and stop it, or set BOBSWARM_EVENTS_PORT to a free port.`
+      );
+      return;
+    }
+    console.error('[BobSwarm events] server error (non-fatal, MCP tools unaffected):', err.message);
+  });
+
   server.listen(PORT, () => {
     console.error(`[BobSwarm events] listening on http://localhost:${PORT}`);
   });
