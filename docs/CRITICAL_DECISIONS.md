@@ -193,6 +193,33 @@ MCP tab, or reopen the project folder to force a fresh spawn.
   subagent, through the MCP path specifically
 - Live dashboard receiving real events (currently untestable until the above happens)
 
+**Update — session count and one discrepancy worth correcting before D3 is
+written:** Sibusiso ran a full 5-agent live session (`docs/bob-sessions/sibusiso/`,
+20:55 SAST) — genuinely strong output (8 bugs, 7 refactor recs, full lineage
+map, all evidence-backed). Sibusiso's own log still lists "verify record_finding
+flows through stdio to the dashboard" as open, consistent with everything
+above. **Separately, Mmopiemang's session log (`docs/bob-sessions/mmpoiemang/`,
+pushed 20:11–20:26 SAST) states subagents "called `record_finding` for their
+domain."** Checked this against the timeline and the generated report:
+
+- The commit that actually wires MCP tool calls into the orchestrator's
+  system prompt (`efa72d2`, "wire MCP tool calls into system prompt") landed
+  at **20:45 SAST — after** Mmopiemang's session was already pushed.
+- The generated `demo/bobswarm-report-demo-sample-project.html` from that
+  session contains **zero** occurrences of `record_finding`, `record_progress`,
+  `MCP`, `mcp-server`, or `stdio` anywhere in the file.
+
+Most likely explanation: this session also ran via Bob's native tools (same
+pattern as every other session so far), and the "called `record_finding`"
+line describes what the **persona instructions** say a subagent should do,
+not something independently verified to have happened. Not raised as an
+accusation — flagging because if this line goes into D3 unchanged, it's an
+unverified claim about tool usage, and D3 is exactly the deliverable the
+rules say must be "specific." **Mmopiemang should either verify this against
+an actual MCP-connected session, or soften the log entry to match what's
+demonstrable** — the swarm's actual output quality doesn't need the MCP claim
+to be impressive on its own.
+
 ---
 
 ## 5. Bobcoins
