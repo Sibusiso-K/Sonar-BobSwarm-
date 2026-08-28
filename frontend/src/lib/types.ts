@@ -17,6 +17,8 @@ export type Severity = "breaks" | "warns" | "informational";
 
 export type RunStatus = "queued" | "running" | "complete" | "error";
 
+export type ConnState = "idle" | "connecting" | "open" | "reconnecting" | "closed" | "error";
+
 export interface Run {
   id: string;
   taskDescription: string;
@@ -24,14 +26,6 @@ export interface Run {
   repoRef: string;
   status: RunStatus;
   createdAt: string;
-}
-
-/** Shape returned by GET /runs — Run plus history-list-only fields. */
-export interface RunSummary extends Run {
-  completedAt: string | null;
-  findingCount: number;
-  /** null while still running; backend computes this once completed. */
-  durationMs: number | null;
 }
 
 export interface Finding {

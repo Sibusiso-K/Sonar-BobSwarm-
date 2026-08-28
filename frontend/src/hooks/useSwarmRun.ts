@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { createRun, subscribeToRun, BackendUnreachableError } from "../lib/api";
-import type { Finding, Report, Run, SwarmEvent, TimelineEntry, AgentRole } from "../lib/types";
+import type { ConnState, Finding, Report, Run, SwarmEvent, TimelineEntry, AgentRole } from "../lib/types";
 
 export type RoleState = {
   role: AgentRole;
@@ -15,8 +15,6 @@ const ALL_ROLES: AgentRole[] = [
   "onboarding",
   "data_lineage",
 ];
-
-type ConnState = "idle" | "connecting" | "open" | "closed" | "error";
 
 export function useSwarmRun() {
   const [run, setRun] = useState<Run | null>(null);
@@ -93,7 +91,13 @@ export function useSwarmRun() {
         unsubscribeRef.current = subscribeToRun(newRun.id, {
           onOpen: () => setConnState("open"),
           onError: () => setConnState("error"),
-          onClose: () => setConnState("closed"),
+          onClose: () => setConnState((prev) => (prev === "open" ? "closed" : prev)),
+          onReconnecting: () => setConnState("reconnecting"),
+          onGiveUp: () => {
+            setConnState("error");
+            setError("Lost the connection to the swarm and couldn't reconnect. Try again.");
+            setSubmitting(false);
+          },
           onEvent: handleEvent,
         });
       } catch (e) {
