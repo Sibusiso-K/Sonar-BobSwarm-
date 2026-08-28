@@ -11,11 +11,8 @@ The BobSwarm orchestrator will dispatch subagents to:
   5. Map the data flow (Data Lineage)
 
 Known issues planted for the demo (DO NOT FIX MANUALLY):
-  - Bug 1: Division by zero in calculate_average when list is empty
-  - Bug 2: process_records mutates its input list (side effect)
-  - Bug 3: enrich_record silently returns None on API failure
-  - Bug 4: save_results opens file but never closes it (resource leak)
-  - Bug 5: validate_email uses a regex that accepts empty strings
+  - Bug 1: enrich_record silently returns None on API failure (None-propagation crash)
+  - Bug 2: load_records and save_results open files but never close them (resource leak)
 """
 
 import json

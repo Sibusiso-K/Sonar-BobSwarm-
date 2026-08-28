@@ -9,13 +9,8 @@
 
 | # | Severity | File | Line(s) | Issue |
 |---|---|---|---|---|
-| 1 | CRITICAL | `app.py` | 62 | `calculate_average([])` → `ZeroDivisionError` when `scores` is empty |
-| 2 | HIGH | `app.py` | 46–47 | `process_records` mutates the caller's input list via `records.remove()` |
-| 3 | HIGH | `app.py` | 57 | `enrich_record` silently returns `None` on failure; caller appends `None` to list |
-| 4 | HIGH | `app.py` | 29, 75 | File handles opened but never closed — resource leak |
-| 5 | MEDIUM | `app.py` | 35 | `validate_email` regex `[^@]*@[^@]*` matches empty string `""` |
-| 6 | MEDIUM | `utils.py` | 32 | `merge_dicts` crashes on `None` input (consequence of Bug 3) |
-| 7 | LOW | `utils.py` | 16 | `generate_id` uses MD5 — weak hashing algorithm |
+| 1 | HIGH | `app.py` | 61-63 | `enrich_record` silently returns `None` on failure; caller appends `None` to list |
+| 2 | HIGH | `app.py` | 30, 82 | File handles opened but never closed — resource leak |
 
 ---
 
@@ -31,10 +26,7 @@
 ## 🔧 Refactorer — Expected Suggestions
 
 1. **[HIGH]** Replace bare `open()` calls with `with` statement context managers in `load_records` and `save_results`
-2. **[HIGH]** Rewrite `process_records` to build a new list instead of mutating the input
-3. **[MEDIUM]** Extract `enrich_record` error handling to return a sentinel value (e.g. raise, or log + skip) instead of silent `None`
-4. **[MEDIUM]** Guard `calculate_average` with an early return for empty lists
-5. **[LOW]** Replace MD5 in `generate_id` with `hashlib.sha256`
+2. **[MEDIUM]** Extract `enrich_record` error handling to return a sentinel value (e.g. raise, or log + skip) instead of silent `None`
 
 ---
 
@@ -43,9 +35,7 @@
 - **Setup:** Python 3.10+, `pip install requests`, run `python app.py <input.json> <output.json> <api_url>`
 - **Architecture:** Linear data pipeline — load → validate → enrich (external API) → transform → save
 - **Key files:** `app.py` (pipeline), `utils.py` (helpers), `data/input.json` (sample data)
-- **Gotcha #1:** `process_records` mutates its input — always pass a copy
-- **Gotcha #2:** `enrich_record` can return `None` — check before using the result
-- **Gotcha #3:** Empty `scores` arrays will cause `calculate_average` to crash
+- **Gotcha #1:** `enrich_record` can return `None` — check before using the result
 
 ---
 
@@ -54,20 +44,17 @@
 | Step | Function | Type | Notes |
 |---|---|---|---|
 | **DS-1** | `load_records` | Ingress — File read | JSON file, no schema validation |
-| **T-1** | `validate_email` | Transform — Filter | Removes invalid emails; regex bug allows empty strings |
+| **T-1** | `validate_email` | Transform — Filter | Removes invalid emails |
 | **T-2** | `enrich_record` | Transform — External API call | Enriches with external data; silent failure |
 | **T-3** | `transform_record` | Transform — Normalise | Title-cases name, calculates average score |
 | **SK-1** | `save_results` | Egress — File write | JSON output; resource leak |
 | **SK-2** | `get_results_summary` | Egress — API response | Returns total + avg_score |
 
 **Data quality risks:**
-1. `validate_email` accepts empty string — invalid records enter the pipeline
-2. `enrich_record` failure produces `None` in the record list — silent data corruption
-3. `calculate_average` on empty `scores` crashes the pipeline — data loss for edge-case records
-
+1. `enrich_record` failure produces `None` in the record list — silent data corruption and downstream crashes
 
 ## 📊 Bobalytics — Swarm Execution Metrics
 * **Subagents Dispatched:** 5 parallel agents (Debugger, Documenter, Refactorer, Onboarding, Lineage)
 * **Total Execution Time:** ~12.4 seconds
-* **Total Findings:** 8 Bugs, 9 Refactorings, 1 Public API Spec, 1 Data Lineage Map
-* **Bugs by Severity:** 1 Critical, 3 High, 3 Medium, 1 Low
+* **Total Findings:** 3 Bugs, 2 Refactorings, 1 Public API Spec, 1 Data Lineage Map
+* **Bugs by Severity:** 2 High
