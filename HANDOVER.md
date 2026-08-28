@@ -147,12 +147,29 @@ defined in `system_prompt.md`.
   extraction — flagging the 12.5/20 qualifying floor, which is only in the
   Official Rules PDF, not on either web page)
 
+### Status update — 2026-08-28 21:26 SAST (was stale, corrected)
+
+**Backend core: ~90% done and live-verified**, not blocked. MCP registration
+resolved hours ago (`.bob/mcp.json` + portable `.example` template). A live
+Bob session confirmed the actual stdio MCP path — not native fallback —
+with real parallel dispatch and zero-paraphrase evidence throughout
+(`docs/CRITICAL_DECISIONS.md` §5b). Also shipped since the list below was
+last accurate: path-traversal guard, Windows path-separator fix, port-conflict
+resilience on the events bridge, `Report.summary` field + a sort-consistency
+fix between the two report code paths, and a verified live end-to-end test
+against Arisha's real frontend (not the placeholder).
+
 ### What still needs doing
-- [ ] Register the MCP server in Bob's MCP config so the orchestrator can call tools — **blocked on confirming Bob's actual session-trigger/MCP-registration mechanism**, see `docs/CRITICAL_DECISIONS.md`
-- [ ] Test `git.js`/`filesystem.js`/`swarm.js` tools live, from inside a real Bob Agent-mode session, not just directly in Node
-- [ ] Pair with Sibusiso on the first end-to-end dry run once MCP is registered
-- [ ] Confirm with Arisha that `docs/LIVE_EVENTS.md`'s event contract is what she actually needs before she wires `frontend/app.js` against it
-- [ ] `write_swarm_report` (existing tool, writes markdown to disk) vs. `finalize_run` (new tool, returns structured JSON report) — decide whether both stay or `write_swarm_report` gets removed/repurposed now that structured findings exist
+- [ ] `git.js`'s 4 tools (`git_status`/`git_log`/`git_diff`/`git_blame`) are
+      tested directly in Node but **not yet confirmed called through a live
+      Bob MCP session** specifically — `filesystem.js` and `swarm.js` are
+      confirmed, `git.js` should behave identically but hasn't been exercised
+      live yet
+- [ ] `write_swarm_report` (writes markdown to disk) vs. `finalize_run`
+      (returns structured JSON) still overlap — minor, not blocking
+- [ ] Stretch/optional, not core: GitHub API integration (real PR diffs) and
+      a Reviewer-persona trust-score badge on the dashboard — ideas in
+      `docs/BACKEND_CONCEPTS_AND_VALUE_PROP.md` §5, neither started
 
 ### Creative freedom
 The 8 original tools are a starting point. If you find the orchestrator needs
