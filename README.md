@@ -20,7 +20,7 @@ It directly solves the hackathon mandate: replacing time-consuming manual invest
 | **Lead / Orchestrator** | Sibusiso | Master system prompt, end-to-end flow, Agent mode configuration |
 | **Backend Engineer** | Lethabo | File system ops, Git integration, MCP server, background tasks |
 | **Frontend Engineer** | Arisha | Web UI, real-time swarm visualisation, result display |
-| **Data / QA Engineer** | Mmpoiemang | Sample projects, test datasets, validation, demo script, Bobalytics |
+| **Data / QA Engineer** | Mmopiemang | Sample projects, test datasets, validation, demo script, Bobalytics |
 | **AI/ML Engineer** | Farheen | Subagent persona design, prompt engineering, task decomposition logic |
 
 ---
