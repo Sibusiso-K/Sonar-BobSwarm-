@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment / secrets — never commit these, per hackathon rules on
+# credential exposure (IBM Cloud account suspension risk)
+.env
+.env.local
+*.pem
+*.key
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+*.log
+
+# Build output
+dist/
+build/
+
+# Python (demo/ uses Python)
+__pycache__/
+*.pyc
+.venv/
+venv/

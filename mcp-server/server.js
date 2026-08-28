@@ -15,6 +15,8 @@ const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 const { registerGitTools } = require('./tools/git');
 const { registerFilesystemTools } = require('./tools/filesystem');
+const { registerSwarmTools } = require('./tools/swarm');
+const { startEventsServer } = require('./events-server');
 
 async function main() {
   const server = new McpServer({
@@ -25,6 +27,12 @@ async function main() {
   // Register tool groups
   registerGitTools(server);
   registerFilesystemTools(server);
+  registerSwarmTools(server); // record_progress, record_finding, finalize_run, get_run_report
+
+  // Side-channel HTTP+WebSocket server so the browser dashboard can see swarm
+  // activity live. Bob only speaks stdio to this process; this is the bridge
+  // that replaces frontend/app.js's simulateSwarm() with real events.
+  startEventsServer();
 
   // Connect via stdio (Bob's default MCP transport)
   const transport = new StdioServerTransport();

@@ -139,8 +139,12 @@ BobSwarm will decompose the task and dispatch subagents automatically.
 ## Built On
 
 - **IBM Bob 2.0** — Agent mode, `spawn_subagent`, parallel tasks, skills, custom modes
-- **Swarm_Corp architecture** — Autonomous multi-agent coding system (prior work by Sibusiso)
-- **MCP (Model Context Protocol)** — Git and filesystem tool exposure
+- **MCP (Model Context Protocol)** — Git, filesystem, and swarm-lifecycle tool exposure
+
+Everything in this repository was built during the Contest window. The
+multi-agent execution is IBM Bob's own Agent mode and `spawn_subagent` — see
+[`docs/CRITICAL_DECISIONS.md`](docs/CRITICAL_DECISIONS.md) for why this repo
+does not depend on any pre-existing codebase.
 
 ---
 
