@@ -107,3 +107,27 @@ session should confirm:
 - The SDK's tool entry stores the callable under `handler`, not `callback` —
   discovered the same way. Noted here because if a future test script uses this
   pattern, use `.handler(args)`, not `.callback(args)`.
+- A stray `node events-server.js` process from earlier local testing was
+  already holding port 8787 when this session tried to connect — caused an
+  unhandled error that crashed the whole MCP process, showing as
+  "Disconnected" in Bob's panel (see `01-mcp-panel-disconnected-and-todo-list.png`).
+  Fixed in two parts: killed the stray process to unblock this session
+  immediately, and fixed `events-server.js` so a port conflict can no longer
+  crash the MCP stdio connection — it now logs a warning and continues, since
+  the tools Bob depends on don't need the events port to function. After the
+  fix, reconnected successfully (see `02-mcp-panel-connected-tasks-complete.png` —
+  `bobswarm` showing Connected, green, 7/7 tasks completed).
+
+---
+
+### Session 1 addendum — screenshots
+
+- `01-mcp-panel-disconnected-and-todo-list.png` — MCP panel showing
+  `bobswarm` as Disconnected, alongside the session's todo list (7 sub-tasks)
+  and Bob's own explanation of the remaining live-verification steps.
+- `02-mcp-panel-connected-tasks-complete.png` — after the port-conflict fix,
+  MCP panel showing `bobswarm` as Connected, "All tasks completed! 7/7".
+  Also visible: a failed `git pull --rebase` (exit code 1) — traced separately
+  to uncommitted local changes at the time, which git correctly refused to
+  rebase over rather than doing anything destructive. Not a bug; resolved by
+  committing first, same pattern hit independently earlier this session.
