@@ -1,6 +1,6 @@
 """
 BobSwarm Demo — Sample Project (Intentionally Broken)
-Owner: Mmpoiemang (Data / QA Engineer)
+Owner: Mmopiemang (Data / QA Engineer)
 
 This is the intentionally flawed codebase used in the BobSwarm demo.
 The BobSwarm orchestrator will dispatch subagents to:
@@ -21,34 +21,26 @@ Known issues planted for the demo (DO NOT FIX MANUALLY):
 import json
 import re
 import requests
+from typing import Any
 
 
 # ── Data ingress ──────────────────────────────────────────────────────────────
 
 def load_records(filepath):
-    """Load records from a JSON file."""
-    f = open(filepath, 'r')  # BUG 4: file never closed
-    data = json.load(f)
-    return data
+    with open(filepath, 'r') as f:
+        return json.load(f)
 
 
 def validate_email(email):
-    # BUG 5: regex matches empty string — re.match returns truthy for ""
-    pattern = r"[^@]*@[^@]*"
-    return re.match(pattern, email) is not None
+    if not email or not isinstance(email, str):
+        return False
+    return bool(re.match(r"[^@\s]+@[^@\s]+\.[^@\s]+", email))
 
 
 # ── Transformations ───────────────────────────────────────────────────────────
 
 def process_records(records):
-    """
-    Process a list of records and return validated ones.
-    """
-    # BUG 2: mutates the input list directly
-    for i, record in enumerate(records):
-        if not validate_email(record.get('email', '')):
-            records.remove(record)  # mutates caller's list, also skips elements
-    return records
+    return [r for r in records if validate_email(r.get("email", ""))]
 
 
 def enrich_record(record, api_url):
@@ -67,8 +59,7 @@ def enrich_record(record, api_url):
 
 
 def calculate_average(values):
-    # BUG 1: ZeroDivisionError when values is empty
-    return sum(values) / len(values)
+    return sum(values) / len(values) if values else 0.0
 
 
 def transform_record(record):
@@ -81,9 +72,8 @@ def transform_record(record):
 # ── Data egress ───────────────────────────────────────────────────────────────
 
 def save_results(records, output_path):
-    """Write processed records to a JSON output file."""
-    f = open(output_path, 'w')  # BUG 4 (second instance): file never closed
-    json.dump(records, f, indent=2)
+    with open(output_path, 'w') as f:
+        json.dump(records, f, indent=2)
 
 
 def get_results_summary(records):
@@ -95,20 +85,19 @@ def get_results_summary(records):
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
-
-def run_pipeline(input_path, output_path, enrich_api_url):
-    records = load_records(input_path)
+def run_pipeline(input_path: str, output_path: str, enrich_api_url: str) -> dict:
+    records = load_records(filepath=input_path)
     records = process_records(records)
 
     enriched = []
     for record in records:
-        result = enrich_record(record, enrich_api_url)
-        enriched.append(result)  # BUG 3 consequence: None appended to list
+        result = enrich_record(record, api_url=enrich_api_url)
+        if result is not None:
+            enriched.append(result)
 
-    transformed = [transform_record(r) for r in enriched]  # crashes on None
-    save_results(transformed, output_path)
-    return get_results_summary(transformed)
-
+    transformed = [transform_record(record=r) for r in enriched]
+    save_results(records=transformed, output_path=output_path)
+    return get_results_summary(records=transformed)
 
 if __name__ == "__main__":
     import sys
