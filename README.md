@@ -91,7 +91,6 @@ BobSwarm/
 <p align="center">
   <img src="./agent-flow.svg" alt="BobSwarm orchestration flow" width="900">
 </p>
-```
 
 ---
 

@@ -3,6 +3,7 @@ node_modules/
 package-lock.json
 # Keep each app reproducible even though historical root lockfiles are ignored.
 !mcp-server/package-lock.json
+!frontend/package-lock.json
 
 # Environment / secrets — never commit these, per hackathon rules on
 # credential exposure (IBM Cloud account suspension risk)

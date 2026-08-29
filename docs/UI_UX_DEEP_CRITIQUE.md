@@ -373,3 +373,203 @@ starting position, not a directive.
    without carrying forward the caveated number.
 3. Make one deliberate Report-view density pass, then freeze the product for
    the genuine Bob video and evidence capture.
+
+---
+
+## Part 7 — Arisha's design production brief
+
+> **For Arisha.** Written assuming you have working access to Figma, Claude
+> (chat + Claude Design's canvas/artifact tooling), and Lovable, with no
+> practical credit ceiling on any of them for this task — so this is written
+> at the ambition level that assumption justifies, not the "cheapest thing
+> that works" level the rest of this doc had to operate at. Follow it in
+> order; each stage's output feeds the next. Lethabo will separately hand
+> you the literal prompt and pointer to this section — this is the detail
+> behind that pointer.
+
+### 7.1 — the system, formalized (extend what exists, don't replace it)
+
+The existing tokens in `frontend/src/index.css` are the right foundation —
+keep every hex value below unless you have a specific reason to change one.
+What's missing is *system*, not *palette*.
+
+**Color — current tokens, plus the roles they should play:**
+
+| Token | Hex | Current use | Extend to |
+|---|---|---|---|
+| `--color-void` | `#0b0a08` | page background | Also: the base for all data-table row backgrounds — don't introduce a second "off-black" |
+| `--color-void-soft` | `#131110` | — | Card/panel background *specifically for data views* (Report, History) — currently unused, this is your differentiator from `.glass` |
+| `--color-paper` | `#f3ede1` | primary text | — |
+| `--color-paper-dim` | `#b9b0a0` | secondary text | — |
+| `--color-stone` / `--color-stone-dim` | `#8a8175` / `#5c564c` | labels, meta | — |
+| `--color-gold` / `--color-gold-soft` / `--color-gold-dim` | `#d9a441` / `#e7c37a` / rgba | CTA, emphasis, `done` state | Reserve gold *only* for "success/complete" and the one hero emphasis phrase — right now it's doing CTA + emphasis + status, which dilutes what "gold" means when a user sees it |
+| `--color-violet` / `--color-violet-soft` | `#8b7bd8` / `#b4a9e8` | `active`/`investigating` state | Keep scoped to "in progress" — don't let it leak into decoration |
+| `--color-breaks` / `--color-warns` / `--color-info` | `#e0654f` / `#d9a441` / `#5fa8d9` | severity | — |
+
+**Note the collision:** `--color-warns` and `--color-gold` are the *same
+hex* (`#d9a441`). That's not a bug, but it means a "warns" severity badge
+and a "done/success" indicator currently read identically at a glance —
+worth a deliberate decision (either keep the deliberate overlap and explain
+why, or split them) rather than an accident nobody chose.
+
+**Add, don't replace:**
+- A **data-grid line color** — something between `--color-line` (0.08 opacity)
+  and `--color-line-strong` (0.16) specifically for table/row dividers in a
+  denser Report view. Try `rgba(243, 237, 225, 0.11)`.
+- A **second texture**, alongside `grain`: a very subtle 1px dot-grid or
+  line-grid background (opacity ~0.03-0.04) specifically for data-dense
+  panels, so they read as "instrument panel" rather than "card on a page."
+
+**Typography — turn the one flourish into a system:**
+
+| Role | Font | Weight/style | Where |
+|---|---|---|---|
+| Hero display | Fraunces | 450-560, italic for emphasis only | Already correct, keep |
+| Section headings | Fraunces | 450, roman (not italic) | Already correct |
+| Data (findings, paths, symbols, timestamps) | IBM Plex Mono | 400 | This should be the *dominant* voice of the Report and History views — currently under-used relative to how much data the product actually shows |
+| Narrative/UI copy | Inter | 400-500 | Body text, buttons, nav |
+| Meta/labels | IBM Plex Mono | 500, uppercase, tracked | Already correct pattern (`text-xs uppercase tracking-[0.14em]`), extend it everywhere a label appears, including inside data rows |
+
+The rule to apply everywhere: **if it's a fact about the code (a path, a
+symbol, a severity, a timestamp, a run ID), it's mono. If it's prose written
+for a human, it's Inter. If it's a moment of emphasis, it's Fraunces
+italic — and only one thing per screen gets that treatment, not
+one-per-section.**
+
+### 7.2 — concrete references, with what to steal from each
+
+Don't open these for "vibes" — pull one specific pattern from each:
+
+- **Linear** (`linear.app/changelog`, `linear.app/method`) — steal the
+  **dense list row pattern**: icon, primary text, secondary meta, right-
+  aligned status, all on one line, minimal padding, hairline dividers not
+  cards. This is the direct fix for Report/History.
+- **Raycast** (`raycast.com`) — steal the **product-screenshot-as-hero**
+  pattern: real UI, not abstract shapes, given the compositional weight a
+  marketing illustration would normally get.
+- **Warp** (`warp.dev`) — steal **real terminal output treated as the star
+  of the page**, including how it uses monospace at a *larger* size than
+  you'd expect for genuine data, not shrunk-down-because-it's-secondary.
+- **Vercel dashboard** (`vercel.com/dashboard` if you have access, or
+  Mobbin) — steal the **deployment-log live-tail pattern**: exactly the
+  shape of "watch parallel work happen in real time," which is what
+  `SwarmStage` is trying to be.
+- **GitHub's PR diff view** — steal **inline evidence styling**: a code
+  line with a colored left gutter marker, not a code block floating in a
+  card.
+- **Mobbin search terms** (use these exact phrases): `"developer tool dark
+  mode dashboard"`, `"AI agent live status"`, `"log viewer dark"`.
+- **Dribbble search terms**: `"dev tool dashboard dark"`, `"data table dark
+  ui"`, `"agent pipeline visualization"` — filter hard for information-
+  dense results, discard anything that's a marketing hero with no real data
+  in it.
+
+### 7.3 — workflow: Figma → Claude Design → Lovable → back into the real codebase
+
+**Stage 1 — Figma (wireframe, structure only, no color yet).**
+Build the Report view and History view as gray-box wireframes first —
+literal boxes and text placement, zero color/type decisions. Pin 3-4
+screenshots from 7.2 as a moodboard frame right next to your wireframe.
+Goal: prove the *density and hierarchy* works before any visual polish gets
+attached to it. This stage should take under an hour — if it's taking
+longer, you're polishing too early.
+
+**Stage 2 — Claude Design (high-fidelity mockup from the wireframe).**
+Use the prompt in 7.4 below, feeding it a screenshot/export of your Stage 1
+wireframe plus the token table from 7.1. Iterate here, not in code — this
+is the cheap-to-change stage.
+
+**Stage 3 — Lovable (interactive prototype, exploration only).**
+Use Lovable to build a *throwaway* interactive prototype of the one highest-
+risk interaction: `LivingSwarmField` as protagonist (a finding traveling
+from an agent card to the report on discovery — see Tell #4 in Part 2).
+This is genuinely hard to judge from a static mockup; Lovable's speed is
+well-suited to trying 2-3 versions of *motion* fast. **Do not plan to ship
+Lovable's generated code directly** — the real codebase is hand-built
+React/Tailwind/Framer Motion with real WebSocket data flowing through it;
+porting a Lovable app wholesale would be a bigger risk than it's worth this
+close to the deadline. Use it to find the *right motion curve and timing*,
+then hand-implement that specific interaction in `LivingSwarmField.tsx`.
+
+**Stage 4 — back into the real codebase.**
+Once Stage 2/3 converge on a direction, implement directly in
+`ReportView.tsx`/`RunHistory.tsx`/`LivingSwarmField.tsx` against real data
+(the fixture repo's actual findings), not mockup placeholder text — the
+critique in Part 2 exists specifically because "looks good with placeholder
+content" and "looks good with real evidence text of varying length" are
+different problems.
+
+### 7.4 — ready-to-paste prompts
+
+**Claude Design — Report view high-fidelity mockup:**
+```
+Design a high-fidelity dark-mode dashboard screen for a developer tool
+called BobSwarm. This is the "Report" view — it shows findings from an
+AI code-audit swarm, grouped by specialist role (Debugger, Documenter,
+Refactorer, Onboarding, Data Lineage).
+
+Design system tokens (use exactly):
+- Background: #0b0a08 (void), secondary panel bg: #131110 (void-soft)
+- Text: #f3ede1 (paper) primary, #b9b0a0 (paper-dim) secondary, #8a8175 (stone) meta
+- Accent: #d9a441 (gold) for success/complete states only
+- Severity: #e0654f (breaks), #d9a441 (warns), #5fa8d9 (informational)
+- Display font: Fraunces (serif, editorial, used sparingly)
+- Data/mono font: IBM Plex Mono (this should dominate the data view)
+- UI font: Inter
+
+Reference patterns to follow: Linear's dense list rows (icon + primary text
++ meta + right-aligned status, hairline dividers, minimal padding — NOT
+individually padded cards), GitHub's inline diff styling for code evidence
+(colored left gutter, not a floating code block in a card).
+
+Layout: a dense, scannable table/list of findings. Each row: severity
+indicator (left edge color bar, not just a badge), file path + line number
+in mono, target symbol name, one line of literal evidence in a monospace
+block with subtle background, grouped under role headers. This is a data
+instrument panel, not a marketing card layout — err toward density over
+whitespace.
+
+Do not use glassmorphism/blur effects for this screen — reserve that
+treatment for the marketing hero only.
+```
+
+**Claude Design — reactive LivingSwarmField concept (feeds Lovable stage):**
+```
+Concept sketch (not final code) for a reactive particle-field visualization
+in a dark-mode dev tool dashboard. Five clusters of particles represent
+five AI agents working in parallel, each cluster near its own status card.
+When an agent "finds" something, one particle should visibly detach from
+its cluster and travel toward a "report" area, arriving with a small burst/
+glow, then the finding appears in the report list. Color per agent role:
+violet while investigating, gold when done. Style: warm dark background
+(#0b0a08), soft glow (not neon/cyberpunk), restrained motion — this should
+read as "instrument," not "screensaver."
+```
+
+**Lovable — interactive motion prototype:**
+```
+Build a small interactive React prototype: a dark page (#0b0a08 background)
+with 5 labeled circular clusters of small glowing dots (particles), each
+cluster representing an agent (Debugger, Documenter, Refactorer, Onboarding,
+Data Lineage). Add a button "Simulate finding" that, when clicked, picks a
+random cluster, animates one particle traveling in a smooth arc from that
+cluster to a "Report" box on the right side of the screen, with a brief
+glow/pulse on arrival, then adds a line of placeholder text to a list
+inside the Report box. Use framer-motion for the animation. Keep it dark,
+warm-toned (gold #d9a441 and violet #8b7bd8 as the only accent colors),
+minimal — the goal is testing the motion timing and easing, not visual
+polish. Make the arc duration and easing easy to tweak via a few exposed
+constants at the top of the file.
+```
+
+### 7.5 — what "done" looks like for this pass
+
+Not "the whole app redesigned." Specifically:
+1. Report view reads as a dense data instrument, not a stack of prose cards
+   (Tell #3).
+2. `LivingSwarmField` does one real thing tied to real events, not just
+   ambient drift (Tell #4).
+3. At least one section (recommend History, per Part 2) has a genuinely
+   different composition from the other three (Tell #1).
+4. The mockup in `README.md` and the actual live app no longer visibly
+   diverge — this is the real finish line, not the mockup itself.
