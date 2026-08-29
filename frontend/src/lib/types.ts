@@ -17,6 +17,8 @@ export type Severity = "breaks" | "warns" | "informational";
 
 export type RunStatus = "queued" | "running" | "complete" | "error";
 
+export type ConnState = "idle" | "connecting" | "open" | "reconnecting" | "closed" | "error";
+
 export interface Run {
   id: string;
   taskDescription: string;
