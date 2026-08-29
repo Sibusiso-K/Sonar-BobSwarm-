@@ -251,7 +251,8 @@ const SWARM_ANCHORS = [
   { id: "b", x: 330, y: 130, energy: 0.55, intensity: 1, color: "violet" as const },
   { id: "c", x: 80, y: 200, energy: 0.3, intensity: 0.75, color: "violet" as const },
   { id: "d", x: 280, y: 280, energy: 0.45, intensity: 0.65, color: "violet" as const },
-  { id: "e", x: 150, y: 350, energy: 0.4, intensity: 0.5, color: "stone" as const },
+  { id: "e", x: 150, y: 350, energy: 0.85, intensity: 0.5, color: "gold" as const },
+
 ];
 
 const SWARM_ROLES = [
