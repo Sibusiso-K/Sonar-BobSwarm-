@@ -190,7 +190,7 @@ export function LivingSwarmField({
 
           // Target orbit radius shrinks as energy rises, but "done" settles into a
           // tight steady halo rather than collapsing to a point.
-          const baseRadius = 26 + (1 - energy) * 64;
+          const baseRadius = 22 + (1 - energy) * 58;
           p.targetRadius = baseRadius * (1 - intensity * 0.25);
           p.radius += (p.targetRadius - p.radius) * Math.min(1, step * 1.6);
 
@@ -211,8 +211,8 @@ export function LivingSwarmField({
           const x = anchor.x + Math.cos(p.angle) * p.radius + jx;
           const y = anchor.y + Math.sin(p.angle) * p.radius * p.ellipse + jy;
           const rgb = palette[anchor.color];
-          const alpha = (0.35 + energy * 0.45 + intensity * 0.2) * twinkle;
-          const size = p.size * (0.8 + energy * 0.9 + intensity * 0.5);
+          const alpha = (0.4 + energy * 0.48 + intensity * 0.22) * twinkle;
+          const size = p.size * (0.9 + energy * 1.0 + intensity * 0.55);
 
           drawn.push({ x, y, r: size, c: rgb, a: Math.min(alpha, 0.95) });
         } else {
@@ -256,7 +256,7 @@ export function LivingSwarmField({
       if (isActive) {
         for (const anchor of currentAnchors) {
           const rgb = palette[anchor.color];
-          const glowR = 30 + anchor.energy * 40 + anchor.intensity * 24;
+          const glowR = 36 + anchor.energy * 48 + anchor.intensity * 28;
           const grad = ctx.createRadialGradient(
             anchor.x,
             anchor.y,
@@ -265,7 +265,7 @@ export function LivingSwarmField({
             anchor.y,
             glowR
           );
-          const centerAlpha = 0.05 + anchor.energy * 0.12 + anchor.intensity * 0.06;
+          const centerAlpha = 0.07 + anchor.energy * 0.17 + anchor.intensity * 0.08;
           grad.addColorStop(0, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${centerAlpha})`);
           grad.addColorStop(1, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0)`);
           ctx.fillStyle = grad;
