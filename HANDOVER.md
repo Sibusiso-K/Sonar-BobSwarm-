@@ -388,10 +388,10 @@ node -e "
 | Member | Role | Paragraph added? |
 |---|---|---|
 | Sibusiso | Lead / Orchestrator | ✅ |
-| Lethabo | Backend Engineer | ⬜ |
-| Arisha | Frontend Engineer | ⬜ |
+| Lethabo | Backend Engineer | ✅ |
+| Arisha | Frontend Engineer | ✅ |
 | Farheen | AI/ML Engineer | ✅ |
-| Mmpoiemang | Data / QA Engineer | ⬜ |
+| Mmpoiemang | Data / QA Engineer | ✅ |
 
 ---
 
@@ -419,17 +419,17 @@ For my session, I acted as the Orchestrator and gave Bob the prompt: *"Analyse d
 
 ### Lethabo — Backend Engineer
 
-> ⬜ *Paragraph not yet added — paste yours here.*
+For Session 6, I tasked Bob with validating the frontend-to-backend live bridge. My prompt was: *"Use existing runId 827af00d-9bf3-4aad-8343-40821ca4a115 created by the frontend. Do not create a second run. Dispatch the full 5-agent swarm against this runId so the already-open dashboard receives events live."* Using its tools, Bob made an HTTP `GET` to the backend to verify the pending run existed. Bob then dispatched all 5 subagents in parallel (spawn_subagent). Through the BobSwarm MCP stdio transport tools, the subagents published `record_progress` and `record_finding` events live to the WebSocket connected to the frontend. The session finalized with 41 findings from the 5 specialists with verbatim code quotes—no paraphrasing. It confirmed our dashboard architecture worked cleanly without pre-briefing the subagents.
 
 ---
 
 ### Arisha — Frontend Engineer
 
-> ⬜ *Paragraph not yet added — paste yours here.*
+To polish the UI for our final submission, I prompted Bob to: *"Read docs/ARISHA_FRONTEND_POLISH.md... Fix the font loading bug... adjust Hero.tsx positioning and wording... Reduce empty-state stacking and add auto-scroll... If time allows, add a full-run-ID copy button."* Using `replace_file_content`, Bob added the Google Fonts `<link>` tags to `index.html` to load Fraunces, IBM Plex Mono, and Inter. Bob then updated `Hero.tsx` to feature an asymmetric layout and refined the hook phrasing. To streamline the UX, Bob added a smooth auto-scroll to the Swarm stage upon dispatch and a "Copy Full Run ID" button to make bridging runs with Bob seamless during the demo, conditionally hiding empty states in `App.tsx` until a run was actively created.
 
 ---
 
 ### Mmpoiemang — Data / QA Engineer
 
-> ⬜ *Paragraph not yet added — paste yours here.*
+To validate the multi-agent QA flow, I tasked Bob with: *"Analyse the codebase at demo/sample-project. Find all bugs, document the public API, suggest refactoring improvements, trace the data flow, and create an onboarding guide."* Bob loaded the agent personas and used `read_project_file` across `app.py`, `utils.py`, and `data/input.json`. Bob successfully spawned all 5 specialized subagents. The SwarmDebugger caught all planted defects (including a silent None propagation and resource leak) while the Data Lineage mapped the failure propagation paths. This proved our automation could detect 12 defects (including criticals and highs) across files in under 5 minutes without manual test suite configuration, aggregating the output cleanly.
 
