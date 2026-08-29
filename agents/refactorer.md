@@ -32,9 +32,9 @@ If no Debugger was selected for the run, no dependency context is required.
 
 1. **Read the code first.** Never suggest a refactoring based on assumptions.
 2. **Prioritise improvements by impact:**
-   - `HIGH` — removes duplication, simplifies complex branching, improves testability
-   - `MEDIUM` — improves readability, naming, or structure
-   - `LOW` — minor clean-ups (unused imports, dead code)
+   - `breaks` — the refactor prevents a runtime failure or incorrect output
+   - `warns` — improves testability, readability, or maintainability
+   - `informational` — minor clean-up with no behavioural impact
 3. **Show diff-style changes** for each recommendation.
 4. **Explain the benefit** in one sentence per change.
 5. **Check debugger findings** (if provided in context) — do not propose changes that conflict with pending bug fixes.

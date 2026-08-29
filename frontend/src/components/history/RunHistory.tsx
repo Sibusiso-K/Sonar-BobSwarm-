@@ -28,7 +28,7 @@ function formatDuration(ms: number | null, status: RunSummary["status"]): string
  * single-run hook (useSwarmRun) — this is history across every run, not
  * just the one currently in flight.
  */
-export function RunHistory() {
+export function RunHistory({ onOpenRun }: { onOpenRun?: (run: RunSummary) => void }) {
   const [runs, setRuns] = useState<RunSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,11 +88,15 @@ export function RunHistory() {
           <div className="glass mt-8 flex flex-col divide-y divide-line rounded-2xl p-2">
             <AnimatePresence initial={false}>
               {runs.map((r) => (
-                <motion.div
+                <motion.button
+                  type="button"
                   key={r.id}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 hover:bg-white/[0.03]"
+                  onClick={() => onOpenRun?.(r)}
+                  disabled={!onOpenRun}
+                  aria-label={`Open ${r.taskDescription}`}
+                  className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left hover:bg-white/[0.03] disabled:cursor-default"
                 >
                   <span
                     title={STATUS_META[r.status].label}
@@ -108,7 +112,7 @@ export function RunHistory() {
                     <p>{r.findingCount} findings</p>
                     <p className="mt-0.5 text-stone-dim">{formatDuration(r.durationMs, r.status)}</p>
                   </div>
-                </motion.div>
+                </motion.button>
               ))}
             </AnimatePresence>
           </div>

@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, RotateCcw } from "lucide-react";
 import { RoleCard } from "./RoleCard";
 import { Timeline } from "./Timeline";
 import { LivingSwarmField, type SwarmAnchor } from "../field/LivingSwarmField";
@@ -39,11 +39,13 @@ export function SwarmStage({
   roles,
   timeline,
   connState,
+  onNewRun,
 }: {
   run: Run | null;
   roles: Record<string, RoleState>;
   timeline: TimelineEntry[];
   connState: ConnState;
+  onNewRun?: () => void;
 }) {
   const roleList = Object.values(roles);
   const fieldRef = useRef<HTMLDivElement | null>(null);
@@ -139,6 +141,17 @@ export function SwarmStage({
                 {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                 {copied ? "copied" : "copy full id"}
               </button>
+              {onNewRun && (
+                <button
+                  type="button"
+                  onClick={onNewRun}
+                  title="Clear this run and prepare a new task"
+                  className="ml-1 flex items-center gap-1 rounded-full border border-line-strong px-2 py-0.5 text-[10px] text-stone-dim transition-colors hover:border-gold hover:text-paper"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  new run
+                </button>
+              )}
             </div>
           )}
         </div>

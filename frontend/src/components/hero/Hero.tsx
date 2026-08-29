@@ -2,13 +2,14 @@ import { useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { LivingSwarmField } from "../field/LivingSwarmField";
 import { TaskForm } from "./TaskForm";
+import type { TaskType } from "../../lib/types";
 
 export function Hero({
   onSubmit,
   submitting,
   error,
 }: {
-  onSubmit: (input: { taskDescription: string; taskType: string; repoRef: string }) => void;
+  onSubmit: (input: { taskDescription: string; taskType: TaskType; repoRef: string }) => void;
   submitting: boolean;
   error: string | null;
 }) {

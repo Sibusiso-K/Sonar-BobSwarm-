@@ -22,17 +22,17 @@ BobSwarm is an on-demand multi-agent engineering orchestrator built natively wit
 
 Every reported finding must include literal source evidence. The specialists publish structured progress and findings through BobSwarm's Model Context Protocol server. A live React dashboard makes the normally invisible agent workflow observable: users can see each specialist's state, follow the event timeline, inspect severity-labelled evidence, and receive one deterministic unified report.
 
-BobSwarm is differentiated from a conventional coding assistant because it coordinates and verifies multiple stages of an engineering workflow rather than producing one conversational answer. It preserves specialist accountability, exposes parallel work in real time, and prevents unsupported findings from entering the final report. In a recorded full-audit run, five specialists worked concurrently and produced 41 evidence-backed findings across five disciplines in approximately 94 seconds, with their first findings overlapping within a 15-second window.
+BobSwarm is differentiated from a conventional coding assistant because it coordinates and verifies multiple stages of an engineering workflow rather than producing one conversational answer. It preserves specialist accountability, exposes parallel work in real time, and prevents unsupported findings from entering the final report. In a recorded full-audit run, five specialists participated: four worked in the first parallel wave and the Refactorer followed the Debugger dependency. Together they produced 41 evidence-backed findings across five disciplines in approximately 94 seconds, with their first findings overlapping within a 15-second window.
 
 The proof of concept targets developers, technical leads, maintainers, and teams onboarding onto unfamiliar repositories. Its architecture can extend to code review, release readiness, security analysis, test generation, and other multi-step developer workflows without changing the core orchestration model.
 
 ## D3 — How the team used IBM Bob
 
-Bob was the execution and development environment for BobSwarm, not a decorative API call. The team created a BobSwarm custom mode and reusable skill that instruct Bob to interpret a developer request, run `orchestrator/decompose.js`, load the relevant specialist persona files, identify dependencies, and dispatch independent tasks through Bob's native `spawn_subagent` capability. For full audits, Bob launched the Debugger, Documenter, Onboarding, and Data Lineage specialists in parallel, then supplied the Debugger's findings to the dependent Refactorer when sequential execution was required.
+Bob was the execution and development environment for BobSwarm, not a decorative API call. The team created a BobSwarm custom mode and reusable skill that instruct Bob to interpret a developer request, run `orchestrator/decompose.js`, load the relevant specialist persona files, identify dependencies, and dispatch independent tasks through Bob's native `spawn_subagent` capability. The dashboard's selected `taskType` is authoritative: focused tasks select one specialist, while `full_audit` launches Debugger, Documenter, Onboarding, and Data Lineage in parallel, then supplies the Debugger's findings to the dependent Refactorer.
 
-During live validation, Bob used the project's MCP tools to read repository files, inspect Git state, publish agent progress, and submit structured findings. Each `record_finding` call required a file path, target symbol, severity, and literal evidence; empty evidence was rejected. Bob then called `finalize_run`, which deterministically grouped and sorted the specialists' results and emitted the unified report to the dashboard. One recorded frontend-linked session used an existing dashboard run ID, dispatched all five specialists, published 59 live events, and completed with 41 evidence-backed findings across five roles.
+During live validation, Bob used the project's MCP tools to read repository files, inspect Git state, publish agent progress, and submit structured findings. Each `record_finding` call required a file path, target symbol, severity, and literal evidence; empty evidence was rejected. Bob then called `finalize_run`, which deterministically grouped and sorted the specialists' results and emitted the unified report to the dashboard. One recorded frontend-linked session used an existing dashboard run ID, dispatched all five specialists, published 59 live events, and completed with 41 evidence-backed findings across five roles. Four specialists formed the first parallel wave; the Refactorer followed the Debugger dependency.
 
-Bob also helped the team build and validate the proof of concept during the contest. It was used to inspect project files in parallel, implement and review the MCP event bridge, exercise all twelve MCP tools over the live stdio transport, refine keyword routing against fourteen representative developer requests, verify the Debugger-to-Refactorer dependency, fix the sample pipeline and its unit tests, and produce exported reports and session evidence. The repository includes the system prompt, skill, persona definitions, task/session contribution logs, screenshots captured by team members, and exported Bob reports so the judges can verify where Bob made decisions and what it produced.
+Bob also helped the team build and validate the proof of concept during the contest. It was used to inspect project files in parallel, implement and review the MCP event bridge, exercise all twelve MCP tools over the live stdio transport, refine keyword routing against representative developer requests, verify the Debugger-to-Refactorer dependency, fix the sample pipeline and its unit tests, and produce reports and session evidence. The repository includes the system prompt, skill, persona definitions, task/session contribution logs, screenshots captured by team members, and the evidence exports supplied by the team so the judges can verify where Bob made decisions and what it produced.
 
 BobSwarm uses IBM Bob Agent mode, parallel tasks, subagents, custom modes, skills, file and Git tooling, and MCP integration to manage an end-to-end developer workflow rather than merely assist with isolated code generation.
 
@@ -70,8 +70,8 @@ The live product section must occupy at least 90 seconds. Keep the browser, Bob,
 ### Human evidence and compliance
 
 - [ ] Every member confirms eligibility, employer/affiliation disclosure, and permission to participate.
-- [ ] Every member's IBM Bob session screenshots are present under `docs/bob-sessions/<name>/`.
-- [ ] Exported Bob reports for all relevant sessions are present.
+- [ ] Every member's IBM Bob task-session consumption screenshots are present under root `bob_sessions/<name>/`.
+- [ ] Matching Bob-exported task histories for all relevant sessions are present under root `bob_sessions/<name>/`.
 - [ ] No credentials, personal information, client data, or unlicensed material is committed.
 - [ ] The public repository URL is confirmed in the submission form.
 - [ ] The final video is 90 seconds to 3 minutes, narrated, and its sharing permissions are tested in a private browser.
@@ -82,5 +82,6 @@ The live product section must occupy at least 90 seconds. Keep the browser, Bob,
 
 - Say **Bob-native multi-agent orchestration**, **parallel specialist execution**, **observable workflow**, and **evidence-backed unified report**.
 - Describe the browser-to-Bob step as an **operator handoff** unless a supported Bob dispatch API is actually integrated and demonstrated.
-- Do not claim production persistence, automatic browser-triggered Bob execution, perfect defect recall, or calibrated confidence.
+- The dashboard persists the latest run pointer locally for reload recovery; do not describe this as server-side or production persistence.
+- Do not claim automatic browser-triggered Bob execution, perfect defect recall, or calibrated confidence.
 - Use only timings, finding counts, and tool calls supported by committed session evidence or the live recorded run.

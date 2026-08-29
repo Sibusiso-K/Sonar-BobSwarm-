@@ -11,6 +11,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const {
   AGENT_TYPES,
+  TASK_TYPES,
   buildDispatchPayload,
   computeConfidence,
   decompose,
@@ -71,6 +72,40 @@ test('standalone refactorer has no artificial dependency', () => {
   assert.equal(refactorerTask.agent, A.REFACTORER);
   assert.equal(refactorerTask.parallel, true);
   assert.deepEqual(refactorerTask.dependsOn, []);
+});
+
+test('explicit task type is authoritative over request keywords', () => {
+  const result = decompose('find bugs, document the API, and trace the data flow', [], TASK_TYPES.DOCUMENTER);
+  assert.deepEqual(result.map(({ agent }) => agent), [A.DOCUMENTER]);
+  assert.equal(result[0].confidence, 1);
+  assert.equal(result[0].lowConfidenceWarning, false);
+});
+
+test('full audit task type selects all agents with the refactor dependency', () => {
+  const result = decompose('write only onboarding notes', [], TASK_TYPES.FULL_AUDIT);
+  assert.deepEqual(result.map(({ agent }) => agent), [
+    A.DEBUGGER,
+    A.DOCUMENTER,
+    A.ONBOARDING,
+    A.DATA_LINEAGE,
+    A.REFACTORER,
+  ]);
+  assert.ok(result.slice(0, 4).every((task) => task.parallel));
+  assert.equal(result[4].parallel, false);
+  assert.deepEqual(result[4].dependsOn, [A.DEBUGGER]);
+});
+
+test('rejects unsupported explicit task types', () => {
+  assert.throws(
+    () => decompose('review the code', [], 'schema_impact'),
+    /taskType must be full_audit or a supported specialist type/,
+  );
+});
+
+test('marks an unclassified fallback as low confidence', () => {
+  const result = decompose('please inspect this repository');
+  assert.ok(result.every((task) => task.confidence === 0.5));
+  assert.ok(result.every((task) => task.lowConfidenceWarning));
 });
 
 test('rejects invalid decomposition inputs', () => {

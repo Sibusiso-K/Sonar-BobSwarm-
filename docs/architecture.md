@@ -15,7 +15,7 @@ Dashboard task form
   → POST /runs → pending UUID
   → copy-ready Bob handoff prompt
   → operator pastes prompt into BobSwarm Orchestrator mode
-  → decompose() + persona loading
+  → decompose(request, contextFiles, taskType) + persona loading
   → first wave: Debugger + Documenter + Onboarding + Data Lineage (parallel)
   → second wave: Refactorer with completed Debugger context (when selected)
   → MCP progress/findings → sequenced event store → WebSocket dashboard
@@ -30,7 +30,7 @@ Dashboard task form
 | File | Purpose |
 |---|---|
 | `system_prompt.md` | Defines the orchestrator's identity, protocol, and report format |
-| `decompose.js` | Keyword-based task decomposition — maps request → agent types + sub-tasks |
+| `decompose.js` | Explicit task-type routing with keyword fallback — maps request → agent types + sub-tasks |
 
 The orchestrator uses Bob's native `spawn_subagent` primitive to achieve true parallelism.
 No external orchestration framework is needed.
@@ -85,6 +85,11 @@ The dashboard does not invoke Bob. After `POST /runs`, it displays a full,
 ready-to-paste Bob prompt containing the task, repository reference, task type,
 and run UUID. This makes the required operator handoff explicit and prevents
 the dashboard and Bob from writing to different runs.
+
+The frontend keeps the latest run ID in browser-local storage and rehydrates it
+from the backend's authoritative WebSocket snapshot after a reload. History
+rows use the same resume path, so a completed run can be reopened without
+creating a duplicate run.
 
 **Pulling Arisha's future updates:**
 ```bash

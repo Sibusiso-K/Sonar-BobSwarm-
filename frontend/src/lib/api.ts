@@ -1,4 +1,5 @@
 import type { Run, RunSummary, SwarmEvent } from "./types";
+import { responseErrorMessage } from "./errors";
 
 const API_BASE = import.meta.env.VITE_BOBSWARM_API ?? "http://localhost:8787";
 const WS_BASE = API_BASE.replace(/^http/, "ws");
@@ -8,6 +9,11 @@ export class BackendUnreachableError extends Error {
     super(message);
     this.name = "BackendUnreachableError";
   }
+}
+
+async function responseError(res: Response, fallback: string): Promise<Error> {
+  const body = await res.text().catch(() => "");
+  return new Error(responseErrorMessage(body, fallback));
 }
 
 export async function createRun(input: {
@@ -27,8 +33,7 @@ export async function createRun(input: {
   }
 
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Failed to create run (${res.status})`);
+    throw await responseError(res, `Failed to create run (${res.status})`);
   }
 
   return (await res.json()) as Run;
@@ -38,12 +43,12 @@ export async function listRuns(signal?: AbortSignal): Promise<RunSummary[]> {
   let res: Response;
   try {
     res = await fetch(`${API_BASE}/runs`, { signal });
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") throw error;
     throw new BackendUnreachableError();
   }
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Failed to list runs (${res.status})`);
+    throw await responseError(res, `Failed to list runs (${res.status})`);
   }
   return (await res.json()) as RunSummary[];
 }

@@ -5,16 +5,31 @@ import { SwarmStage } from "./components/swarm/SwarmStage";
 import { ReportView } from "./components/report/ReportView";
 import { RunHistory } from "./components/history/RunHistory";
 import { useSwarmRun } from "./hooks/useSwarmRun";
+import type { RunSummary, TaskType } from "./lib/types";
 
 function App() {
-  const { run, roles, timeline, report, connState, error, submitting, start } = useSwarmRun();
+  const { run, roles, timeline, report, connState, error, submitting, start, resume, reset } = useSwarmRun();
   const hasRun = run !== null;
 
-  const handleStart = (input: { taskDescription: string; taskType: string; repoRef: string }) => {
+  const handleStart = (input: { taskDescription: string; taskType: TaskType; repoRef: string }) => {
     start(input);
     // Give the swarm section a beat to mount before scrolling to it.
     requestAnimationFrame(() => {
       document.getElementById("swarm")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  const handleOpenRun = (summary: RunSummary) => {
+    resume(summary.id);
+    requestAnimationFrame(() => {
+      document.getElementById("swarm")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  const handleNewRun = () => {
+    reset();
+    requestAnimationFrame(() => {
+      document.getElementById("run")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };
 
@@ -40,7 +55,7 @@ function App() {
             cards under the hero. */}
         {hasRun ? (
           <>
-            <SwarmStage run={run} roles={roles} timeline={timeline} connState={connState} />
+            <SwarmStage run={run} roles={roles} timeline={timeline} connState={connState} onNewRun={handleNewRun} />
             <ReportView report={report} />
           </>
         ) : (
@@ -55,7 +70,7 @@ function App() {
             </div>
           </section>
         )}
-        <RunHistory />
+        <RunHistory onOpenRun={handleOpenRun} />
       </main>
       <footer className="border-t border-line px-6 py-10 text-center font-mono text-xs text-stone-dim sm:px-10">
         BobSwarm — five specialists, one report.

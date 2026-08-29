@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createRun, subscribeToRun, BackendUnreachableError } from "../lib/api";
-import type { ConnState, Finding, Report, Run, SwarmEvent, TimelineEntry, AgentRole } from "../lib/types";
+import type { ConnState, Finding, Report, Run, SwarmEvent, TimelineEntry, AgentRole, TaskType } from "../lib/types";
 
 export type RoleState = {
   role: AgentRole;
@@ -15,6 +15,32 @@ const ALL_ROLES: AgentRole[] = [
   "onboarding",
   "data_lineage",
 ];
+
+const LAST_RUN_STORAGE_KEY = "bobswarm:last-run-id";
+
+function readLastRunId(): string | null {
+  try {
+    return window.localStorage.getItem(LAST_RUN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeLastRunId(runId: string): void {
+  try {
+    window.localStorage.setItem(LAST_RUN_STORAGE_KEY, runId);
+  } catch {
+    // Storage can be unavailable in private browsing or restricted embeds.
+  }
+}
+
+function clearLastRunId(): void {
+  try {
+    window.localStorage.removeItem(LAST_RUN_STORAGE_KEY);
+  } catch {
+    // Storage can be unavailable in private browsing or restricted embeds.
+  }
+}
 
 export function useSwarmRun() {
   const [run, setRun] = useState<Run | null>(null);
@@ -147,9 +173,47 @@ export function useSwarmRun() {
     [applyLiveEvent, applySnapshot]
   );
 
-  const start = useCallback(
-    async (input: { taskDescription: string; taskType: string; repoRef: string }) => {
+  const connectToRun = useCallback(
+    (runId: string) => {
+      unsubscribeRef.current?.();
+      unsubscribeRef.current = null;
+      setConnState("connecting");
+      unsubscribeRef.current = subscribeToRun(runId, {
+        onOpen: () => setConnState("open"),
+        onError: () => setConnState("error"),
+        onClose: () => setConnState((prev) => (prev === "open" ? "closed" : prev)),
+        onReconnecting: () => setConnState("reconnecting"),
+        onGiveUp: () => {
+          setConnState("error");
+          setError("Lost the connection to the swarm and couldn't reconnect. Try again.");
+          setSubmitting(false);
+        },
+        onEvent: handleEvent,
+      });
+    },
+    [handleEvent]
+  );
+
+  const resume = useCallback(
+    (runId: string) => {
+      if (!runId.trim()) return;
       setError(null);
+      setSubmitting(false);
+      setFindings([]);
+      setReport(null);
+      setTimeline([]);
+      setRoles(Object.fromEntries(ALL_ROLES.map((r) => [r, { role: r, status: "waiting" as const }])));
+      connectToRun(runId.trim());
+    },
+    [connectToRun]
+  );
+
+  const start = useCallback(
+    async (input: { taskDescription: string; taskType: TaskType; repoRef: string }) => {
+      unsubscribeRef.current?.();
+      unsubscribeRef.current = null;
+      setError(null);
+      setRun(null);
       setFindings([]);
       setReport(null);
       setTimeline([]);
@@ -161,21 +225,8 @@ export function useSwarmRun() {
       try {
         const newRun = await createRun(input);
         setRun(newRun);
-        setConnState("connecting");
-
-        unsubscribeRef.current?.();
-        unsubscribeRef.current = subscribeToRun(newRun.id, {
-          onOpen: () => setConnState("open"),
-          onError: () => setConnState("error"),
-          onClose: () => setConnState((prev) => (prev === "open" ? "closed" : prev)),
-          onReconnecting: () => setConnState("reconnecting"),
-          onGiveUp: () => {
-            setConnState("error");
-            setError("Lost the connection to the swarm and couldn't reconnect. Try again.");
-            setSubmitting(false);
-          },
-          onEvent: handleEvent,
-        });
+        writeLastRunId(newRun.id);
+        connectToRun(newRun.id);
       } catch (e) {
         if (e instanceof BackendUnreachableError) {
           setError("Can't reach the BobSwarm events server — is it running on :8787?");
@@ -186,7 +237,7 @@ export function useSwarmRun() {
         setSubmitting(false);
       }
     },
-    [handleEvent]
+    [connectToRun]
   );
 
   const reset = useCallback(() => {
@@ -200,7 +251,18 @@ export function useSwarmRun() {
     setConnState("idle");
     setError(null);
     setSubmitting(false);
+    clearLastRunId();
   }, []);
+
+  useEffect(() => {
+    const lastRunId = readLastRunId();
+    // oxlint-disable-next-line react/set-state-in-effect -- one-time restoration from external localStorage state.
+    if (lastRunId) resume(lastRunId);
+  }, [resume]);
+
+  useEffect(() => {
+    if (run) writeLastRunId(run.id);
+  }, [run]);
 
   useEffect(() => () => unsubscribeRef.current?.(), []);
 
@@ -214,6 +276,7 @@ export function useSwarmRun() {
     error,
     submitting,
     start,
+    resume,
     reset,
     ALL_ROLES,
   };

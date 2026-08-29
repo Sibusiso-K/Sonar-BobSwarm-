@@ -53,21 +53,21 @@ paths, client data, and personal information before committing it.
 
 ### P1 — focused product fixes
 
-- [ ] Persist the active run pointer and rehydrate it from the backend snapshot
+- [x] Persist the latest run pointer and rehydrate it from the backend snapshot
   after reload. Add an explicit reset/new-run path.
-- [ ] Make History rows reopen their run rather than acting as display-only rows.
-- [ ] Change the repository CTA from `Built on Bob 2.0` to `View source`, or
-  link the current wording to an actual IBM Bob page.
+- [x] Make History rows reopen their run rather than acting as display-only rows.
+- [x] Change the repository CTA to `View source`.
 - [ ] Keep the current responsive behavior and verify the completed report at
   desktop and mobile widths.
 
 ### P2 — documentation visuals
 
-- [ ] Correct `agent-flow.svg`: include Onboarding; show four independent
+- [x] Correct `agent-flow.svg`: include Onboarding; show four independent
   specialists in the first wave and Refactorer after Debugger; include the
   dashboard → operator handoff → Bob → MCP events → dashboard/report loop.
-- [ ] Label `landingpagemockupbobswarm.png` as a **conceptual design mockup**
-  and place a real completed-product screenshot beside or above it.
+- [x] Label `landingpagemockupbobswarm.png` as a **conceptual design mockup**.
+- [ ] Place a real completed-product screenshot beside or above the conceptual
+  mockup before final submission.
 - [ ] Treat the broad Figma/Claude/Lovable brief in `UI_UX_DEEP_CRITIQUE.md` as
   post-evidence exploration. Do not replace the real React application or risk
   the final capture for a large redesign.
@@ -81,21 +81,19 @@ paths, client data, and personal information before committing it.
 
 ### P1 — correctness fixes
 
-- [ ] Make the selected dashboard `taskType` control decomposition. Required
+- [x] Make the selected dashboard `taskType` control decomposition. Required
   behavior: `full_audit` selects all five specialists; a specialist task type
-  selects that specialist; text routing may refine scope but must not contradict
-  the explicit selection.
-- [ ] Add tests proving task-type and free-text combinations cannot dispatch the
+  selects that specialist; keyword routing is used only when no explicit task
+  type is supplied.
+- [x] Add tests proving task-type and free-text combinations cannot dispatch the
   wrong set of agents.
-- [ ] Align persona severity with the MCP contract. Either use
-  `breaks|warns|informational` everywhere or define and test one deterministic
-  mapping from `CRITICAL|HIGH|MEDIUM|LOW`.
-- [ ] Replace the newly added Debugger example about an empty-score
+- [x] Align persona severity with the MCP contract by using
+  `breaks|warns|informational` in the active persona examples and system prompt.
+- [x] Replace the newly added Debugger example about an empty-score
   `ZeroDivisionError`. The current fixture already guards empty values at
   `demo/sample-project/app.py:65`, so that example is no longer a real finding.
-- [ ] Re-check `lowConfidenceWarning`: current confidence is never below 0.5 for
-  an assigned agent, so a `< 0.1` warning cannot fire. Either define a reachable
-  threshold with tests or remove the dead signal.
+- [x] Re-check `lowConfidenceWarning`: fallback full-audit assignments now use a
+  reachable `<= 0.5` threshold, covered by tests.
 
 ## Lethabo — Backend and live-run reliability
 
@@ -137,7 +135,7 @@ paths, client data, and personal information before committing it.
 - [ ] Make the authoritative QA claim match the final recorded run. Do not mix
   historical `8 bugs`, `12 defects`, `42 findings`, and current `41 findings`
   without dates and clear labels.
-- [ ] Update `docs/DATA_SOURCES.md` to include `synthetic_input.json`, how it was
+- [x] Update `docs/DATA_SOURCES.md` to include `synthetic_input.json`, how it was
   generated, and the origin/licence of any submitted visual assets.
 
 ## Sibusiso — lead-only gates

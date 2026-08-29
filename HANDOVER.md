@@ -22,7 +22,8 @@ and returns a single structured report.
 User types a task
     → BobSwarm Orchestrator (Bob Agent mode) reads it
     → decompose() splits it into sub-tasks
-    → spawn_subagent × N fires in parallel (each loaded with a specialist persona)
+    → spawn_subagent × 4 fires in parallel (each loaded with a specialist persona)
+    → Refactorer receives Debugger context and runs as the dependent fifth task
     → All agents return findings
     → Orchestrator aggregates into Unified Report
     → Frontend dashboard shows live progress + final report
@@ -45,7 +46,9 @@ the real MCP events. The dashboard does not claim to invoke Bob automatically.
 The backend now enforces `pending → running → complete|error`, makes report
 reads side-effect-free, supports bounded sequenced event replay and snapshots,
 and rejects writes after terminal state. The frontend reconnects and hydrates
-from snapshots. These are real implementation guarantees covered by tests;
+from snapshots, persists the latest run pointer locally for reload recovery,
+and lets operators reopen history rows or start a new run. These are real
+implementation guarantees covered by tests/build checks;
 they are not pre-cached presentation events.
 
 Synthetic data generation is local-only and writes to
@@ -64,7 +67,7 @@ states. They do not replace the required Bob MCP-panel screenshot.
 | Owner | Remaining work that can still cost points | Evidence in this checkout |
 |---|---|---|
 | Sibusiso / lead | Capture the Bob MCP-panel `bobswarm` connected screenshot; record the genuine 90–180 second golden-path video; complete the final submission form and eligibility/disclosure confirmations. | Dashboard task, handoff, and waiting-state screenshots are now present; Bob-panel and video are still external actions. |
-| Arisha | Add her own Bob task-session screenshots and contribution log; optionally load the designed fonts before the final capture. | `docs/bob-sessions/arisha/` contains no screenshots or contribution log in this checkout. |
+| Arisha | Add the required root `bob_sessions/arisha/` consumption-summary screenshot and exported task history; optionally load the designed fonts before the final capture. | Supporting screenshots and contribution log are present under `docs/bob-sessions/arisha/`; official exports remain outstanding. |
 | Farheen | No known implementation blocker; keep persona/routing evidence available for the final video. | Persona and routing checks pass; screenshots and contribution evidence are present. |
 | Lethabo | No known implementation blocker; use the current MCP server for the final live Bob run and keep the server restart/health check in the recording checklist. | Backend lifecycle, snapshot/replay, and live MCP evidence are present. |
 | Mmpoiemang | Prepare the short verbal demo walkthrough and confirm the final expected-output metrics match the recorded run. | Demo validation and fixture evidence pass; walkthrough remains unchecked below. |
@@ -416,7 +419,7 @@ node -e "
 1. Ensure MCP server is registered in Bob's config
 2. Switch Bob to **BobSwarm Orchestrator** mode
 3. Paste: _"Analyse the codebase at demo/sample-project. Find all bugs, document the public API, suggest refactoring, trace the data flow, and write an onboarding guide."_
-4. Verify 5 agents fire in parallel and a Unified Report comes back
+4. Verify 4 independent agents fire in parallel, then Refactorer follows Debugger, and a Unified Report comes back
 
 ---
 
@@ -480,7 +483,7 @@ For my session, I acted as the Orchestrator and gave Bob the prompt: *"Analyse d
 
 ### Lethabo — Backend Engineer
 
-For Session 6, I tasked Bob with validating the frontend-to-backend live bridge. My prompt was: *"Use existing runId 827af00d-9bf3-4aad-8343-40821ca4a115 created by the frontend. Do not create a second run. Dispatch the full 5-agent swarm against this runId so the already-open dashboard receives events live."* Using its tools, Bob made an HTTP `GET` to the backend to verify the pending run existed. Bob then dispatched all 5 subagents in parallel (spawn_subagent). Through the BobSwarm MCP stdio transport tools, the subagents published `record_progress` and `record_finding` events live to the WebSocket connected to the frontend. The session finalized with 41 findings from the 5 specialists with verbatim code quotes—no paraphrasing. It confirmed our dashboard architecture worked cleanly without pre-briefing the subagents.
+For Session 6, I tasked Bob with validating the frontend-to-backend live bridge. My prompt was: *"Use existing runId 827af00d-9bf3-4aad-8343-40821ca4a115 created by the frontend. Do not create a second run. Dispatch the full 5-agent swarm against this runId so the already-open dashboard receives events live."* Using its tools, Bob made an HTTP `GET` to the backend to verify the pending run existed. Bob dispatched four independent subagents in parallel, then dispatched the Refactorer after the Debugger returned. Through the BobSwarm MCP stdio transport tools, the subagents published `record_progress` and `record_finding` events live to the WebSocket connected to the frontend. The session finalized with 41 findings from the 5 specialists with verbatim code quotes—no paraphrasing. It confirmed our dashboard architecture worked cleanly without pre-briefing the subagents.
 
 ---
 
@@ -492,5 +495,5 @@ To polish the UI for our final submission, I prompted Bob to: *"Read docs/ARISHA
 
 ### Mmpoiemang — Data / QA Engineer
 
-To validate the multi-agent QA flow, I tasked Bob with: *"Analyse the codebase at demo/sample-project. Find all bugs, document the public API, suggest refactoring improvements, trace the data flow, and create an onboarding guide."* Bob loaded the agent personas and used `read_project_file` across `app.py`, `utils.py`, and `data/input.json`. Bob successfully spawned all 5 specialized subagents. The SwarmDebugger caught all planted defects (including a silent None propagation and resource leak) while the Data Lineage mapped the failure propagation paths. This proved our automation could detect 12 defects (including criticals and highs) across files in under 5 minutes without manual test suite configuration, aggregating the output cleanly.
+To validate the multi-agent QA flow, I tasked Bob with: *"Analyse the codebase at demo/sample-project. Find all bugs, document the public API, suggest refactoring improvements, trace the data flow, and create an onboarding guide."* Bob loaded the agent personas and used `read_project_file` across `app.py`, `utils.py`, and `data/input.json`. Bob successfully spawned four independent specialized subagents, then the Refactorer after the Debugger. The SwarmDebugger caught the planted defects (including silent None propagation and a resource leak) while the Data Lineage mapped the failure propagation paths. This historical session demonstrated the workflow and aggregation; its 12-defect count is not the authoritative final-run metric.
 

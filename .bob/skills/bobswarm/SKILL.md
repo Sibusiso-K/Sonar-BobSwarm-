@@ -38,9 +38,14 @@ Call the decomposition logic to identify sub-tasks and their agent mappings:
 ```js
 // Node: orchestrator/decompose.js
 const { decompose, buildDispatchPayload } = require('./orchestrator/decompose');
-const subtasks = decompose(userRequest);
+const subtasks = decompose(userRequest, contextFiles, taskType);
 // Returns: [{ agent: 'debugger', task: '...', context: [...files] }, ...]
 ```
+
+When the dashboard supplies a supported `taskType`, pass it as the third
+argument. It is authoritative: `full_audit` selects all five specialists and
+an individual specialist type selects only that specialist. Only omit it when
+there is no dashboard task type and keyword routing is intentionally desired.
 
 Or reason through decomposition manually using the keyword table in the system prompt.
 

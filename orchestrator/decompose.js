@@ -21,6 +21,11 @@ const AGENT_TYPES = {
   DATA_LINEAGE: 'data_lineage',
 };
 
+const TASK_TYPES = {
+  FULL_AUDIT: 'full_audit',
+  ...AGENT_TYPES,
+};
+
 const RUN_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /**
@@ -135,6 +140,8 @@ function matchesKeyword(text, keyword) {
  *
  * @param {string} request - The raw user request.
  * @param {string[]} [contextFiles=[]] - File paths relevant to all sub-tasks.
+ * @param {string} [taskType] - Explicit dashboard task type. When supplied,
+ *   it is authoritative and prevents keyword matches from widening the run.
  * @returns {SubTask[]} Ordered array of sub-tasks (independent tasks first).
  *
  * @typedef {Object} SubTask
@@ -144,30 +151,41 @@ function matchesKeyword(text, keyword) {
  * @property {boolean}  parallel             - Whether this task can run in parallel
  * @property {string[]} dependsOn            - Agent types that must complete before this runs
  * @property {number}   confidence           - Score 0.0–1.0: keyword match strength for this agent
- * @property {boolean}  lowConfidenceWarning - True if confidence < 0.1 (weak signal — orchestrator should flag to user)
+ * @property {boolean}  lowConfidenceWarning - True for an unclassified request
+ *   that fell back to a full audit.
  */
-function decompose(request, contextFiles = []) {
+function decompose(request, contextFiles = [], taskType) {
   if (typeof request !== 'string' || request.trim().length === 0) {
     throw new TypeError('request must be a non-empty string');
   }
   if (!Array.isArray(contextFiles) || contextFiles.some((file) => typeof file !== 'string')) {
     throw new TypeError('contextFiles must be an array of file paths');
   }
+  if (taskType !== undefined && taskType !== null && taskType !== ''
+    && !Object.values(TASK_TYPES).includes(taskType)) {
+    throw new TypeError('taskType must be full_audit or a supported specialist type');
+  }
 
   const lower = request.toLowerCase();
   const matched = new Map(); // agent → confidence score
   const subtasks = [];
 
-  for (const { agent, keywords } of KEYWORD_MAP) {
-    if (keywords.some((keyword) => matchesKeyword(lower, keyword))) {
-      matched.set(agent, computeConfidence(lower, keywords));
+  if (taskType && taskType !== TASK_TYPES.FULL_AUDIT) {
+    matched.set(taskType, 1);
+  } else if (taskType === TASK_TYPES.FULL_AUDIT) {
+    Object.values(AGENT_TYPES).forEach((agent) => matched.set(agent, 1));
+  } else {
+    for (const { agent, keywords } of KEYWORD_MAP) {
+      if (keywords.some((keyword) => matchesKeyword(lower, keyword))) {
+        matched.set(agent, computeConfidence(lower, keywords));
+      }
     }
-  }
 
-  // If nothing matched, default to a full audit
-  if (matched.size === 0) {
-    console.warn('[BobSwarm] No specific task type detected — defaulting to full audit.');
-    Object.values(AGENT_TYPES).forEach((a) => matched.set(a, 0.5));
+    // If nothing matched, default to a full audit.
+    if (matched.size === 0) {
+      console.warn('[BobSwarm] No specific task type detected — defaulting to full audit.');
+      Object.values(AGENT_TYPES).forEach((a) => matched.set(a, 0.5));
+    }
   }
 
   // Build sub-tasks with dependency rules
@@ -188,7 +206,7 @@ function decompose(request, contextFiles = []) {
         parallel: true,
         dependsOn: [],
         confidence: matched.get(agent),
-        lowConfidenceWarning: matched.get(agent) < 0.1,
+        lowConfidenceWarning: matched.get(agent) <= 0.5,
       });
     }
   }
@@ -202,7 +220,7 @@ function decompose(request, contextFiles = []) {
       parallel: !matched.has(AGENT_TYPES.DEBUGGER),
       dependsOn: matched.has(AGENT_TYPES.DEBUGGER) ? [AGENT_TYPES.DEBUGGER] : [],
       confidence: matched.get(AGENT_TYPES.REFACTORER),
-      lowConfidenceWarning: matched.get(AGENT_TYPES.REFACTORER) < 0.1,
+      lowConfidenceWarning: matched.get(AGENT_TYPES.REFACTORER) <= 0.5,
     });
   }
 
@@ -308,6 +326,7 @@ module.exports = {
   decompose,
   buildDispatchPayload,
   AGENT_TYPES,
+  TASK_TYPES,
   KEYWORD_MAP,
   RUN_ID_PATTERN,
   computeConfidence,

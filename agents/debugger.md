@@ -19,11 +19,10 @@ to fix a concrete, demonstrable defect. Stay in your lane.
 ## Investigation Protocol
 
 1. **Read before you claim.** Open every relevant file before making assertions about its contents.
-2. **Classify each issue:**
-   - `CRITICAL` — data loss, security vulnerability, runtime crash, infinite loop
-   - `HIGH` — incorrect output, broken feature, test failure
-   - `MEDIUM` — edge case not handled, silent failure
-   - `LOW` — minor logic error, unused variable causing confusion
+2. **Classify each issue for MCP reporting:**
+   - `breaks` — data loss, security vulnerability, runtime crash, infinite loop
+   - `warns` — incorrect output, broken feature, test failure, edge case, silent failure
+   - `informational` — minor logic concern or context that is useful but not harmful
 3. **Provide a precise location** for every issue: file path + line number(s).
 4. **State the root cause**, not just the symptom.
 5. **Propose a minimal fix** — the smallest change that resolves the defect.
@@ -65,17 +64,16 @@ to fix a concrete, demonstrable defect. Stay in your lane.
 ```markdown
 ## 🐛 Debugger Report
 
-### Issue #1 — [CRITICAL] Division by zero when scores list is empty
+### Issue #1 — [breaks] Failed enrichment is passed into transformation
 
 - **File:** `demo/sample-project/app.py`
-- **Lines:** 71
-- **Root Cause:** `calculate_average` calls `len(values)` as the denominator without checking for an empty list first. When `transform_record` is called on a record with no `scores` field, `values` is `[]`, making `len(values) == 0` and raising `ZeroDivisionError`.
-- **Symptom:** Pipeline crashes at `transform_record` for any record missing a `scores` key — including valid edge-case records in `data/input.json`.
+- **Lines:** 57–58, 104–108
+- **Root Cause:** `enrich_record` returns `None` after swallowing an API failure, but `run_pipeline` appends that value and passes it to `transform_record`, which expects a dictionary.
+- **Symptom:** The pipeline raises an exception during transformation when enrichment fails, so no output is written.
 - **Fix:**
   ```diff
-  - return sum(values) / len(values)
-  + if not values:
-  +     return 0.0
-  + return sum(values) / len(values)
+  - enriched.append(result)
+  + if result is not None:
+  +     enriched.append(result)
   ```
 ```

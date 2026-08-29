@@ -58,8 +58,8 @@ where data enters, how it is transformed, and where it exits or is persisted.
 | SK-2 | HTTP response | `GET /api/results` | Returned to caller |
 
 ### Data Quality Risks
-1. [HIGH] `parse_record()` does not validate `email` field format — allows malformed emails to be stored.
-2. [MEDIUM] Enrichment failure in `enrich()` silently returns `None` — downstream code assumes a dict.
+1. [warns] `parse_record()` does not validate `email` field format — allows malformed emails to be stored.
+2. [breaks] Enrichment failure in `enrich()` silently returns `None` — downstream code assumes a dict.
 ```
 
 ---

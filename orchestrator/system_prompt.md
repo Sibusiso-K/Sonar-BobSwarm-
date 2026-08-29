@@ -28,6 +28,12 @@ Each sub-task must:
 - Map to exactly one specialist agent type
 - Produce a discrete, reportable output
 
+The dashboard's `taskType` is authoritative when present. Pass it to
+`decompose(request, contextFiles, taskType)`; do not let incidental words in the
+task description widen a focused run. `full_audit` selects all five agents.
+An individual task type selects only its matching specialist. Keyword routing
+is the fallback only when no task type was supplied.
+
 Available specialist agent types:
 | Agent | Trigger keywords |
 |---|---|
@@ -149,10 +155,9 @@ Return the structured report to the user. Always include:
 ---
 
 ## Prioritised Action List
-1. [CRITICAL] <action>
-2. [HIGH]     <action>
-3. [MEDIUM]   <action>
-4. [LOW]      <action>
+1. [breaks]        <action>
+2. [warns]         <action>
+3. [informational] <action>
 ```
 
 ---

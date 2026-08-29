@@ -8,8 +8,11 @@
 ## Preview
 
 <p align="center">
-  <img src="./landingpagemockupbobswarm.png" alt="BobSwarm Landing Page Mockup" width="900">
+  <img src="./landingpagemockupbobswarm.png" alt="BobSwarm conceptual landing-page design mockup" width="900">
 </p>
+
+> The image above is a conceptual design mockup. The running React dashboard
+> and live evidence are documented below and in `docs/SUBMISSION_PACKAGE.md`.
 
 ## What is BobSwarm?
 
@@ -98,11 +101,11 @@ BobSwarm/
 
 | Task | Subagents Spawned |
 |---|---|
-| **Debug a codebase** | Debugger, Data Lineage |
-| **Document a project** | Documenter, Onboarding |
-| **Refactor legacy code** | Refactorer, Debugger |
-| **Onboard a new developer** | Onboarding, Documenter |
-| **Trace data flow / lineage** | Data Lineage, Documenter |
+| **Debug a codebase** | Debugger |
+| **Document a project** | Documenter |
+| **Refactor legacy code** | Refactorer |
+| **Onboard a new developer** | Onboarding |
+| **Trace data flow / lineage** | Data Lineage |
 | **Full engineering audit** | All 5 agents |
 
 ---

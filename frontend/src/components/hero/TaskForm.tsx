@@ -16,7 +16,7 @@ export function TaskForm({
   onSubmit,
   submitting,
 }: {
-  onSubmit: (input: { taskDescription: string; taskType: string; repoRef: string }) => void;
+  onSubmit: (input: { taskDescription: string; taskType: TaskType; repoRef: string }) => void;
   submitting: boolean;
 }) {
   const [taskDescription, setTaskDescription] = useState("");
