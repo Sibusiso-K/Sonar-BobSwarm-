@@ -1,3 +1,7 @@
+
+![BobSwarm](bobswarm_logo.gif)
+
+---
 # 🐝 BobSwarm — On-Demand Multi-Agent Orchestrator
 
 > **IBM Bob 2.0 Hackathon Project**
