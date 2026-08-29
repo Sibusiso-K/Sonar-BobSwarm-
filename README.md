@@ -5,6 +5,12 @@
 
 ---
 
+## Preview
+
+<p align="center">
+  <img src="./landingpagemockupbobswarm.png" alt="BobSwarm Landing Page Mockup" width="900">
+</p>
+
 ## What is BobSwarm?
 
 BobSwarm is an on-demand, multi-agent orchestrator built on IBM Bob 2.0. A developer describes a complex engineering task in plain language; Bob decomposes it, spawns specialised subagents that work **in parallel**, and aggregates their evidence into a single structured report.
