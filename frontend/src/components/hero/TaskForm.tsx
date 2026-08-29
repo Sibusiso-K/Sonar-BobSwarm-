@@ -1,15 +1,15 @@
 import { useRef, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, Terminal, FolderGit2 } from "lucide-react";
 import type { TaskType } from "../../lib/types";
 
-const TASK_TYPES: { value: TaskType; label: string; hint: string }[] = [
-  { value: "full_audit", label: "Full audit", hint: "every specialist, one pass" },
-  { value: "debugger", label: "Debug", hint: "chase a specific failure" },
-  { value: "documenter", label: "Document", hint: "explain what's undocumented" },
-  { value: "refactorer", label: "Refactor", hint: "flag structural debt" },
-  { value: "onboarding", label: "Onboarding", hint: "map the repo for a newcomer" },
-  { value: "data_lineage", label: "Data lineage", hint: "trace where data comes from" },
+const TASK_TYPES: { value: TaskType; label: string; hint: string; color: string }[] = [
+  { value: "full_audit", label: "Full audit", hint: "every specialist, one pass", color: "#d9a441" },
+  { value: "debugger", label: "Debug", hint: "chase a specific failure", color: "#e0654f" },
+  { value: "documenter", label: "Document", hint: "explain what's undocumented", color: "#5fa8d9" },
+  { value: "refactorer", label: "Refactor", hint: "flag structural debt", color: "#8b7bd8" },
+  { value: "onboarding", label: "Onboarding", hint: "map the repo for a newcomer", color: "#4bb894" },
+  { value: "data_lineage", label: "Data lineage", hint: "trace where data comes from", color: "#e08a4f" },
 ];
 
 export function TaskForm({
@@ -75,8 +75,9 @@ export function TaskForm({
       <div className="relative rounded-[22px] bg-void-soft/40 p-5 sm:p-6">
         <label
           htmlFor="taskDescription"
-          className="mb-2 block text-xs font-medium uppercase tracking-[0.14em] text-stone"
+          className="mb-3 flex items-center justify-center gap-2 text-center text-xs font-medium uppercase tracking-[0.14em] text-gold-soft"
         >
+          <Terminal className="h-3.5 w-3.5" />
           Describe the task
         </label>
         <textarea
@@ -85,15 +86,16 @@ export function TaskForm({
           onChange={(e) => setTaskDescription(e.target.value)}
           placeholder="e.g. Figure out why the checkout webhook silently drops retries above 3 attempts"
           rows={3}
-          className="w-full resize-none bg-transparent font-display text-xl leading-snug text-paper placeholder:text-stone-dim focus:outline-none sm:text-2xl"
+          className="w-full resize-none bg-transparent text-center font-display text-xl leading-snug text-paper placeholder:text-stone-dim focus:outline-none sm:text-2xl"
         />
 
         <div className="mt-5 flex flex-col gap-4 border-t border-line pt-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex-1">
             <label
               htmlFor="repoRef"
-              className="mb-2 block text-xs font-medium uppercase tracking-[0.14em] text-stone"
+              className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.14em] text-violet-soft"
             >
+              <FolderGit2 className="h-3.5 w-3.5" />
               Repository
             </label>
             <input
@@ -101,7 +103,7 @@ export function TaskForm({
               value={repoRef}
               onChange={(e) => setRepoRef(e.target.value)}
               placeholder="org/repo or local path"
-              className="w-full rounded-lg border border-line bg-void/40 px-3 py-2 font-mono text-sm text-paper placeholder:text-stone-dim focus:border-gold-dim focus:outline-none"
+              className="w-full rounded-lg border border-line bg-void/40 px-3 py-2 font-mono text-sm text-paper placeholder:text-stone-dim focus:border-violet focus:outline-none"
             />
           </div>
 
@@ -123,22 +125,26 @@ export function TaskForm({
           </button>
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">
-          {TASK_TYPES.map((t) => (
-            <button
-              key={t.value}
-              type="button"
-              onClick={() => setTaskType(t.value)}
-              title={t.hint}
-              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                taskType === t.value
-                  ? "border-gold-dim bg-gold/10 text-gold-soft"
-                  : "border-line text-paper-dim hover:border-line-strong hover:text-paper"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+        <div className="mt-5 flex flex-wrap justify-center gap-2">
+          {TASK_TYPES.map((t) => {
+            const selected = taskType === t.value;
+            return (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => setTaskType(t.value)}
+                title={t.hint}
+                className="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                style={{
+                  color: selected ? t.color : `${t.color}b3`,
+                  borderColor: selected ? `${t.color}80` : `${t.color}33`,
+                  background: selected ? `${t.color}1A` : `${t.color}0d`,
+                }}
+              >
+                {t.label}
+              </button>
+            );
+          })}
         </div>
       </div>
     </motion.form>
