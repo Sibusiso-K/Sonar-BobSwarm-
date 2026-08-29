@@ -11,7 +11,7 @@ themselves. The competition requires Bob task-session evidence in the repo:
 1. A screenshot of Bob's **task session consumption summary**.
 2. The matching Markdown file exported from Bob with **Export task history**.
 
-The current screenshots in `docs/bob-sessions/mmpoiemang/` show useful workflow
+The current screenshots in `docs/bob-sessions/mmopiemang/` show useful workflow
 states, but they do not replace those two official artifacts.
 
 ## Where to put the official artifacts
@@ -19,7 +19,7 @@ states, but they do not replace those two official artifacts.
 Put the files in the root-level folder below, not only under `docs/`:
 
 ```text
-bob_sessions/mmpoiemang/
+bob_sessions/mmopiemang/
   01-task-consumption-summary.png
   01-task-history.md
 ```
@@ -27,7 +27,7 @@ bob_sessions/mmpoiemang/
 If you are documenting another relevant Bob task, use the next matching pair:
 
 ```text
-bob_sessions/mmpoiemang/
+bob_sessions/mmopiemang/
   02-task-consumption-summary.png
   02-task-history.md
 ```
@@ -39,7 +39,7 @@ Do not create or edit these files by hand: they must be the real Bob outputs.
 ## What to update in the contribution log
 
 After the files are added, update
-`docs/bob-sessions/mmpoiemang/CONTRIBUTIONS.md` with:
+`docs/bob-sessions/mmopiemang/CONTRIBUTIONS.md` with:
 
 - the Bob task date and prompt;
 - what Bob actually did and which outputs were produced;
@@ -68,7 +68,7 @@ Drive/YouTube/Vimeo recording from the contribution log instead.
 ## Definition of done
 
 - [X] Official screenshot and matching Bob-exported Markdown are in
-  `bob_sessions/mmpoiemang/`.
+  `bob_sessions/mmopiemang/`.
 - [X] Contribution log records the exact validation command, result, and
   evidence filenames.
 - [X] Claims match the final run and do not imply an unmeasured speedup.
