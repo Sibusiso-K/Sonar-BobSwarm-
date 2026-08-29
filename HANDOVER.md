@@ -2,6 +2,11 @@
 
 > **Maintained by the whole team.** When you finish a piece of work, update your section and push.
 > Keep it honest — mark things done only when they actually work end-to-end.
+>
+> **Current competition action sheet:**
+> [`docs/COMPETITION_ACTIONS_2026-08-29.md`](docs/COMPETITION_ACTIONS_2026-08-29.md).
+> Every owner should complete the P0 evidence/compliance tasks there before
+> broad product changes. Sibusiso owns the final claims, video, and submission gates.
 
 ---
 
