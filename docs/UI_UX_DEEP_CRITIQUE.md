@@ -20,6 +20,14 @@
 > a better answer to Part 1's friction than what I'd proposed (see note
 > there).
 
+> **Lead review update — 2026-08-29:** I agree with the root cause and the
+> need for a reload-safe resume path. I am narrowing two claims below against
+> the current tree: a timing-comparison harness now exists, although its first
+> manual baseline is explicitly invalid as performance evidence, and
+> `ReportView` already renders literal evidence in monospace code blocks with
+> severity-specific visual weight. The remaining design issue is density,
+> navigation, and information hierarchy—not absence of code rendering.
+
 ---
 
 ## Part 1 — the "swarm always resets" bug, diagnosed
@@ -59,20 +67,29 @@ randomly — it's the *complete absence* of a "resume" path, so anything that
 remounts the page reads as "it reset."
 
 **The fix, concretely:**
-1. On `start()`, write `{ runId, taskDescription, taskType, repoRef }` to
-   `localStorage`.
-2. On mount, check `localStorage` for an active run ID. If present, call
-   `GET /runs/:id/report` (already exists, already non-mutating as of
-   today's fix) to get current state, then `subscribeToRun()` to resume
-   live updates — same code path `start()` already uses, just triggered on
-   mount instead of on submit.
-3. Bonus, cheap once the above exists: the History panel already lists
-   pending/running runs via `GET /runs` — clicking one of those rows could
-   trigger the same resume logic, which also solves "someone else opens the
-   page and wants to watch an already-running swarm" for free.
+1. On `start()`, persist only `{ runId, taskDescription, taskType, repoRef }`
+   as an active-run pointer. Do not persist mutable findings or timeline data
+   as a second source of truth.
+2. On mount, prefer an explicit `?run=<id>` URL parameter, then fall back to
+   the active-run pointer. Call `GET /runs/:id/snapshot` to hydrate the full
+   authoritative state, then use `subscribeToRun()` with the last sequence to
+   resume live updates. The snapshot endpoint is the right source because
+   `/report` does not contain role progress or the event timeline.
+3. Clear the active pointer only when the user explicitly resets or when a
+   terminal `complete`/`error` state has been successfully hydrated. Keep the
+   completed run in History.
+4. Add a real History selection action for pending/running rows once the hook
+   accepts a requested run ID. This is useful, but it is a follow-up to the
+   reload-safe resume path rather than a reason to expand the run protocol now.
 
-This is maybe 30-40 lines of code, all in `useSwarmRun.ts` plus a small
-`onClick` in `RunHistory.tsx`. High leverage, not a big lift.
+This is browser-session resilience, not durable persistence: because the
+current backend store is intentionally in-memory, a server restart still ends
+the run. The UI and submission copy should say "resume after refresh while the
+bridge is alive," not imply production-grade durability.
+
+This is a small, scoped change across `useSwarmRun.ts`, the API helper, and a
+History selection action. It is high leverage, but should still be tested as a
+real lifecycle feature rather than treated as a cosmetic localStorage tweak.
 
 ---
 
@@ -85,17 +102,16 @@ uniformity, which are the two most common tells of AI-generated (Lovable /
 v0 / Bolt-style) design, even in hand-written code.** Naming this plainly
 because you asked for a full critique, not a gentle one.
 
-### Tell #1 — every section is the same shape
+### Tell #1 — the lower sections repeat the same shape
 
-Hero, Swarm stage, Report, History: all four are
-`border-t border-line px-6 py-24`, all four open with the same
+The three lower sections—Swarm stage, Report, and History—are all
+`border-t border-line px-6 py-24`, and all three open with the same
 `font-mono text-xs uppercase tracking-[0.14em] text-stone` label followed by
-a `font-display text-3xl/4xl` heading. Scroll the page and every section
-announces itself identically. This is *exactly* what a template generator
-produces — one section component, reused four times with different content.
-A considered product breaks this rhythm on purpose: different section
-heights, at least one asymmetric or bento-style composition, not four
-uniform full-bleed blocks stacked top to bottom.
+a `font-display text-3xl/4xl` heading. The Hero already has an asymmetric
+two-column composition, so the issue is specifically the repeated lower data
+sections. A considered product breaks this rhythm on purpose: different
+section heights or a bento-style data view instead of three uniform full-bleed
+blocks stacked top to bottom.
 
 ### Tell #2 — everything is the same container
 
@@ -106,19 +122,22 @@ type by function: a raw list is not a card is not a bordered table is not a
 full-bleed panel. Applying one "nice card style" everywhere is a strong
 signal of a generated design system, not an art-directed one.
 
-### Tell #3 — the actual data is under-designed relative to the product's value
+### Tell #3 — the actual data still needs a denser developer-tool hierarchy
 
 This is the one that matters most. **The product's entire value proposition
-is evidence-backed findings — literal quoted code, not paraphrase.** Right
-now those findings render as prose in soft rounded boxes. Compare to what
+is evidence-backed findings — literal quoted code, not paraphrase.** The
+current tree has already corrected the most serious version of this: findings
+render as literal monospace code blocks, and `breaks` findings get a left
+accent border. The remaining issue is that the evidence is still nested
+inside roomy, repeated glass cards rather than presented as dense, scannable
+developer-tool rows with stronger path/line/severity navigation. Compare to what
 dev tools with real design budgets do with equivalent data: Linear renders
 data in dense, scannable rows with real typographic hierarchy; Warp and
 Raycast use monospace and real tool output as the *hero visual itself*, not
 decoration around it; GitHub's own newer UI uses syntax-aware code blocks
 with inline diff markers, not paragraph text describing a diff. The evidence
-field — literal source code — deserves a monospace block with a subtle
-background at minimum (already flagged in `ARISHA_FRONTEND_POLISH.md` §4,
-worth escalating from "nice to have" to "do this").
+field now meets the basic monospace-block requirement; syntax-aware line
+markers, tighter rows, and faster scanning are the remaining opportunities.
 
 ### Tell #4 — `LivingSwarmField` is technically the most impressive thing
 built and it's being used as wallpaper
@@ -206,9 +225,9 @@ This needs to be sayable in one breath, in the video, without hedging:
 > You can watch the swarm work and watch it catch its own mistakes, live.
 
 Versus the two nearest comparisons:
-- **GitHub Copilot code review / generic AI review bots**: single-pass,
-  no visible process, no self-verification story, doesn't reach COBOL/RPG
-  or anything outside CodeQL's supported languages.
+- **GitHub Copilot code review / generic AI review bots**: generally present a
+  single-pass review with less visible specialist process and no equivalent
+  evidence-gated swarm dashboard in this product comparison.
 - **Generic multi-agent demo repos** (AutoGen/CrewAI-style showcases):
   usually terminal/log output only, no real product surface. This has an
   actual UI a non-technical judge could watch and understand in 10 seconds.
@@ -242,22 +261,26 @@ this lands):**
 - ~~Frontend test coverage~~ **Done, wasn't even on this list** —
   `frontend/tests/*.test.ts`, 5/5 pass, using Node's native TS stripping
   (`--experimental-strip-types`) instead of adding a test framework dependency.
-- ~~Commit `package-lock.json`~~ **Done** for `mcp-server`. Worth checking:
-  does `frontend/package-lock.json` need the same treatment, or is there a
-  reason it's still excluded?
+- **Reproducible installs:** `mcp-server/package-lock.json` is committed, but
+  `frontend/package-lock.json` is still absent. That is a real clean-checkout
+  follow-up: either commit the frontend lockfile or document why the frontend
+  intentionally relies on an external lock/install process.
 - ~~One-command launch script~~ **Done** — `demo/run_demo.ps1` (Windows) runs
   a 6-test preflight (`validate_demo.py`) then prints the exact handoff
   steps. Tested it directly, works cleanly.
-- **Still open:** the localStorage/reset gap (Part 1). Nothing else on this
-  list is outstanding as far as I can tell — genuinely good progress.
+- **Still open:** the localStorage/reset gap (Part 1), the frontend lockfile
+  decision, and the remaining evidence/presentation gates. The core backend
+  hardening and manual Bob handoff work are genuinely complete.
 
 **Creativity & innovation (currently ~3.5/5):**
-- Real GitHub PR integration — a subagent reads an actual PR diff via the
-  GitHub API and posts findings back as a real PR comment. Biggest single
-  swing available, scoped already in `BACKEND_CONCEPTS_AND_VALUE_PROP.md`,
-  never built.
-- Stage the Reviewer persona catching a fabricated finding, live, on camera
-  — zero new code, pure demo staging, most memorable moment available.
+- Real GitHub PR integration is a plausible post-contest extension, but it is
+  not the best pre-submission move: it adds credentials, network dependency,
+  and a second product story while the existing local-repository workflow is
+  already demonstrable.
+- Do not stage a fabricated finding as if it were spontaneous. If the team
+  wants a memorable trust moment, demonstrate the existing evidence contract
+  rejecting an empty or unsupported finding, and label it explicitly as a
+  validation step.
 - A second language in the same run (one small JS/Go fixture) — rebuts
   "is this actually general or hardcoded to one demo."
 
@@ -273,13 +296,14 @@ this lands):**
   findings overlapping within a 15-second window." That's genuine swarm-
   speed evidence, and it's framed correctly (a recorded result, not an
   estimate — matches the doc's own "claims discipline" section).
-- **Still the one gap that matters most here:** that's swarm speed alone,
-  not a comparison. The rubric's literal word is "measurable impact" — what's
-  still missing is *a human doing the same investigation by hand, timed
-  honestly, next to that 94 seconds*. Without the "vs. what" half, it's a
-  fast demo, not yet a demonstrated time-saving. This is the one item from
-  the original list still fully open, and probably the single highest-
-  leverage thing left across the whole rubric.
+- **The comparison now exists as a harness, but not yet as valid speed evidence.**
+  `demo/TIMING_COMPARISON.md` records a 60.2-second manual attempt next to the
+  94-second BobSwarm run, then correctly disqualifies that manual number
+  because the investigator already knew this fixture. The highest-leverage
+  remaining action is therefore a genuinely blind manual run by a teammate
+  who has not studied `app.py`/`utils.py`, using the same five deliverables and
+  timing rule. Until that exists, do not claim that BobSwarm is faster; claim
+  parallel coverage, first-finding overlap, and evidence-backed breadth.
 - Show it scaling: run against a second, larger fixture, report comparable
   time.
 
@@ -302,12 +326,10 @@ approach instead.
 
 ## Part 6 — other things worth doing before this goes wider
 
-- **Arisha should watch a real live run before doing more UI work.** Per
-  the review and this session's history, most of her build/testing has
-  been against mocked or self-driven data, not a genuine Bob-driven swarm.
-  Seeing real findings land live would sharpen exactly the kind of design
-  decisions this doc is asking for — designing against real data beats
-  designing against assumptions about what the data looks like.
+- **Arisha should validate the final visual hierarchy against a real live run**
+  before the recording. This is now a submission-evidence and polish action,
+  not a claim that the current frontend is still mocked; the integration
+  baseline and handover record genuine Bob-linked live rendering.
 - Once you've amended this (Sibusiso), it goes to the whole team — Arisha
   and Farheen specifically should weigh in on Part 2/3 before anyone starts
   building against it, since it touches both their areas.
@@ -318,3 +340,36 @@ approach instead.
 
 Push back, cut what you disagree with, add what's missing. This is a
 starting position, not a directive.
+
+## Sibusiso — lead response
+
+### Agreed and adopted
+
+- The reset report is a real reload-resume gap. The backend can retain a run
+  while the dashboard loses its React state, so the fix should persist a small
+  active-run pointer and rehydrate from the authoritative snapshot.
+- The lower-page composition is too repetitive for a product whose strongest
+  value is information density. The next visual improvement should target the
+  Report view, not add more decorative background effects.
+- The 94-second BobSwarm result needs a valid blind manual baseline before the
+  team makes a time-saving claim.
+
+### Pushed back / cut
+
+- The critique no longer says that no timing comparison exists; the harness is
+  present, but its first baseline is not valid evidence.
+- The critique no longer says evidence is rendered as prose. Code blocks and
+  severity weighting are already shipped; the open issue is density and
+  scanning.
+- GitHub PR integration and a staged fabricated finding are cut from the
+  pre-submission plan. They create risk and distract from the Bob-native,
+  evidence-gated local-repository story.
+
+### Proposed order of work
+
+1. Implement reload-safe snapshot resume, with URL override and an explicit
+   reset path.
+2. Run one blind manual timing baseline and update `demo/TIMING_COMPARISON.md`
+   without carrying forward the caveated number.
+3. Make one deliberate Report-view density pass, then freeze the product for
+   the genuine Bob video and evidence capture.
