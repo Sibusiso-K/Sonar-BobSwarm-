@@ -59,12 +59,12 @@ The live product section must occupy at least 90 seconds. Keep the browser, Bob,
 
 ### Machine-verifiable
 
-- [ ] `npm test` passes in `mcp-server/`.
-- [ ] Frontend lint, tests, and production build pass.
-- [ ] Orchestrator routing tests pass and fail on a deliberately wrong expectation.
-- [ ] Demo validation passes on Windows and POSIX systems.
-- [ ] A clean checkout can be started from the README without undocumented steps.
-- [ ] The backend serves the current `GET /runs` and snapshot/replay behavior.
+- [x] `npm test` passes in `mcp-server/`.
+- [x] Frontend lint, tests, and production build pass.
+- [x] Orchestrator routing tests pass and fail on a deliberately wrong expectation.
+- [x] Demo validation passes on Windows and POSIX systems.
+- [x] A clean checkout can be started from the README without undocumented steps.
+- [x] The backend serves the current `GET /runs` and snapshot/replay behavior.
 - [ ] The working tree is clean and the public remote contains the final commit.
 
 ### Human evidence and compliance
@@ -75,7 +75,7 @@ The live product section must occupy at least 90 seconds. Keep the browser, Bob,
 - [ ] No credentials, personal information, client data, or unlicensed material is committed.
 - [ ] The public repository URL is confirmed in the submission form.
 - [ ] The final video is 90 seconds to 3 minutes, narrated, and its sharing permissions are tested in a private browser.
-- [ ] D2 is at most 500 words and D3 names the actual Bob tools and decisions shown in evidence.
+- [x] D2 is at most 500 words and D3 names the actual Bob tools and decisions shown in evidence.
 - [ ] The team submits before the internal 12:00 SAST target and makes no post-deadline changes.
 
 ## Claims discipline

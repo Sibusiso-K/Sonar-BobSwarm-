@@ -1,5 +1,11 @@
 # BobSwarm Current-State Review
 
+> Historical review retained for auditability. The authoritative current
+> status is the integration baseline at the top of `HANDOVER.md`; older notes
+> about missing snapshots and the dashboard handoff UI have been superseded by
+> the current implementation. Remaining evidence gaps are still intentionally
+> listed below.
+
 **Prepared for:** Sibusiso — Lead / Orchestrator  
 **Review date:** 29 August 2026  
 **Reviewed branch:** `main`  
@@ -302,5 +308,4 @@ The deadline recorded in the repository is **Sunday, 30 August 2026 at 16:00 SAS
 ## Final decision
 
 **Start from the synchronized `main` and preserve the demonstrated manual workflow for the submission.** Do not merge the old frontend branch wholesale. Do not spend the remaining submission window rebuilding the dispatcher unless the mandatory evidence and video are already complete. The strongest immediate outcome is an honest, polished demonstration of the real manual bridge, followed by targeted lifecycle and test fixes.
-
 

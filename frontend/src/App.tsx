@@ -1,5 +1,6 @@
 import { Nav } from "./components/layout/Nav";
 import { Hero } from "./components/hero/Hero";
+import { BobHandoff } from "./components/hero/BobHandoff";
 import { SwarmStage } from "./components/swarm/SwarmStage";
 import { ReportView } from "./components/report/ReportView";
 import { RunHistory } from "./components/history/RunHistory";
@@ -22,6 +23,17 @@ function App() {
       <Nav />
       <main>
         <Hero onSubmit={handleStart} submitting={submitting} error={error} />
+        {hasRun && run?.status === "pending" && (
+          <section id="handoff" className="border-t border-line px-6 py-10 sm:px-10">
+            <div className="mx-auto max-w-3xl">
+              <p className="font-mono text-xs uppercase tracking-[0.14em] text-stone">Stage 1.5</p>
+              <h2 className="mt-1 font-display text-2xl font-medium text-paper sm:text-3xl">
+                Keep Bob in control
+              </h2>
+              <BobHandoff run={run} />
+            </div>
+          </section>
+        )}
         {/* Stage 2 and the report only take their full-height, glassy empty-state
             treatment once a run actually exists — before that, a single compact
             teaser keeps the page from reading as three stacked "nothing here yet"

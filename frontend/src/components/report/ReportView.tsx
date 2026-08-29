@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { Report, Severity } from "../../lib/types";
 
 const SEVERITY_META: Record<
@@ -40,6 +40,23 @@ export function ReportView({ report }: { report: Report | null }) {
         </h2>
 
         {!report ? (
+          <div className="glass mt-8 rounded-2xl p-10 text-center text-stone-dim">
+            The report assembles here once every specialist reports back.
+          </div>
+        ) : report.status === "error" ? (
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="glass mt-8 flex flex-col items-center gap-3 rounded-2xl border-breaks/30 p-10 text-center"
+          >
+            <AlertTriangle className="h-8 w-8 text-breaks" />
+            <p className="font-display text-xl text-paper">Run stopped before completion</p>
+            <p className="max-w-xl text-sm text-stone-dim">
+              {typeof report.error === "string" ? report.error : report.error?.message ?? "The swarm reported an unknown error."}
+            </p>
+          </motion.div>
+        ) : report.status !== "complete" && report.isFinal !== true ? (
           <div className="glass mt-8 rounded-2xl p-10 text-center text-stone-dim">
             The report assembles here once every specialist reports back.
           </div>

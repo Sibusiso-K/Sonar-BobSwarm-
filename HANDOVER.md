@@ -49,13 +49,29 @@ Synthetic data generation is local-only and writes to
 `repoRef`. Synthetic fixtures and replay are appropriate for zero-cost team
 rehearsals, but the submitted video must show one genuine Bob-driven run.
 
+The lead's dashboard evidence is now committed under
+`docs/bob-sessions/sibusiso/`: `01-task-prompt.png` and
+`02-bob-handoff.png`. These prove the real task-creation and operator-handoff
+states. They do not replace the required Bob MCP-panel screenshot.
+
+### Active submission blockers after the current integration pass
+
+| Owner | Remaining work that can still cost points | Evidence in this checkout |
+|---|---|---|
+| Sibusiso / lead | Capture the Bob MCP-panel `bobswarm` connected screenshot; record the genuine 90–180 second golden-path video; complete the final submission form and eligibility/disclosure confirmations. | Dashboard task, handoff, and waiting-state screenshots are now present; Bob-panel and video are still external actions. |
+| Arisha | Add her own Bob task-session screenshots and contribution log; optionally load the designed fonts before the final capture. | `docs/bob-sessions/arisha/` contains no screenshots or contribution log in this checkout. |
+| Farheen | No known implementation blocker; keep persona/routing evidence available for the final video. | Persona and routing checks pass; screenshots and contribution evidence are present. |
+| Lethabo | No known implementation blocker; use the current MCP server for the final live Bob run and keep the server restart/health check in the recording checklist. | Backend lifecycle, snapshot/replay, and live MCP evidence are present. |
+| Mmpoiemang | Prepare the short verbal demo walkthrough and confirm the final expected-output metrics match the recorded run. | Demo validation and fixture evidence pass; walkthrough remains unchecked below. |
+| Everyone | Confirm eligibility, employer/affiliation disclosure, and permission to participate before submission. | This cannot be verified from repository files and remains a team action. |
+
 ### Lead next actions before submission
 
 - Capture one clean golden-path video with the dashboard UUID handoff visible,
   Bob's parallel `spawn_subagent` calls visible, and the final report grounded
   in literal source evidence.
-- Capture the missing Sibusiso/Arisha session screenshots and complete the
-  outstanding team usage statements.
+- Capture the remaining Bob MCP-panel screenshot for Sibusiso, obtain Arisha's
+  required Bob session evidence, and complete the outstanding team usage statements.
 - Restart the events server immediately before recording so port 8787 serves
   the current checkout; verify `/health` and `/runs` first.
 - Reconcile any remaining historical notes below this section only when they
@@ -143,7 +159,8 @@ docs/
 - [x] **Live end-to-end orchestration run complete** — 5 agents, 4 parallel + 1 sequential, full Unified Report produced and saved in `docs/bob-sessions/sibusiso/`
 - [x] `docs/bob-sessions/sibusiso/CONTRIBUTIONS.md` created — session log for D3 submission
 - [x] `orchestrator/decompose.js` confirmed correct against full-audit task (5/5 agents triggered correctly)
-- [ ] Add MCP panel screenshot to `docs/bob-sessions/sibusiso/` — verify `bobswarm` shows Connected (green) after next Bob restart
+- [x] Add dashboard task/handoff screenshots to `docs/bob-sessions/sibusiso/` — `01-task-prompt.png` and `02-bob-handoff.png`
+- [ ] Add Bob MCP panel screenshot to `docs/bob-sessions/sibusiso/` — verify `bobswarm` shows Connected (green) after a Bob restart
 
 ### Creative freedom
 The system prompt and skill are templates — you have full freedom to rewrite,
@@ -239,6 +256,10 @@ integration now runs over a separate HTTP+WS side-channel
   once via a real Bob MCP session with real findings rendering.
 - Task input → `POST /runs` → real run created, dashboard subscribes to its
   own WebSocket automatically.
+- The copy-ready Bob handoff is now rendered in the live pending-run UI with
+  the exact UUID and repository context visible before dispatch.
+- Frontend reconnects resume with the last event sequence, hydrate from the
+  backend snapshot, deduplicate replayed findings, and render terminal errors.
 - **Run history panel + live elapsed timer** — the stretch goal from the
   old list, done (added on top of her build, PR #4).
 - Ambient `SwarmField` background (hand-rolled animated SVG), warm dark
@@ -251,8 +272,8 @@ integration now runs over a separate HTTP+WS side-channel
       polish plan (positioning, wording, flow) in
       `docs/ARISHA_FRONTEND_POLISH.md`, with a ready-to-paste Bob prompt at
       the bottom of that doc.
-- [ ] A few additive polish items (evidence code-styling, severity visual
-      weight, zero-findings empty state, full-run-ID copy button) — same doc.
+- [x] Additive polish items (evidence code-styling, severity visual weight,
+      zero-findings empty state, full-run-ID copy button) are complete.
 
 ### Creative freedom
 The UI template gives you the structure and the colour palette (dark theme, amber).

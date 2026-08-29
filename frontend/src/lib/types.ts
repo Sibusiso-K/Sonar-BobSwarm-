@@ -119,6 +119,8 @@ export interface RunSnapshot {
   report: Report;
   events: SequencedSwarmEvent[];
   progressByRole?: Record<string, SequencedSwarmEvent>;
+  afterSequence: number;
+  firstAvailableSequence: number;
   lastSequence: number;
   truncated?: boolean;
 }

@@ -3,6 +3,22 @@
 > Raw material for the D3 "how IBM Bob was used" written statement.
 > One entry per session, written immediately after.
 
+### Evidence addendum — 2026-08-29
+
+Captured from the running BobSwarm dashboard after creating a real pending run
+for the full-audit prompt:
+
+- `01-task-prompt.png` — the lead's audit task and repository selected before dispatch.
+- `02-bob-handoff.png` — the generated UUID, exact copy-ready Bob handoff, and the
+  dashboard's explicit "Keep Bob in control" state.
+- `03-awaiting-bob.png` — the five specialist cards and live timeline waiting for
+  Bob to begin the real orchestration.
+
+These screenshots document the dashboard/operator portion of the workflow. A
+Bob MCP panel screenshot showing the `bobswarm` connection still needs to be
+captured from Bob itself; the dashboard screenshots must not be presented as a
+substitute for that evidence.
+
 ---
 
 ### Session 1 — Live End-to-End Orchestration Test — 2026-08-28
@@ -51,5 +67,7 @@ All subagents read actual file contents before reporting. Every finding included
 | Refactorer | 7 recommendations | HIGH: extract enrichment loop, replace merge_dicts, immutable transform |
 
 **What still needs doing from this session:**
-- [ ] Capture screenshot of Bob's MCP panel showing `bobswarm` connected (green) during next Bob restart
-- [ ] Verify `record_finding` calls flow through stdio transport to WebSocket dashboard (Lethabo's remaining gap)
+- [x] Capture the task prompt, generated run-ID handoff, and awaiting state in the running dashboard — see the three PNGs above
+- [x] Verify `record_finding` calls flow through stdio transport to the WebSocket dashboard — confirmed in the current integration baseline
+- [ ] Capture screenshot of Bob's MCP panel showing `bobswarm` connected (green) during a Bob restart
+- [ ] Record the final genuine Bob-driven golden-path run for the submission video

@@ -72,6 +72,7 @@ export function subscribeToRun(runId: string, handlers: SubscribeHandlers): () =
   let attempt = 0;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   let stopped = false;
+  let lastSequence = 0;
 
   const clearTimer = () => {
     if (reconnectTimer) {
@@ -82,7 +83,7 @@ export function subscribeToRun(runId: string, handlers: SubscribeHandlers): () =
 
   const connect = () => {
     if (stopped) return;
-    socket = new WebSocket(`${WS_BASE}/runs/${runId}/events`);
+    socket = new WebSocket(`${WS_BASE}/runs/${runId}/events?after=${lastSequence}`);
 
     socket.onopen = () => {
       attempt = 0;
@@ -92,8 +93,14 @@ export function subscribeToRun(runId: string, handlers: SubscribeHandlers): () =
     socket.onmessage = (msg) => {
       try {
         const parsed = JSON.parse(msg.data) as SwarmEvent;
+        if (parsed.type === "snapshot") {
+          lastSequence = Math.max(lastSequence, parsed.lastSequence);
+        } else if (typeof parsed.sequence === "number") {
+          lastSequence = Math.max(lastSequence, parsed.sequence);
+        }
         handlers.onEvent(parsed);
-        if (parsed.type === "run_complete") {
+        if (parsed.type === "run_complete" ||
+            (parsed.type === "snapshot" && (parsed.run.status === "complete" || parsed.run.status === "error"))) {
           // The run finished cleanly — no need to keep the socket, and no
           // need to reconnect if the server closes it right after.
           stopped = true;
