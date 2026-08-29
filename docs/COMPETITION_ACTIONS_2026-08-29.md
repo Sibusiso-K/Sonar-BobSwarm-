@@ -27,7 +27,7 @@ bob_sessions/
   arisha/
   farheen/
   lethabo/
-  mmpoiemang/
+  mmopiemang/
   sibusiso/
 ```
 
@@ -120,7 +120,7 @@ paths, client data, and personal information before committing it.
 ### P0 — required evidence
 
 - [ ] Add consumption-summary screenshots and matching exported task-history
-  Markdown files under `bob_sessions/mmpoiemang/`.
+  Markdown files under `bob_sessions/mmopiemang/`.
 - [ ] Re-run the final fixture validation against the exact commit used in the
   video and record the command/result in the contribution log.
 - [ ] Reconcile expected defect counts with the final fixture and recorded run.
@@ -128,7 +128,7 @@ paths, client data, and personal information before committing it.
 ### P1 — claims and measurement
 
 - [ ] Remove the unsupported `2–4 hours` manual-investigation claim from
-  `docs/bob-sessions/mmpoiemang/CONTRIBUTIONS.md` unless measured evidence exists.
+  `docs/bob-sessions/mmopiemang/CONTRIBUTIONS.md` unless measured evidence exists.
 - [ ] Run a genuinely blind manual baseline using the same five-deliverable
   prompt, or explicitly state that no valid baseline was available. Do not use
   the existing 60.2-second recall run as speed evidence.
