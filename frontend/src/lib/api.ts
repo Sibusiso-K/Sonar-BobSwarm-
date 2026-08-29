@@ -34,10 +34,10 @@ export async function createRun(input: {
   return (await res.json()) as Run;
 }
 
-export async function listRuns(): Promise<RunSummary[]> {
+export async function listRuns(signal?: AbortSignal): Promise<RunSummary[]> {
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}/runs`);
+    res = await fetch(`${API_BASE}/runs`, { signal });
   } catch {
     throw new BackendUnreachableError();
   }
