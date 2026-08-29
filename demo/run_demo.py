@@ -3,6 +3,15 @@ import sys
 import tempfile
 from pathlib import Path
 
+# Windows' default console codepage (cp1252 or similar) can't encode the
+# box-drawing characters and emoji this script prints, crashing with
+# UnicodeEncodeError before step 1 even runs. Reconfigure stdout/stderr to
+# UTF-8 explicitly rather than stripping the characters -- available on
+# Python 3.7+, and this script already requires 3.10+.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 DEMO_DIR = Path(__file__).parent.resolve()
 PROJECT_DIR = DEMO_DIR / "sample-project"
 EXPECTED = DEMO_DIR / "expected_output.md"
