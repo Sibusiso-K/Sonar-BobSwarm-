@@ -53,8 +53,10 @@
 **Data quality risks:**
 1. `enrich_record` failure produces `None` in the record list — silent data corruption and downstream crashes
 
+---
+
 ## 📊 Bobalytics — Swarm Execution Metrics
 * **Subagents Dispatched:** 5 parallel agents (Debugger, Documenter, Refactorer, Onboarding, Lineage)
 * **Total Execution Time:** ~12.4 seconds
-* **Total Findings:** 3 Bugs, 2 Refactorings, 1 Public API Spec, 1 Data Lineage Map
+* **Total Findings:** 2 High Severity Bugs, 2 Refactorings, 1 Public API Spec, 1 Data Lineage Map
 * **Bugs by Severity:** 2 High
