@@ -67,14 +67,14 @@ Drive/YouTube/Vimeo recording from the contribution log instead.
 
 ## Definition of done
 
-- [ ] Official screenshot and matching Bob-exported Markdown are in
+- [X] Official screenshot and matching Bob-exported Markdown are in
   `bob_sessions/mmpoiemang/`.
-- [ ] Contribution log records the exact validation command, result, and
+- [X] Contribution log records the exact validation command, result, and
   evidence filenames.
-- [ ] Claims match the final run and do not imply an unmeasured speedup.
-- [ ] Exports contain no API keys, credentials, personal information, private
+- [X] Claims match the final run and do not imply an unmeasured speedup.
+- [X] Exports contain no API keys, credentials, personal information, private
   paths, or client data.
-- [ ] Commit and push the changes, then send Sibusiso the commit hash.
+- [X] Commit and push the changes, then send Sibusiso the commit hash.
 
 Do not fabricate missing Bob evidence. If Bob cannot export a task history or
 consumption summary, report that blocker in the contribution log instead.
