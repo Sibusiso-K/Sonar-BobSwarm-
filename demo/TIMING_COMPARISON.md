@@ -52,6 +52,17 @@ CONTRIBUTIONS.md` for references to the fixture files.
 - **Arisha** — no session log exists yet for her at all
   (`docs/bob-sessions/arisha/` is empty).
 
+### Arisha's Manual Investigation
+
+Arisha completed the same five investigation tasks: bugs, API documentation, refactoring suggestions, data flow, and onboarding guide.
+
+The completed manual findings are available in `demo/arisha-manual-investigation-findings.md`.
+
+The investigation took about 8 minutes. However, the code had already been seen before the timed investigation, so this should not be treated as a blind or cold start measurement. It is included as a record of the investigation, not as evidence that manual investigation is faster than BobSwarm.
+
+A valid manual timing comparison would require someone who has not seen the fixture before.
+
+
 Either is a real candidate for the genuine blind run — Farheen is the safer
 bet specifically, since her work never had reason to reference the bugs
 even indirectly. If nobody on the team qualifies as genuinely unfamiliar by
