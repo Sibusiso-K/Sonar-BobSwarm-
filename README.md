@@ -8,7 +8,7 @@
 ## Preview
 
 <p align="center">
-  <img src="./landingpagemockupbobswarm.png" alt="BobSwarm conceptual landing-page design mockup" width="900">
+  <img src="./landingpagemockupswarm.png" alt="BobSwarm conceptual landing-page design mockup" width="900">
 </p>
 
 > The image above is a conceptual design mockup. The running React dashboard
