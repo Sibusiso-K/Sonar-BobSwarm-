@@ -1,6 +1,6 @@
+import argparse
 import json
 import random
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +14,6 @@ SCHEMA_DRIFTS: list[dict[str, Any]] = [
     {"id": "syn-drift-2", "email": "no-scores@test.com"},  # Missing name & scores
 ]
 
-
 def generate_batch(count=3):
     batch = []
     for _ in range(count):
@@ -24,25 +23,28 @@ def generate_batch(count=3):
             rec["id"] = f"syn-type-{random.randint(100, 999)}"
         else:
             rec = random.choice(SCHEMA_DRIFTS).copy()
-
+        
         rec["_meta"] = {"synthetic": True, "defect_category": defect_type}
         batch.append(rec)
     return batch
 
-
 if __name__ == "__main__":
-    count = int(sys.argv[1]) if len(sys.argv) > 1 else 3
-    batch = generate_batch(count)
-
-    output_path = (
-        Path(__file__).resolve().parent
-        / "sample-project"
-        / "data"
-        / "synthetic_input.json"
+    parser = argparse.ArgumentParser(
+        description="Generate local synthetic input records for BobSwarm rehearsal."
     )
+    parser.add_argument("count", nargs="?", type=int, default=3)
+    parser.add_argument("--seed", type=int, default=20260829)
+    args = parser.parse_args()
+    if args.count < 1:
+        parser.error("count must be at least 1")
+
+    random.seed(args.seed)
+    batch = generate_batch(args.count)
+    
+    output_path = Path(__file__).resolve().parent / "sample-project" / "data" / "synthetic_input.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_path, "w", encoding="utf-8") as f:
+    with open(output_path, "w") as f:
         json.dump(batch, f, indent=2)
-
-    print(f"✓ Generated {len(batch)} synthetic records -> {output_path}")
+    print(f"Generated {len(batch)} synthetic records -> {output_path}")
+    print("Local-only generator: no API calls or Bobcoins used.")

@@ -61,7 +61,7 @@ function registerSwarmTools(server) {
   server.registerTool(
     'finalize_run',
     {
-      description: 'Marks a run complete and returns the aggregated, deterministically-sorted report. Call once, after all spawned subagents report done.',
+      description: 'Marks a running run complete and returns the aggregated, deterministically-sorted report. Safe to retry: repeated calls return the original final report without emitting another completion event.',
       inputSchema: {
         runId: z.string(),
       },
@@ -75,7 +75,7 @@ function registerSwarmTools(server) {
   server.registerTool(
     'get_run_report',
     {
-      description: 'Fetch the current (or final) aggregated report for a run without finalizing it.',
+      description: 'Fetch the current partial or final aggregated report without changing the run status. Pending and running reports are explicitly marked isFinal: false.',
       inputSchema: {
         runId: z.string(),
       },

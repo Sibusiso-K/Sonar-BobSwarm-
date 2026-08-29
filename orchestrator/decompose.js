@@ -21,9 +21,12 @@ const AGENT_TYPES = {
   DATA_LINEAGE: 'data_lineage',
 };
 
+const RUN_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 /**
  * Keyword → agent type mapping.
- * Order matters: first match wins for ambiguous input.
+ * Requests may match multiple agents. Array order keeps routing deterministic;
+ * it is not a first-match-wins classifier.
  *
  * Keyword coverage verified against 14 test requests (see HANDOVER.md — Farheen section).
  */
@@ -31,7 +34,7 @@ const KEYWORD_MAP = [
   {
     agent: AGENT_TYPES.DEBUGGER,
     keywords: [
-      'bug', 'error', 'crash', 'exception', 'fail', 'broken', 'fix', 'issue', 'debug',
+      'bug', 'error', 'crash', 'exception', 'fail', 'failure', 'broken', 'fix', 'issue', 'debug',
       // Added: security issues are a subset of defects; test/spec failures surface as bugs
       'security', 'vulnerability', 'test fail', 'spec fail', 'not working', 'wrong output',
     ],
@@ -74,10 +77,10 @@ const KEYWORD_MAP = [
 /**
  * Computes a confidence score (0.0–1.0) for an agent assignment.
  *
- * Score reflects how many of the agent's keywords matched the request,
- * normalised by the total number of that agent's keywords.
- * A score of 1.0 means every keyword for this agent appeared in the request.
- * A score > 0 means at least one keyword matched (agent is relevant).
+ * Score reflects match strength without dividing by the synonym-list length.
+ * The first match establishes relevance at 0.60; each additional independent
+ * match adds 0.15, capped at 1.0. Adding routing synonyms therefore cannot
+ * make an unchanged request appear less confident.
  * A default full-audit fallback always assigns a score of 0.5.
  *
  * @param {string} lower        - Lowercased request string.
@@ -85,8 +88,46 @@ const KEYWORD_MAP = [
  * @returns {number} Confidence score rounded to 2 decimal places.
  */
 function computeConfidence(lower, keywords) {
-  const matchCount = keywords.filter((kw) => lower.includes(kw)).length;
-  return Math.round((matchCount / keywords.length) * 100) / 100;
+  const matchCount = keywords.filter((keyword) => matchesKeyword(lower, keyword)).length;
+  if (matchCount === 0) return 0;
+  return Math.min(1, Math.round((0.6 + ((matchCount - 1) * 0.15)) * 100) / 100);
+}
+
+/**
+ * Matches a keyword or phrase on token boundaries, with a small set of common
+ * English inflections on the final token. This accepts "bugs" for "bug" but
+ * does not accept substring collisions such as "issue" inside "tissue".
+ *
+ * @param {string} text
+ * @param {string} keyword
+ * @returns {boolean}
+ */
+function matchesKeyword(text, keyword) {
+  if (typeof text !== 'string' || typeof keyword !== 'string' || keyword.trim().length === 0) {
+    return false;
+  }
+
+  const tokens = keyword.trim().toLowerCase().split(/\s+/);
+  const finalToken = tokens.pop();
+  const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const variants = new Set([finalToken]);
+  if (finalToken.endsWith('e')) {
+    variants.add(`${finalToken}s`);
+    variants.add(`${finalToken}d`);
+    variants.add(`${finalToken.slice(0, -1)}ing`);
+  } else {
+    variants.add(`${finalToken}s`);
+    variants.add(`${finalToken}es`);
+    variants.add(`${finalToken}ed`);
+    variants.add(`${finalToken}ing`);
+  }
+
+  const prefix = tokens.length > 0
+    ? `${tokens.map(escapeRegex).join('\\s+')}\\s+`
+    : '';
+  const finalPattern = [...variants].map(escapeRegex).join('|');
+  const pattern = new RegExp(`(?:^|[^a-z0-9_])${prefix}(?:${finalPattern})(?=$|[^a-z0-9_])`, 'i');
+  return pattern.test(text);
 }
 
 /**
@@ -105,12 +146,19 @@ function computeConfidence(lower, keywords) {
  * @property {number}   confidence - Score 0.0–1.0: keyword match strength for this agent
  */
 function decompose(request, contextFiles = []) {
+  if (typeof request !== 'string' || request.trim().length === 0) {
+    throw new TypeError('request must be a non-empty string');
+  }
+  if (!Array.isArray(contextFiles) || contextFiles.some((file) => typeof file !== 'string')) {
+    throw new TypeError('contextFiles must be an array of file paths');
+  }
+
   const lower = request.toLowerCase();
   const matched = new Map(); // agent → confidence score
   const subtasks = [];
 
   for (const { agent, keywords } of KEYWORD_MAP) {
-    if (keywords.some((kw) => lower.includes(kw))) {
+    if (keywords.some((keyword) => matchesKeyword(lower, keyword))) {
       matched.set(agent, computeConfidence(lower, keywords));
     }
   }
@@ -135,7 +183,7 @@ function decompose(request, contextFiles = []) {
       subtasks.push({
         agent,
         task: buildTaskDescription(agent, request),
-        context: contextFiles,
+        context: [...contextFiles],
         parallel: true,
         dependsOn: [],
         confidence: matched.get(agent),
@@ -148,7 +196,7 @@ function decompose(request, contextFiles = []) {
     subtasks.push({
       agent: AGENT_TYPES.REFACTORER,
       task: buildTaskDescription(AGENT_TYPES.REFACTORER, request),
-      context: contextFiles,
+      context: [...contextFiles],
       parallel: !matched.has(AGENT_TYPES.DEBUGGER),
       dependsOn: matched.has(AGENT_TYPES.DEBUGGER) ? [AGENT_TYPES.DEBUGGER] : [],
       confidence: matched.get(AGENT_TYPES.REFACTORER),
@@ -156,6 +204,62 @@ function decompose(request, contextFiles = []) {
   }
 
   return subtasks;
+}
+
+/**
+ * Builds the complete text passed to spawn_subagent.
+ *
+ * Keeping the lifecycle/evidence contract in this deterministic helper prevents
+ * the orchestrator from dispatching a persona-only prompt that cannot report to
+ * the dashboard. The dashboard creates the run; this helper only accepts that
+ * existing UUID and never creates or invents one.
+ *
+ * @param {Object} options
+ * @param {SubTask} options.subtask - A sub-task returned by decompose().
+ * @param {string} options.runId - Exact run ID copied from the dashboard.
+ * @param {string} options.personaPrompt - Contents of agents/<type>.md.
+ * @param {string} [options.dependencyContext] - Debugger result for a dependent refactorer.
+ * @returns {string} Complete spawn_subagent payload.
+ */
+function buildDispatchPayload({ subtask, runId, personaPrompt, dependencyContext = '' }) {
+  if (!subtask || typeof subtask !== 'object' || !Object.values(AGENT_TYPES).includes(subtask.agent)) {
+    throw new TypeError('subtask must be a valid result from decompose()');
+  }
+  if (typeof runId !== 'string' || !RUN_ID_PATTERN.test(runId.trim())) {
+    throw new TypeError('runId must be the existing UUID copied from the BobSwarm dashboard');
+  }
+  if (typeof personaPrompt !== 'string' || personaPrompt.trim().length === 0) {
+    throw new TypeError('personaPrompt must contain the specialist persona');
+  }
+
+  const dependsOnDebugger = Array.isArray(subtask.dependsOn)
+    && subtask.dependsOn.includes(AGENT_TYPES.DEBUGGER);
+  if (dependsOnDebugger && (typeof dependencyContext !== 'string' || dependencyContext.trim().length === 0)) {
+    throw new Error('refactorer dispatch requires completed debugger findings as dependencyContext');
+  }
+
+  const context = Array.isArray(subtask.context) && subtask.context.length > 0
+    ? subtask.context.map((file) => `- ${file}`).join('\n')
+    : '- Inspect the repository paths needed for the scoped task.';
+  const dependencySection = dependsOnDebugger
+    ? `\n[DEPENDENCY CONTEXT — DEBUGGER COMPLETED]\n${dependencyContext.trim()}\n`
+    : '';
+  const role = subtask.agent;
+  const exactRunId = runId.trim();
+
+  return `[SPECIALIST PERSONA]\n${personaPrompt.trim()}\n\n` +
+    `[SCOPED TASK]\n${subtask.task}\n\n` +
+    `[CONTEXT PATHS]\n${context}\n` +
+    dependencySection +
+    `\n[MANDATORY MCP REPORTING CONTRACT]\n` +
+    `Use runId exactly as provided: ${exactRunId}\n` +
+    `Use subagentRole exactly as provided: ${role}\n` +
+    `1. Call record_progress(runId="${exactRunId}", subagentRole="${role}", status="started") before investigation.\n` +
+    `2. Read each source through read_project_file before making a claim.\n` +
+    `3. Call record_progress with status="investigating" at least once while reading.\n` +
+    `4. Call record_finding once per distinct source-backed observation. evidence must be a literal quoted span from a file actually read; never paraphrase or infer it. severity must be exactly breaks, warns, or informational. If literal evidence is unavailable, do not record that claim.\n` +
+    `5. Call record_progress with status="done" exactly once after all findings are recorded.\n` +
+    `6. Return your concise specialist result to the orchestrator; do not call finalize_run.`;
 }
 
 /**
@@ -175,8 +279,8 @@ Deliverable: A numbered list of issues found, each with file path, line referenc
 Original request context: "${request}"
 Deliverable: Inline code comments, a public API reference, and a high-level module overview.`,
 
-    [AGENT_TYPES.REFACTORER]: `Identify and apply refactoring improvements to the provided codebase.
-Use any debugger findings (passed in context) to avoid re-introducing known bugs.
+    [AGENT_TYPES.REFACTORER]: `Identify targeted refactoring improvements for the provided codebase.
+Use the completed debugger findings passed as dependencyContext to avoid conflicting with known bugs.
 Original request context: "${request}"
 Deliverable: A diff-style list of recommended changes with rationale for each.`,
 
@@ -192,4 +296,12 @@ Deliverable: A data lineage map showing where data enters the system, how it is 
   return descriptions[agent] || `Complete the following engineering task: "${request}"`;
 }
 
-module.exports = { decompose, AGENT_TYPES, KEYWORD_MAP, computeConfidence };
+module.exports = {
+  decompose,
+  buildDispatchPayload,
+  AGENT_TYPES,
+  KEYWORD_MAP,
+  RUN_ID_PATTERN,
+  computeConfidence,
+  matchesKeyword,
+};

@@ -24,22 +24,67 @@ const ALLOWED_ROOT = path.resolve(
 );
 
 /**
- * Resolves candidatePath and throws if it falls outside ALLOWED_ROOT.
- * Returns the resolved absolute path on success, so callers use the
- * validated path, not the raw input.
+ * Creates a path guard that validates both the lexical path and the real path.
+ * The real-path check is important: a path can look as though it is inside the
+ * project while a symlink/junction redirects reads or writes somewhere else.
  */
-function resolveWithinAllowedRoot(candidatePath) {
-  const resolved = path.resolve(ALLOWED_ROOT, candidatePath);
-  // Trailing sep check avoids a false-positive prefix match, e.g.
-  // ALLOWED_ROOT "/project" must not accept "/project-evil".
-  if (resolved !== ALLOWED_ROOT && !resolved.startsWith(ALLOWED_ROOT + path.sep)) {
-    throw new Error(
-      `path escapes the allowed project root: "${candidatePath}" resolved to "${resolved}", ` +
-      `which is outside "${ALLOWED_ROOT}". Refusing.`
-    );
+function createPathGuard(allowedRoot) {
+  const lexicalRoot = path.resolve(allowedRoot);
+  let realRootPromise;
+
+  const realRoot = () => {
+    realRootPromise ||= fs.realpath(lexicalRoot);
+    return realRootPromise;
+  };
+
+  const isWithin = (root, candidate) => {
+    const relative = path.relative(root, candidate);
+    return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
+  };
+
+  return async function resolveWithinRoot(candidatePath) {
+    if (typeof candidatePath !== 'string' || candidatePath.trim().length === 0) {
+      throw new Error('path must be a non-empty string');
+    }
+
+    const canonicalRoot = await realRoot();
+    const lexicalCandidate = path.resolve(lexicalRoot, candidatePath);
+    if (!isWithin(lexicalRoot, lexicalCandidate) && !isWithin(canonicalRoot, lexicalCandidate)) {
+      throw new Error(
+        `path escapes the allowed project root: "${candidatePath}" resolved to "${lexicalCandidate}". Refusing.`
+      );
+    }
+
+    // Resolve the nearest existing ancestor, then append the missing suffix.
+    // This protects write targets that do not exist yet as well as reads.
+    let existingAncestor = lexicalCandidate;
+    const missingSegments = [];
+    let canonicalCandidate;
+    while (true) {
+      try {
+        const canonicalAncestor = await fs.realpath(existingAncestor);
+        canonicalCandidate = path.resolve(canonicalAncestor, ...missingSegments.reverse());
+        break;
+      } catch (error) {
+        if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR') throw error;
+        const parent = path.dirname(existingAncestor);
+        if (parent === existingAncestor) throw error;
+        missingSegments.push(path.basename(existingAncestor));
+        existingAncestor = parent;
+      }
+    }
+
+    if (!isWithin(canonicalRoot, canonicalCandidate)) {
+      throw new Error(
+        `path escapes the allowed project root through a symlink or junction: "${candidatePath}" ` +
+        `resolves to "${canonicalCandidate}". Refusing.`
+      );
+    }
+    return canonicalCandidate;
   }
-  return resolved;
 }
+
+const resolveWithinAllowedRoot = createPathGuard(ALLOWED_ROOT);
 
 /**
  * Registers all filesystem tools on the given MCP server instance.
@@ -60,14 +105,22 @@ function registerFilesystemTools(server) {
       },
     },
     async ({ rootPath, pattern, ignore }) => {
-      const safeRoot = resolveWithinAllowedRoot(rootPath);
-      const files = await glob(pattern, { cwd: safeRoot, ignore, nodir: true });
+      const safeRoot = await resolveWithinAllowedRoot(rootPath);
+      const files = await glob(pattern, { cwd: safeRoot, ignore, nodir: true, follow: false });
       // Normalize to forward slashes: on Windows, glob returns native
       // backslash separators for nested paths, which then mismatches any
       // affected_path a subagent quotes in record_finding (LLM output tends
       // toward forward slashes regardless of host OS), breaking exact-match
       // validation against fixtures/expected_findings.json.
-      const normalized = files.map((f) => f.split(path.sep).join('/'));
+      const normalized = [];
+      for (const file of files) {
+        try {
+          await resolveWithinAllowedRoot(path.resolve(safeRoot, file));
+          normalized.push(file.split(path.sep).join('/'));
+        } catch {
+          // Do not expose a symlink/junction whose target leaves the project.
+        }
+      }
       return {
         content: [{ type: 'text', text: normalized.join('\n') }],
       };
@@ -85,7 +138,7 @@ function registerFilesystemTools(server) {
       },
     },
     async ({ filePath, encoding }) => {
-      const safePath = resolveWithinAllowedRoot(filePath);
+      const safePath = await resolveWithinAllowedRoot(filePath);
       const content = await fs.readFile(safePath, { encoding });
       return {
         content: [{ type: 'text', text: content }],
@@ -103,27 +156,37 @@ function registerFilesystemTools(server) {
       },
     },
     async ({ rootPath }) => {
-      const safeRoot = resolveWithinAllowedRoot(rootPath);
+      const safeRoot = await resolveWithinAllowedRoot(rootPath);
       const allFiles = await glob('**/*', {
         cwd: safeRoot,
         ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/__pycache__/**'],
         nodir: true,
+        follow: false,
       });
 
-      // Same normalization as list_project_files — see comment there.
-      const normalizedFiles = allFiles.map((f) => f.split(path.sep).join('/'));
+      // Same normalization and real-path filtering as list_project_files.
+      const normalizedFiles = [];
+      for (const file of allFiles) {
+        try {
+          await resolveWithinAllowedRoot(path.resolve(safeRoot, file));
+          normalizedFiles.push(file.split(path.sep).join('/'));
+        } catch {
+          // Do not count a symlink/junction whose target leaves the project.
+        }
+      }
 
       const byExt = {};
       let totalBytes = 0;
 
       for (const file of normalizedFiles) {
         const ext = path.extname(file) || '(no ext)';
-        byExt[ext] = (byExt[ext] || 0) + 1;
         try {
-          const stat = await fs.stat(path.join(safeRoot, file));
+          const safeFile = await resolveWithinAllowedRoot(path.resolve(safeRoot, file));
+          const stat = await fs.stat(safeFile);
+          byExt[ext] = (byExt[ext] || 0) + 1;
           totalBytes += stat.size;
         } catch {
-          // skip unreadable files
+          // Skip unreadable files and links that leave the allowed root.
         }
       }
 
@@ -134,7 +197,7 @@ function registerFilesystemTools(server) {
       );
 
       const summary = {
-        totalFiles: allFiles.length,
+        totalFiles: normalizedFiles.length,
         totalSizeKB: Math.round(totalBytes / 1024),
         filesByExtension: byExt,
         likelyEntryPoints: entryPoints,
@@ -157,7 +220,7 @@ function registerFilesystemTools(server) {
       },
     },
     async ({ outputPath, content }) => {
-      const safePath = resolveWithinAllowedRoot(outputPath);
+      const safePath = await resolveWithinAllowedRoot(outputPath);
       await fs.mkdir(path.dirname(safePath), { recursive: true });
       await fs.writeFile(safePath, content, 'utf-8');
       return {
@@ -167,4 +230,9 @@ function registerFilesystemTools(server) {
   );
 }
 
-module.exports = { registerFilesystemTools };
+module.exports = {
+  ALLOWED_ROOT,
+  createPathGuard,
+  resolveWithinAllowedRoot,
+  registerFilesystemTools,
+};

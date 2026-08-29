@@ -6,51 +6,20 @@
 
 ## High-Level Overview
 
+BobSwarm has two deliberately separate operator surfaces. The dashboard creates
+and observes a run; IBM Bob performs orchestration. The dashboard generates the
+exact handoff text needed to bind both surfaces to the same UUID.
+
 ```
-                        ┌─────────────────────────────────┐
-                        │        Developer (User)          │
-                        │  Plain-language task description │
-                        └──────────────┬──────────────────┘
-                                       │
-                                       ▼
-                        ┌─────────────────────────────────┐
-                        │     BobSwarm Orchestrator        │
-                        │  (Bob Agent mode + system prompt)│
-                        │                                 │
-                        │  1. Parse request               │
-                        │  2. decompose() → sub-tasks     │
-                        │  3. spawn_subagent × N          │
-                        │  4. Aggregate results           │
-                        │  5. Return Unified Report       │
-                        └──────┬───────────────────┬──────┘
-                               │  parallel         │
-               ┌───────────────┼───────────────────┼─────────────┐
-               │               │                   │             │
-               ▼               ▼                   ▼             ▼
-        ┌──────────┐   ┌──────────────┐   ┌────────────┐  ┌────────────┐
-        │ Debugger │   │  Documenter  │   │ Onboarding │  │Data Lineage│
-        │ Subagent │   │  Subagent    │   │  Subagent  │  │  Subagent  │
-        └──────────┘   └──────────────┘   └────────────┘  └────────────┘
-               │                                            (sequential
-               ▼                                           if needed ↓)
-        ┌──────────────────┐
-        │  Refactorer      │ ← depends on Debugger findings
-        │  Subagent        │
-        └──────────────────┘
-               │
-               ▼ (all results collected)
-        ┌──────────────────────────────────┐
-        │        Unified Report            │
-        │  Executive Summary               │
-        │  Per-agent findings              │
-        │  Prioritised action list         │
-        └──────────────────────────────────┘
-                        │
-          ┌─────────────┴──────────────┐
-          ▼                            ▼
-   Frontend Dashboard          MCP Server writes
-   (Arisha's UI)                report to disk
-                                (Lethabo's tools)
+Dashboard task form
+  → POST /runs → pending UUID
+  → copy-ready Bob handoff prompt
+  → operator pastes prompt into BobSwarm Orchestrator mode
+  → decompose() + persona loading
+  → first wave: Debugger + Documenter + Onboarding + Data Lineage (parallel)
+  → second wave: Refactorer with completed Debugger context (when selected)
+  → MCP progress/findings → sequenced event store → WebSocket dashboard
+  → finalize_run → deterministic unified report
 ```
 
 ---
@@ -91,8 +60,14 @@ A lightweight Node.js MCP server exposing filesystem and Git tools to the orches
 | `read_project_file` | Read a single file |
 | `project_summary` | File counts, sizes, entry points |
 | `write_swarm_report` | Persist the final report to disk |
+| `record_progress` | Publish an agent lifecycle transition |
+| `record_finding` | Store one structured, evidence-bearing finding |
+| `finalize_run` | Idempotently complete a running run |
+| `get_run_report` | Read a partial/final report without changing state |
 
-Transport: MCP stdio (Bob's default).
+Transport: MCP stdio for Bob. The same process starts a loopback HTTP/WebSocket
+bridge for the dashboard. Run state is in memory for the proof of concept, but
+the event log is sequenced and replayable for reconnecting clients.
 
 ### Frontend Dashboard (`frontend/`)
 React 19 + TypeScript + Vite, pulled in via `git subtree` from Arisha's own
@@ -100,10 +75,16 @@ repo (github.com/Arisha004/frontend) — real code, not a placeholder. See
 `frontend/README.md` for its own structure/stack details.
 
 Connects live to the backend's WebSocket events bridge
-(`mcp-server/events-server.js`, `ws://localhost:8787/runs/:id/events` by
-default, override with `VITE_BOBSWARM_API`) — verified end-to-end: a real
-`POST /runs` followed by a forced `run_complete` event rendered live in the
-UI with no page refresh. Event contract: `docs/LIVE_EVENTS.md`.
+(`mcp-server/events-server.js`, `ws://127.0.0.1:8787/runs/:id/events` by
+default, override with `VITE_BOBSWARM_API`). Each connection receives an
+authoritative snapshot before sequenced events. The frontend reconnects with
+its last applied sequence, deduplicates replay, restores role state, and shows
+terminal errors distinctly. Event contract: `docs/LIVE_EVENTS.md`.
+
+The dashboard does not invoke Bob. After `POST /runs`, it displays a full,
+ready-to-paste Bob prompt containing the task, repository reference, task type,
+and run UUID. This makes the required operator handoff explicit and prevents
+the dashboard and Bob from writing to different runs.
 
 **Pulling Arisha's future updates:**
 ```bash
@@ -123,14 +104,16 @@ git subtree pull --prefix=frontend arisha-frontend main --squash
 ## Data Flow
 
 ```
-User task (text)
-    → Orchestrator parses + decomposes
-    → MCP server: project_summary + list_project_files (context gathering)
-    → Subagents read files via MCP: read_project_file
-    → Subagents return findings (text)
-    → Orchestrator aggregates findings
-    → MCP server: write_swarm_report (persist to disk)
-    → Frontend: displays Unified Report
+User task in dashboard
+    → POST /runs creates pending UUID
+    → dashboard builds Bob handoff prompt
+    → operator pastes handoff into Bob
+    → Orchestrator parses + decompose() routes specialists
+    → buildDispatchPayload() adds persona, scope, UUID, lifecycle and evidence rules
+    → independent subagents read source and publish progress/findings through MCP
+    → dependent Refactorer receives completed Debugger context
+    → finalize_run produces the deterministic report
+    → HTTP/WebSocket snapshot + sequenced events render in the dashboard
 ```
 
 ---

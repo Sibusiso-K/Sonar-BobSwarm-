@@ -9,7 +9,30 @@
 'use strict';
 
 const { z } = require('zod');
+const path = require('path');
 const simpleGit = require('simple-git');
+const { resolveWithinAllowedRoot } = require('./filesystem');
+
+function validateRevision(revision, field) {
+  if (revision === undefined) return;
+  if (
+    typeof revision !== 'string' ||
+    revision.length === 0 ||
+    revision.length > 256 ||
+    revision.startsWith('-') ||
+    /[\u0000-\u0020\u007f]/.test(revision)
+  ) {
+    throw new Error(`${field} must be a valid Git revision without options or whitespace`);
+  }
+}
+
+function ensureWithinRepo(repoPath, candidatePath) {
+  const relative = path.relative(repoPath, candidatePath);
+  if (relative === '' || relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new Error(`filePath must resolve to a file inside the selected repository`);
+  }
+  return relative;
+}
 
 /**
  * Registers all Git tools on the given MCP server instance.
@@ -27,7 +50,8 @@ function registerGitTools(server) {
       },
     },
     async ({ repoPath }) => {
-      const git = simpleGit(repoPath);
+      const safeRepoPath = await resolveWithinAllowedRoot(repoPath);
+      const git = simpleGit(safeRepoPath);
       const status = await git.status();
       return {
         content: [
@@ -51,7 +75,8 @@ function registerGitTools(server) {
       },
     },
     async ({ repoPath, maxCount }) => {
-      const git = simpleGit(repoPath);
+      const safeRepoPath = await resolveWithinAllowedRoot(repoPath);
+      const git = simpleGit(safeRepoPath);
       const log = await git.log({ maxCount });
       return {
         content: [
@@ -76,12 +101,15 @@ function registerGitTools(server) {
       },
     },
     async ({ repoPath, from, to }) => {
-      const git = simpleGit(repoPath);
+      const safeRepoPath = await resolveWithinAllowedRoot(repoPath);
+      validateRevision(from, 'from');
+      validateRevision(to, 'to');
+      const git = simpleGit(safeRepoPath);
       let diff;
       if (from && to) {
-        diff = await git.diff([from, to]);
+        diff = await git.diff([from, to, '--']);
       } else if (from) {
-        diff = await git.diff([from]);
+        diff = await git.diff([from, '--']);
       } else {
         diff = await git.diff();
       }
@@ -102,8 +130,11 @@ function registerGitTools(server) {
       },
     },
     async ({ repoPath, filePath }) => {
-      const git = simpleGit(repoPath);
-      const blame = await git.raw(['blame', '--line-porcelain', filePath]);
+      const safeRepoPath = await resolveWithinAllowedRoot(repoPath);
+      const safeFilePath = await resolveWithinAllowedRoot(path.resolve(safeRepoPath, filePath));
+      const relativeFilePath = ensureWithinRepo(safeRepoPath, safeFilePath);
+      const git = simpleGit(safeRepoPath);
+      const blame = await git.raw(['blame', '--line-porcelain', '--', relativeFilePath]);
       return {
         content: [{ type: 'text', text: blame }],
       };

@@ -34,12 +34,12 @@ export function Nav() {
             </a>
           </nav>
           <a
-            href="https://github.com"
+            href="https://github.com/Sibusiso-K/Sonar-BobSwarm-"
             target="_blank"
             rel="noreferrer"
             className="rounded-full border border-line-strong px-3.5 py-1.5 text-xs font-medium text-paper-dim transition-colors hover:border-gold hover:text-paper"
           >
-            Built on Bob 2.0
+            View source
           </a>
         </div>
       </div>

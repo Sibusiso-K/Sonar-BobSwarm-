@@ -16,7 +16,7 @@ export function Timeline({ entries }: { entries: TimelineEntry[] }) {
       <div className="glass flex h-full min-h-[220px] flex-col items-center justify-center rounded-2xl p-6 text-center">
         <p className="font-mono text-xs text-stone">no activity yet</p>
         <p className="mt-1 text-sm text-stone-dim">
-          Dispatch a run to see the swarm think in real time.
+          Send the handoff prompt to Bob to see the specialists work in real time.
         </p>
       </div>
     );

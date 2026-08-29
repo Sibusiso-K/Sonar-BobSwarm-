@@ -28,6 +28,41 @@ This must work fully end-to-end for the demo. Every part of the stack matters.
 
 ---
 
+## ✅ Current Integration Baseline — 2026-08-29
+
+The synchronized `main` branch now contains the complete integration baseline.
+`npm run verify` passes all orchestrator, demo, backend, frontend, lint, and
+production-build checks. The repository is intentionally still a **manual Bob
+handoff** proof of concept: the dashboard creates a pending UUID, the operator
+copies its handoff prompt into Bob, and Bob's native `spawn_subagent` calls drive
+the real MCP events. The dashboard does not claim to invoke Bob automatically.
+
+The backend now enforces `pending → running → complete|error`, makes report
+reads side-effect-free, supports bounded sequenced event replay and snapshots,
+and rejects writes after terminal state. The frontend reconnects and hydrates
+from snapshots. These are real implementation guarantees covered by tests;
+they are not pre-cached presentation events.
+
+Synthetic data generation is local-only and writes to
+`demo/sample-project/data/synthetic_input.json`. It never posts records to
+`POST /runs`; that endpoint accepts only `taskDescription`, `taskType`, and
+`repoRef`. Synthetic fixtures and replay are appropriate for zero-cost team
+rehearsals, but the submitted video must show one genuine Bob-driven run.
+
+### Lead next actions before submission
+
+- Capture one clean golden-path video with the dashboard UUID handoff visible,
+  Bob's parallel `spawn_subagent` calls visible, and the final report grounded
+  in literal source evidence.
+- Capture the missing Sibusiso/Arisha session screenshots and complete the
+  outstanding team usage statements.
+- Restart the events server immediately before recording so port 8787 serves
+  the current checkout; verify `/health` and `/runs` first.
+- Reconcile any remaining historical notes below this section only when they
+  contradict the implementation; do not use old simulated-flow descriptions.
+
+---
+
 ## 🗂 Repo Map — Who Owns What
 
 ```

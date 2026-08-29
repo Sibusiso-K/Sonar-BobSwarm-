@@ -10,6 +10,12 @@
 > texture, the hand-rolled `SwarmField` dot-and-thread SVG) is genuinely
 > good — not generic. Everything below builds on it, none of it replaces it.
 
+> **Status note — 2026-08-29:** This began as a polish plan. Font loading,
+> hero layout, wording, conditional empty states, auto-scroll, evidence
+> presentation, and full-run-ID copy are now implemented in `frontend/`.
+> Use the current source and `docs/LAUNCH_GUIDE.md` as the authority; the
+> sections below are retained as design rationale.
+
 ---
 
 ## 1. The font bug — fix this first, biggest visual impact for the least effort

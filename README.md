@@ -7,9 +7,15 @@
 
 ## What is BobSwarm?
 
-BobSwarm is an on-demand, multi-agent orchestrator built on IBM Bob 2.0. A developer describes any complex engineering task in plain language; BobSwarm automatically decomposes it, spawns a swarm of specialised subagents that work **in parallel**, and aggregates their findings into a single structured report.
+BobSwarm is an on-demand, multi-agent orchestrator built on IBM Bob 2.0. A developer describes a complex engineering task in plain language; Bob decomposes it, spawns specialised subagents that work **in parallel**, and aggregates their evidence into a single structured report.
 
-It directly solves the hackathon mandate: replacing time-consuming manual investigations with automated, parallel AI collaboration.
+It directly addresses the hackathon mandate: improve a multi-step developer workflow with Bob Agent mode, parallel tasks, subagents, and document understanding—not merely isolated code generation.
+
+The proof of concept uses an explicit, honest operator handoff between its two product surfaces: the dashboard creates a tracked run and generates a copy-ready prompt; the user pastes that prompt into Bob, where native `spawn_subagent` execution begins. The dashboard observes the real MCP lifecycle and never claims that a browser request invoked Bob directly.
+
+### Verified demo result
+
+A committed frontend-linked session dispatched five specialists, published 59 live events, and completed with **41 literal-evidence findings across five roles in about 94 seconds**. The specialists' first findings overlapped within a 15-second window, demonstrating real concurrent work. See [`docs/bob-sessions/lethabo/CONTRIBUTIONS.md`](docs/bob-sessions/lethabo/CONTRIBUTIONS.md#session-6--live-dashboard-run-frontend-supplied-runid--2026-08-28).
 
 ---
 
@@ -114,25 +120,57 @@ User Request (plain language)
 ## Quick Start
 
 ### 1. Prerequisites
-- IBM Bob 2.0 installed and configured
-- Node.js ≥ 18 (for MCP server)
-- A Bob workspace open
+- IBM Bob 2.0 installed with a workspace open
+- Node.js `^20.19.0` or `>=22.12.0`
+- Python 3.10+ for the cross-platform demo validator
 
-### 2. Install the BobSwarm mode
-The `.bob/custom_modes.yaml` file is already included. Bob will automatically pick up the **BobSwarm Orchestrator** mode.
+### 2. Install dependencies and register the MCP server
 
-### 3. Run the demo
 ```bash
-cd demo
-bash run_demo.sh
+npm --prefix mcp-server ci
+npm --prefix frontend ci
 ```
 
-### 4. Try it yourself
-Switch to **BobSwarm Orchestrator** mode in Bob and type:
+The BobSwarm mode and skill are committed under `.bob/`. Copy
+`.bob/mcp.json.example` to `.bob/mcp.json`, replace the placeholder `cwd` with
+the absolute path to this clone, then reopen the workspace in Bob. The MCP panel
+must show `bobswarm` as connected before a live run.
+
+### 3. Start the two local services
+
+In separate terminals:
+
+```bash
+npm --prefix mcp-server start
+npm --prefix frontend run dev
+```
+
+Open `http://localhost:5173`. The events bridge binds to
+`http://127.0.0.1:8787` by default.
+
+### 4. Run the golden path
+
+1. Submit the task in the dashboard.
+2. Copy the generated **Bob handoff prompt**, which contains the full run UUID.
+3. Switch to **BobSwarm Orchestrator** mode in Bob and paste the prompt.
+4. Watch real specialist progress, evidence, and the final report in the dashboard.
+
+Suggested task:
 
 > _"Analyse this codebase, find all bugs, document the public API, and give me an onboarding guide for a new developer."_
 
-BobSwarm will decompose the task and dispatch subagents automatically.
+### 5. Verify the complete repository
+
+```bash
+npm run verify
+```
+
+This runs the orchestrator assertions, demo-fixture checks, Python regressions,
+backend lifecycle/WebSocket/security tests, frontend lint/tests, and production
+build. If Python is not on `PATH`, set `BOBSWARM_PYTHON` to its executable.
+
+Windows users can run `demo/run_demo.ps1`; macOS, Linux, and Git Bash users can
+run `demo/run_demo.sh` for the guided demo preflight.
 
 ---
 
@@ -152,8 +190,10 @@ does not depend on any pre-existing codebase.
 
 | Judging Criterion | How BobSwarm addresses it |
 |---|---|
-| **Bob feature usage** | Agent mode, spawn_subagent, parallel tasks, custom modes, skills, workflows |
-| **Innovation** | First swarm-of-agents orchestrator built natively on Bob |
-| **Practicality** | Solves real daily dev pain: debugging, docs, refactoring |
-| **Demo quality** | Live demo on real broken codebase with measurable before/after |
-| **Team collaboration** | 5 roles, clearly separated, all integrated through a single Bob workflow |
+| **Completeness and feasibility** | Bob custom mode + skill, five personas, MCP tools, strict run lifecycle, event recovery, deterministic report, one-command verification |
+| **Creativity and innovation** | Makes Bob's specialist parallelism observable and requires literal evidence before a finding enters the report |
+| **Design and usability** | Polished task form, copy-ready Bob handoff, live role cards, timeline, recovery, history, and evidence-first report |
+| **Effectiveness and efficiency** | Recorded five-role run: 41 evidence-backed findings, 59 events, about 94 seconds, visibly overlapping specialist work |
+
+Copy-ready submission text, the video storyboard, claims discipline, and final
+gates are in [`docs/SUBMISSION_PACKAGE.md`](docs/SUBMISSION_PACKAGE.md).
