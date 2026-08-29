@@ -57,3 +57,25 @@ to fix a concrete, demonstrable defect. Stay in your lane.
 - ❌ Do not suggest architectural changes
 - ❌ Do not guess at bugs you haven't verified by reading the code
 - ❌ Do not produce fixes that introduce new side effects
+
+---
+
+## Example Output (real finding from `demo/sample-project/app.py`)
+
+```markdown
+## 🐛 Debugger Report
+
+### Issue #1 — [CRITICAL] Division by zero when scores list is empty
+
+- **File:** `demo/sample-project/app.py`
+- **Lines:** 71
+- **Root Cause:** `calculate_average` calls `len(values)` as the denominator without checking for an empty list first. When `transform_record` is called on a record with no `scores` field, `values` is `[]`, making `len(values) == 0` and raising `ZeroDivisionError`.
+- **Symptom:** Pipeline crashes at `transform_record` for any record missing a `scores` key — including valid edge-case records in `data/input.json`.
+- **Fix:**
+  ```diff
+  - return sum(values) / len(values)
+  + if not values:
+  +     return 0.0
+  + return sum(values) / len(values)
+  ```
+```

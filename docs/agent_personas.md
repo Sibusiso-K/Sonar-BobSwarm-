@@ -18,11 +18,11 @@
 
 | Agent | File | Trigger Keywords | Output |
 |---|---|---|---|
-| Debugger | `agents/debugger.md` | bug, error, crash, exception, fail, fix | Numbered issue list with severity, location, root cause, diff |
-| Documenter | `agents/documenter.md` | document, docs, API, comment, explain | Inline comments + API reference + module overviews |
-| Refactorer | `agents/refactorer.md` | refactor, clean, improve, optimise | Diff-style improvement list with rationale |
-| Onboarding | `agents/onboarding.md` | onboard, guide, new developer, walkthrough | Structured getting-started document |
-| Data Lineage | `agents/data_lineage.md` | data flow, lineage, trace, pipeline | Lineage map (sources → transforms → sinks) + quality risks |
+| Debugger | `agents/debugger.md` | bug, error, crash, exception, fail, broken, fix, issue, debug, security, vulnerability, not working, wrong output | Numbered issue list with severity, location, root cause, diff |
+| Documenter | `agents/documenter.md` | document, docs, api doc, comment, jsdoc, docstring, readme, explain, architecture, how does, describe, summarise | Inline comments + API reference + module overviews |
+| Refactorer | `agents/refactorer.md` | refactor, clean, improve, modernise, optimize, rewrite, performance, simplify, technical debt, code quality | Diff-style improvement list with rationale |
+| Onboarding | `agents/onboarding.md` | onboard, new developer, getting started, walkthrough, guide, introduce, new dev, setup guide, how to start | Structured getting-started document |
+| Data Lineage | `agents/data_lineage.md` | data flow, lineage, pipeline, trace, where does, origin, source of, data source, data transformation, etl, ingestion | Lineage map (sources → transforms → sinks) + quality risks |
 
 ---
 

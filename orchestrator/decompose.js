@@ -97,14 +97,16 @@ function computeConfidence(lower, keywords) {
  * @returns {SubTask[]} Ordered array of sub-tasks (independent tasks first).
  *
  * @typedef {Object} SubTask
- * @property {string}   agent      - Agent type from AGENT_TYPES
- * @property {string}   task       - Scoped task description for the subagent
- * @property {string[]} context    - File paths the subagent should read
- * @property {boolean}  parallel   - Whether this task can run in parallel
- * @property {string[]} dependsOn  - Agent types that must complete before this runs
- * @property {number}   confidence - Score 0.0–1.0: keyword match strength for this agent
+ * @property {string}   agent               - Agent type from AGENT_TYPES
+ * @property {string}   task                - Scoped task description for the subagent
+ * @property {string[]} context             - File paths the subagent should read
+ * @property {boolean}  parallel            - Whether this task can run in parallel
+ * @property {string[]} dependsOn           - Agent types that must complete before this runs
+ * @property {number}   confidence          - Score 0.0–1.0: keyword match strength for this agent
+ * @property {boolean}  lowConfidenceWarning - True if confidence < 0.1 (weak keyword signal — orchestrator should flag to user)
  */
 function decompose(request, contextFiles = []) {
+  if (typeof request !== 'string' || !request.trim()) return [];
   const lower = request.toLowerCase();
   const matched = new Map(); // agent → confidence score
   const subtasks = [];
@@ -139,6 +141,7 @@ function decompose(request, contextFiles = []) {
         parallel: true,
         dependsOn: [],
         confidence: matched.get(agent),
+        lowConfidenceWarning: matched.get(agent) < 0.1,
       });
     }
   }
@@ -152,6 +155,7 @@ function decompose(request, contextFiles = []) {
       parallel: !matched.has(AGENT_TYPES.DEBUGGER),
       dependsOn: matched.has(AGENT_TYPES.DEBUGGER) ? [AGENT_TYPES.DEBUGGER] : [],
       confidence: matched.get(AGENT_TYPES.REFACTORER),
+      lowConfidenceWarning: matched.get(AGENT_TYPES.REFACTORER) < 0.1,
     });
   }
 
@@ -168,23 +172,28 @@ function decompose(request, contextFiles = []) {
 function buildTaskDescription(agent, request) {
   const descriptions = {
     [AGENT_TYPES.DEBUGGER]: `Analyse the provided codebase for bugs, errors, and unexpected behaviour.
+This applies to any language — Python, JavaScript, TypeScript, Java, or other.
 Original request context: "${request}"
 Deliverable: A numbered list of issues found, each with file path, line reference, root cause, and suggested fix.`,
 
     [AGENT_TYPES.DOCUMENTER]: `Generate comprehensive documentation for the provided codebase.
+This applies to any language — use the appropriate doc style (docstrings, JSDoc, Javadoc, etc.).
 Original request context: "${request}"
 Deliverable: Inline code comments, a public API reference, and a high-level module overview.`,
 
     [AGENT_TYPES.REFACTORER]: `Identify and apply refactoring improvements to the provided codebase.
+This applies to any language — use idiomatic patterns for whatever language is present.
 Use any debugger findings (passed in context) to avoid re-introducing known bugs.
 Original request context: "${request}"
 Deliverable: A diff-style list of recommended changes with rationale for each.`,
 
     [AGENT_TYPES.ONBOARDING]: `Create an onboarding guide for a developer who is new to this codebase.
+This applies to any language or framework — explain the stack clearly regardless of technology.
 Original request context: "${request}"
 Deliverable: A structured getting-started document covering setup, architecture overview, key files, and first-contribution workflow.`,
 
     [AGENT_TYPES.DATA_LINEAGE]: `Trace the data flow through the provided codebase.
+This applies to any language — follow data from ingress to egress regardless of implementation.
 Original request context: "${request}"
 Deliverable: A data lineage map showing where data enters the system, how it is transformed, and where it exits or is stored.`,
   };
