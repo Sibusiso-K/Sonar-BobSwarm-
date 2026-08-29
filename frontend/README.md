@@ -32,16 +32,32 @@ If no backend is running, submitting the form shows a friendly
 "can't reach the BobSwarm events server" message instead of crashing —
 the UI itself has no other dependency on a live backend.
 
+The WebSocket client (`src/lib/api.ts`) auto-reconnects on an unexpected
+drop with capped exponential backoff (6 attempts, ~0.8s → ~25s + jitter),
+surfacing a `reconnecting` connection state in the UI. It stops cleanly
+once a `run_complete` event arrives or the caller unsubscribes.
+
+## The living swarm field
+
+`src/components/field/LivingSwarmField.tsx` is a canvas-based particle
+system, not decoration. In the hero it drifts ambiently; once a run starts,
+`SwarmStage` measures each specialist card's real on-screen position and
+feeds those as "anchors" into the field. Particles then orbit each anchor,
+with orbit speed, radius, and color driven directly by that role's live
+status (waiting → started → investigating → done/error) — so the swarm
+visibly gathers, tightens, and settles around whichever specialist is
+actually working, rather than just sitting behind the UI.
+
 ## Project structure
 
 ```
 src/
-  lib/            shared types + REST/WS client
+  lib/            shared types + REST/WS client (with reconnect logic)
   hooks/          useSwarmRun — orchestrates the whole run lifecycle
   components/
     layout/       Nav
-    hero/         Hero, TaskForm
-    field/        SwarmField (ambient background)
+    hero/         Hero, TaskForm (mouse-parallax depth + glass tilt)
+    field/        LivingSwarmField (reactive particle centerpiece)
     swarm/        SwarmStage, RoleCard, Timeline
     report/       ReportView
   App.tsx         composes the full page: Nav → Hero → SwarmStage → ReportView

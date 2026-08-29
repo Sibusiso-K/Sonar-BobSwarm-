@@ -148,19 +148,16 @@ function finalizeRun(runId) {
   return report;
 }
 
+/**
+ * Non-mutating peek at a run's current findings, whatever the run's status.
+ * Does NOT finalize a pending/running run as a side effect -- both callers
+ * (the get_run_report MCP tool and GET /runs/:id/report) need a read that's
+ * actually a read. A pending run peeked at here stays pending; its findings
+ * so far are still returned. Only finalize_run (the tool) or the timeout
+ * handler should ever call finalizeRun() and end a run.
+ */
 function getReport(runId) {
-  return finalizeRunIfNeeded(runId);
-}
-
-function finalizeRunIfNeeded(runId) {
   const run = getRun(runId);
-  if (run.status !== 'complete') {
-    return finalizeRun(runId);
-  }
-  // Already complete: rebuild the same deterministic shape finalizeRun
-  // produces (sorted findings, generated summary) rather than a second,
-  // less-complete code path -- a GET here must match the run_complete
-  // event's shape exactly, not just approximate it.
   const findings = findingsByRun.get(runId) || [];
   const byRole = {};
   for (const f of findings) {
@@ -177,7 +174,7 @@ function finalizeRunIfNeeded(runId) {
   );
   return {
     runId,
-    generatedAt: run.completedAt,
+    generatedAt: run.completedAt, // null until the run actually finalizes
     summary: buildSummary(findings, Object.keys(sortedByRole)),
     findingsByRole: sortedByRole,
   };
@@ -231,8 +228,13 @@ const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes, tune against fixture repo size
 function armTimeout(runId) {
   setTimeout(() => {
     const run = runs.get(runId);
-    if (run && run.status === 'running') {
-      console.error(`[BobSwarm store] run ${runId} timed out — force-finalizing`);
+    // Was `=== 'running'`, which excludes 'pending' -- the exact case this
+    // guards against: a run the frontend creates while waiting to be handed
+    // to Bob (the manual runId-bridging step) that never gets picked up
+    // stayed 'pending' forever and was silently exempt from its own
+    // safety net. Anything not already finished is eligible.
+    if (run && run.status !== 'complete' && run.status !== 'error') {
+      console.error(`[BobSwarm store] run ${runId} timed out (status: ${run.status}) — force-finalizing`);
       finalizeRun(runId);
     }
   }, TIMEOUT_MS).unref();
