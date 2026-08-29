@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useRef, useState } from "react";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { ArrowRight, Loader2 } from "lucide-react";
 import type { TaskType } from "../../lib/types";
 
@@ -25,8 +25,29 @@ export function TaskForm({
 
   const canSubmit = taskDescription.trim().length > 0 && repoRef.trim().length > 0 && !submitting;
 
+  const panelRef = useRef<HTMLFormElement | null>(null);
+  const mx = useMotionValue(0.5);
+  const my = useMotionValue(0.5);
+  const rotateX = useSpring(useTransform(my, [0, 1], [3, -3]), { stiffness: 150, damping: 18 });
+  const rotateY = useSpring(useTransform(mx, [0, 1], [-3, 3]), { stiffness: 150, damping: 18 });
+  const sheenX = useTransform(mx, [0, 1], ["0%", "100%"]);
+  const sheenY = useTransform(my, [0, 1], ["0%", "100%"]);
+
+  const handlePanelMouseMove = (e: React.MouseEvent<HTMLFormElement>) => {
+    const rect = panelRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    mx.set((e.clientX - rect.left) / rect.width);
+    my.set((e.clientY - rect.top) / rect.height);
+  };
+
+  const handlePanelMouseLeave = () => {
+    mx.set(0.5);
+    my.set(0.5);
+  };
+
   return (
     <motion.form
+      ref={panelRef}
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
@@ -35,9 +56,23 @@ export function TaskForm({
         if (!canSubmit) return;
         onSubmit({ taskDescription: taskDescription.trim(), taskType, repoRef: repoRef.trim() });
       }}
-      className="glass-strong grain w-full rounded-[28px] p-2"
+      onMouseMove={handlePanelMouseMove}
+      onMouseLeave={handlePanelMouseLeave}
+      style={{ rotateX, rotateY, transformPerspective: 1200 }}
+      className="glass-strong grain relative w-full overflow-hidden rounded-[28px] p-2"
     >
-      <div className="rounded-[22px] bg-void-soft/40 p-5 sm:p-6">
+      <motion.div
+        aria-hidden
+        style={{
+          background: useTransform(
+            [sheenX, sheenY],
+            ([x, y]) =>
+              `radial-gradient(360px circle at ${x} ${y}, rgba(243, 237, 225, 0.08), transparent 65%)`
+          ),
+        }}
+        className="pointer-events-none absolute inset-0 rounded-[28px]"
+      />
+      <div className="relative rounded-[22px] bg-void-soft/40 p-5 sm:p-6">
         <label
           htmlFor="taskDescription"
           className="mb-2 block text-xs font-medium uppercase tracking-[0.14em] text-stone"

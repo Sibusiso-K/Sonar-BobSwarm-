@@ -1,73 +1,102 @@
-# BobSwarm Demo — Expected Swarm Output
+# BobSwarm Demo — Validation Targets
 
 > **Owner:** Mmopiemang (Data / QA Engineer)
-> **Purpose:** Reference document for validating the live demo. The BobSwarm output should match or exceed these findings.
+> **Purpose:** Source-backed acceptance criteria for the live demo. These are fixture
+> targets, not pre-recorded or fabricated swarm results.
 
 ---
 
-## 🐛 Debugger — Expected Findings
+## Run protocol
 
-| # | Severity | File | Line(s) | Issue |
-|---|---|---|---|---|
-| 1 | CRITICAL | `app.py` | 62 | `calculate_average([])` → `ZeroDivisionError` when `scores` is empty |
-| 2 | HIGH | `app.py` | 46–47 | `process_records` mutates the caller's input list via `records.remove()` |
-| 3 | HIGH | `app.py` | 57 | `enrich_record` silently returns `None` on failure; caller appends `None` to list |
-| 4 | HIGH | `app.py` | 29, 75 | File handles opened but never closed — resource leak |
-| 5 | MEDIUM | `app.py` | 35 | `validate_email` regex `[^@]*@[^@]*` matches empty string `""` |
-| 6 | MEDIUM | `utils.py` | 32 | `merge_dicts` crashes on `None` input (consequence of Bug 3) |
-| 7 | LOW | `utils.py` | 16 | `generate_id` uses MD5 — weak hashing algorithm |
+1. Submit the task in the dashboard and copy the UUID it displays.
+2. Switch to **BobSwarm Orchestrator** mode in Bob.
+3. Paste the exact UUID as `runId` with the task prompt.
+4. Bob dispatches the swarm; the dashboard visualises the MCP events. Dashboard
+   submission itself does not invoke Bob.
 
----
-
-## 📝 Documenter — Expected Output
-
-- Docstrings added to all undocumented public functions in `app.py` and `utils.py`
-- Public API Reference covering: `load_records`, `validate_email`, `process_records`, `enrich_record`, `calculate_average`, `transform_record`, `save_results`, `get_results_summary`, `run_pipeline`, `generate_id`, `format_timestamp`, `merge_dicts`, `chunk_list`, `flatten`, `safe_get`
-- Module overview for `app.py`: data pipeline entry point handling load → validate → enrich → transform → save
-- Module overview for `utils.py`: shared utility functions for ID generation, formatting, and collection manipulation
+For a full audit, four independent specialists run in the first parallel wave. The
+`refactorer` runs in a second wave after receiving the completed `debugger` result.
 
 ---
 
-## 🔧 Refactorer — Expected Suggestions
+## Debugger — required source-backed coverage
 
-1. **[HIGH]** Replace bare `open()` calls with `with` statement context managers in `load_records` and `save_results`
-2. **[HIGH]** Rewrite `process_records` to build a new list instead of mutating the input
-3. **[MEDIUM]** Extract `enrich_record` error handling to return a sentinel value (e.g. raise, or log + skip) instead of silent `None`
-4. **[MEDIUM]** Guard `calculate_average` with an early return for empty lists
-5. **[LOW]** Replace MD5 in `generate_id` with `hashlib.sha256`
-
----
-
-## 🧭 Onboarding — Expected Guide Structure
-
-- **Setup:** Python 3.10+, `pip install requests`, run `python app.py <input.json> <output.json> <api_url>`
-- **Architecture:** Linear data pipeline — load → validate → enrich (external API) → transform → save
-- **Key files:** `app.py` (pipeline), `utils.py` (helpers), `data/input.json` (sample data)
-- **Gotcha #1:** `process_records` mutates its input — always pass a copy
-- **Gotcha #2:** `enrich_record` can return `None` — check before using the result
-- **Gotcha #3:** Empty `scores` arrays will cause `calculate_average` to crash
-
----
-
-## 🔍 Data Lineage — Expected Map
-
-| Step | Function | Type | Notes |
+| ID | MCP severity | File / symbol | Verified target |
 |---|---|---|---|
-| **DS-1** | `load_records` | Ingress — File read | JSON file, no schema validation |
-| **T-1** | `validate_email` | Transform — Filter | Removes invalid emails; regex bug allows empty strings |
-| **T-2** | `enrich_record` | Transform — External API call | Enriches with external data; silent failure |
-| **T-3** | `transform_record` | Transform — Normalise | Title-cases name, calculates average score |
-| **SK-1** | `save_results` | Egress — File write | JSON output; resource leak |
-| **SK-2** | `get_results_summary` | Egress — API response | Returns total + avg_score |
+| BUG-01 | `breaks` | `app.py` / `enrich_record` → `run_pipeline` | An enrichment exception returns `None`; the caller appends it and later passes it to `transform_record`, producing a runtime failure. |
+| BUG-02 | `warns` | `app.py` / `load_records` | `open(filepath, 'r')` is not managed by a context manager. |
+| BUG-03 | `warns` | `app.py` / `save_results` | `open(output_path, 'w')` is not managed by a context manager. |
 
-**Data quality risks:**
-1. `validate_email` accepts empty string — invalid records enter the pipeline
-2. `enrich_record` failure produces `None` in the record list — silent data corruption
-3. `calculate_average` on empty `scores` crashes the pipeline — data loss for edge-case records
+Each recorded finding must quote a literal source span actually returned by
+`read_project_file`. A paraphrase is not valid evidence.
 
+---
 
-## 📊 Bobalytics — Swarm Execution Metrics
-* **Subagents Dispatched:** 5 parallel agents (Debugger, Documenter, Refactorer, Onboarding, Lineage)
-* **Total Execution Time:** ~12.4 seconds
-* **Total Findings:** 8 Bugs, 9 Refactorings, 1 Public API Spec, 1 Data Lineage Map
-* **Bugs by Severity:** 1 Critical, 3 High, 3 Medium, 1 Low
+## Documenter — required output
+
+- Public API reference covering `load_records`, `validate_email`, `process_records`,
+  `enrich_record`, `calculate_average`, `transform_record`, `save_results`,
+  `get_results_summary`, `run_pipeline`, `generate_id`, `format_timestamp`,
+  `merge_dicts`, `chunk_list`, `flatten`, and `safe_get`.
+- Module overview for `app.py`: load → validate → enrich → transform → save.
+- Module overview for `utils.py`: identifiers, timestamps, and collection helpers.
+- The `enrich_record` failure contract is documented accurately as returning `None`.
+
+---
+
+## Refactorer — required dependency-aware suggestions
+
+The Refactorer result must explicitly acknowledge the completed Debugger context, then
+recommend targeted changes without silently fixing the fixture:
+
+1. **[HIGH]** Replace the unmanaged opens in `load_records` and `save_results` with
+   context managers.
+2. **[HIGH]** Make enrichment failure handling explicit so `run_pipeline` never passes
+   `None` into `transform_record`.
+
+---
+
+## Onboarding — required guide structure
+
+- **Setup:** Python 3.10+, install `requests`, and run
+  `python app.py <input.json> <output.json> <api_url>`.
+- **Architecture:** Linear pipeline — load → validate → enrich → transform → save.
+- **Key files:** `app.py`, `utils.py`, `data/input.json`, and `test_app.py`.
+- **Known gotcha:** external enrichment failure propagates `None` into the pipeline.
+
+---
+
+## Data Lineage — required map
+
+| Step | Function | Type | Source-backed observation |
+|---|---|---|---|
+| DS-1 | `load_records` | Ingress — file read | Reads JSON records from the input path. |
+| T-1 | `validate_email` | Transform — filter | Filters records by email shape. |
+| T-2 | `enrich_record` | Transform — external call | Calls `/enrich`; failure returns `None`. |
+| T-3 | `transform_record` | Transform — normalise | Normalises names and averages scores. |
+| SK-1 | `save_results` | Egress — file write | Serialises transformed records as JSON. |
+| SK-2 | `get_results_summary` | Egress — return value | Returns total count and average score. |
+
+---
+
+## Honest Bobalytics acceptance criteria
+
+- **Specialists selected:** 5.
+- **Execution shape:** 4 independent specialists in parallel, followed by the dependent
+  Refactorer.
+- **Required defect coverage:** BUG-01, BUG-02, and BUG-03 above.
+- **Evidence quality:** every MCP finding quotes text present in its `affectedPath`.
+- **Execution time:** report the measured dashboard duration; do not use a pre-filled value.
+- **Finding count:** report the actual `finalize_run` count; do not use a pre-filled value.
+
+Run the cross-platform fixture validation before the demo:
+
+```text
+python demo/validate_demo.py
+```
+
+After saving the JSON returned by `finalize_run`, validate the real swarm result:
+
+```text
+python demo/validate_demo.py --report path/to/final-report.json
+```

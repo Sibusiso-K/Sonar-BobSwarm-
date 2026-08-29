@@ -17,6 +17,17 @@ If you notice a bug, mention it in your report but defer the fix to the Debugger
 
 ---
 
+## Dispatch Precondition
+
+If this run also selected a Debugger, you must be dispatched only after that Debugger has
+completed. Your payload must contain a `[DEPENDENCY CONTEXT — DEBUGGER COMPLETED]` section
+with its actual returned findings. Treat a missing or placeholder dependency section as a
+blocked dispatch: return to the orchestrator and do not begin speculative refactoring.
+
+If no Debugger was selected for the run, no dependency context is required.
+
+---
+
 ## Refactoring Protocol
 
 1. **Read the code first.** Never suggest a refactoring based on assumptions.

@@ -15,7 +15,18 @@ export type TaskType =
 
 export type Severity = "breaks" | "warns" | "informational";
 
-export type RunStatus = "queued" | "running" | "complete" | "error";
+/**
+ * `pending` is the backend's canonical pre-dispatch state. `queued` remains
+ * accepted so the dashboard can still render runs created by older builds.
+ */
+export type RunStatus = "pending" | "queued" | "running" | "complete" | "error";
+
+export interface RunError {
+  code: string;
+  message: string;
+}
+
+export type ConnState = "idle" | "connecting" | "open" | "reconnecting" | "closed" | "error";
 
 export interface Run {
   id: string;
@@ -24,6 +35,8 @@ export interface Run {
   repoRef: string;
   status: RunStatus;
   createdAt: string;
+  completedAt?: string | null;
+  error?: RunError | string | null;
 }
 
 /** Shape returned by GET /runs — Run plus history-list-only fields. */
@@ -45,8 +58,12 @@ export interface Finding {
 
 export interface Report {
   runId: string;
+  status?: RunStatus;
+  isFinal?: boolean;
+  generatedAt?: string | null;
   summary: string;
   findingsByRole: Record<string, Finding[]>;
+  error?: RunError | string | null;
 }
 
 export interface TimelineEntry {
@@ -65,7 +82,12 @@ export type ProgressStatus =
   | "skipped"
   | "error";
 
-export type SwarmEvent =
+type EventMeta = {
+  runId?: string;
+  sequence?: number;
+};
+
+export type LiveSwarmEvent =
   | {
       type: "progress";
       at: string;
@@ -82,4 +104,30 @@ export type SwarmEvent =
       type: "run_complete";
       at: string;
       report: Report;
+    }
+  | {
+      type: "run_error";
+      at: string;
+      report: Report;
+      error: RunError;
     };
+
+export type SequencedSwarmEvent = LiveSwarmEvent & EventMeta;
+
+export interface RunSnapshot {
+  run: Run;
+  report: Report;
+  events: SequencedSwarmEvent[];
+  progressByRole?: Record<string, SequencedSwarmEvent>;
+  afterSequence: number;
+  firstAvailableSequence: number;
+  lastSequence: number;
+  truncated?: boolean;
+}
+
+export type SwarmEvent =
+  | SequencedSwarmEvent
+  | ({
+      type: "snapshot";
+      at?: string;
+    } & RunSnapshot);

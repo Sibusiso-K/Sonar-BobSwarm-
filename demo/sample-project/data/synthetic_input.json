@@ -1,0 +1,120 @@
+[
+  {
+    "name": "Chris Paul",
+    "email": "chris@test.com",
+    "scores": [
+      100,
+      "invalid_score"
+    ],
+    "id": "syn-type-672",
+    "_meta": {
+      "synthetic": true,
+      "defect_category": "type_corruption"
+    }
+  },
+  {
+    "name": "Chris Paul",
+    "email": "chris@test.com",
+    "scores": [
+      100,
+      "invalid_score"
+    ],
+    "id": "syn-type-276",
+    "_meta": {
+      "synthetic": true,
+      "defect_category": "type_corruption"
+    }
+  },
+  {
+    "name": "Alex Vance",
+    "email": "alex@test.com",
+    "scores": [
+      "85",
+      "ninety",
+      null
+    ],
+    "id": "syn-type-949",
+    "_meta": {
+      "synthetic": true,
+      "defect_category": "type_corruption"
+    }
+  },
+  {
+    "id": "syn-drift-2",
+    "email": "no-scores@test.com",
+    "_meta": {
+      "synthetic": true,
+      "defect_category": "schema_drift"
+    }
+  },
+  {
+    "name": "Chris Paul",
+    "email": "chris@test.com",
+    "scores": [
+      100,
+      "invalid_score"
+    ],
+    "id": "syn-type-959",
+    "_meta": {
+      "synthetic": true,
+      "defect_category": "type_corruption"
+    }
+  },
+  {
+    "name": "Alex Vance",
+    "email": "alex@test.com",
+    "scores": [
+      "85",
+      "ninety",
+      null
+    ],
+    "id": "syn-type-184",
+    "_meta": {
+      "synthetic": true,
+      "defect_category": "type_corruption"
+    }
+  },
+  {
+    "name": "Alex Vance",
+    "email": "alex@test.com",
+    "scores": [
+      "85",
+      "ninety",
+      null
+    ],
+    "id": "syn-type-498",
+    "_meta": {
+      "synthetic": true,
+      "defect_category": "type_corruption"
+    }
+  },
+  {
+    "name": "Chris Paul",
+    "email": "chris@test.com",
+    "scores": [
+      100,
+      "invalid_score"
+    ],
+    "id": "syn-type-474",
+    "_meta": {
+      "synthetic": true,
+      "defect_category": "type_corruption"
+    }
+  },
+  {
+    "id": "syn-drift-1",
+    "name": "Taylor Swift",
+    "_meta": {
+      "synthetic": true,
+      "defect_category": "schema_drift"
+    }
+  },
+  {
+    "id": "syn-drift-2",
+    "email": "no-scores@test.com",
+    "_meta": {
+      "synthetic": true,
+      "defect_category": "schema_drift"
+    }
+  }
+]

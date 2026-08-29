@@ -1,0 +1,285 @@
+<svg viewBox="0 0 1040 760" xmlns="http://www.w3.org/2000/svg" font-family="Inter,'Segoe UI',Helvetica,Arial,sans-serif">
+<defs>
+
+<radialGradient id="bgGrad" cx="50%" cy="30%" r="85%">
+  <stop offset="0%" stop-color="#141a24"/>
+  <stop offset="100%" stop-color="#090c11"/>
+</radialGradient>
+<linearGradient id="orcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+  <stop offset="0%" stop-color="#a371f7"/>
+  <stop offset="100%" stop-color="#e879c9"/>
+</linearGradient>
+<linearGradient id="repGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+  <stop offset="0%" stop-color="#e8b339"/>
+  <stop offset="100%" stop-color="#f0d878"/>
+</linearGradient>
+<pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse">
+  <circle cx="1.4" cy="1.4" r="1.1" fill="#1b2129"/>
+</pattern>
+<filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+  <feGaussianBlur stdDeviation="7" result="b"/>
+  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="softshadow" x="-40%" y="-40%" width="180%" height="180%">
+  <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000000" flood-opacity="0.5"/>
+</filter>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+  <path d="M0,0 L10,5 L0,10 z" fill="#4b5563"/>
+</marker>
+
+</defs>
+<rect x="0" y="0" width="1040" height="760" rx="22" fill="url(#bgGrad)"/>
+<rect x="0" y="0" width="1040" height="760" rx="22" fill="url(#grid)"/>
+<path d="M 520,130.0 L 520,204.0" fill="none" stroke="#2a3038" stroke-opacity="0.30" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M 520,316.0 C 520,353.0 175,353.0 175,390.0" fill="none" stroke="#f85149" stroke-opacity="0.30" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M 520,316.0 C 520,353.0 405,353.0 405,390.0" fill="none" stroke="#58a6ff" stroke-opacity="0.30" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M 520,316.0 C 520,353.0 635,353.0 635,390.0" fill="none" stroke="#3fb950" stroke-opacity="0.30" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M 520,316.0 C 520,353.0 865,353.0 865,390.0" fill="none" stroke="#d29922" stroke-opacity="0.30" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M 175,490.0 C 175,545.0 520,545.0 520,600" fill="none" stroke="#f85149" stroke-opacity="0.30" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M 405,490.0 C 405,545.0 520,545.0 520,600" fill="none" stroke="#58a6ff" stroke-opacity="0.30" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M 635,490.0 C 635,545.0 520,545.0 520,600" fill="none" stroke="#3fb950" stroke-opacity="0.30" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M 865,490.0 C 865,545.0 520,545.0 520,600" fill="none" stroke="#d29922" stroke-opacity="0.30" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M 520,600 L 520,635.0" fill="none" stroke="#e8b339" stroke-opacity="0.30" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect id="glow-ur" x="334.0" y="24.0" width="372" height="112" rx="20" fill="#8b949e" opacity="0" filter="url(#glow)"/>
+<rect x="340.0" y="30.0" width="360" height="100" rx="16" fill="#12161d" stroke="#8b949e" stroke-width="2.4" filter="url(#softshadow)"/>
+<rect x="340.0" y="44.0" width="4" height="72" rx="2" fill="#8b949e"/>
+<circle cx="370.0" cy="60.0" r="15" fill="#8b949e" fill-opacity="0.14" stroke="#8b949e" stroke-opacity="0.55" stroke-width="1.3"/>
+<text x="370.0" y="66.0" font-size="16" text-anchor="middle">💬</text>
+<text x="534" y="65.0" font-size="16.5" font-weight="700" fill="#eef2f6" text-anchor="middle">User Request</text>
+<text x="534" y="84.0" font-size="11.5" fill="#8b949e" text-anchor="middle" font-family="'JetBrains Mono',Menlo,Consolas,monospace" letter-spacing="0.3">plain-language input</text>
+<rect id="glow-orc" x="324.0" y="198.0" width="392" height="124" rx="20" fill="#a371f7" opacity="0" filter="url(#glow)"/>
+<rect x="330.0" y="204.0" width="380" height="112" rx="16" fill="#12161d" stroke="url(#orcGrad)" stroke-width="2.8" filter="url(#softshadow)"/>
+<circle cx="360.0" cy="234.0" r="18" fill="#a371f7" fill-opacity="0.14" stroke="#a371f7" stroke-opacity="0.55" stroke-width="1.3"/>
+<text x="360.0" y="240.0" font-size="19" text-anchor="middle">🧠</text>
+<text x="534" y="239.0" font-size="18.5" font-weight="700" fill="#eef2f6" text-anchor="middle">BobSwarm Orchestrator</text>
+<text x="534" y="258.0" font-size="11.5" fill="#8b949e" text-anchor="middle" font-family="'JetBrains Mono',Menlo,Consolas,monospace" letter-spacing="0.3">spawns &amp; coordinates agents</text>
+
+<g transform="translate(520,260)">
+  <circle r="216.0" fill="none" stroke="#a371f7" stroke-opacity="0.35" stroke-width="1.6" stroke-dasharray="3 10" stroke-linecap="round" id="orc-ring"/>
+</g>
+<text x="520" y="342.0" font-size="12" fill="#c9a6ff" text-anchor="middle" font-family="'JetBrains Mono',Menlo,monospace">Bob Agent mode + master system prompt</text>
+<text x="520" y="368.0" font-size="12.5" fill="#c9a6ff" text-anchor="middle" font-style="italic" font-family="'JetBrains Mono',Menlo,monospace">spawn_subagent × N &#8202;·&#8202; parallel execution</text>
+<rect id="glow-sub0" x="69.0" y="384.0" width="212" height="112" rx="20" fill="#f85149" opacity="0" filter="url(#glow)"/>
+<rect x="75.0" y="390.0" width="200" height="100" rx="16" fill="#12161d" stroke="#f85149" stroke-width="2.4" filter="url(#softshadow)"/>
+<rect x="75.0" y="404.0" width="4" height="72" rx="2" fill="#f85149"/>
+<circle cx="105.0" cy="420.0" r="15" fill="#f85149" fill-opacity="0.14" stroke="#f85149" stroke-opacity="0.55" stroke-width="1.3"/>
+<text x="105.0" y="426.0" font-size="16" text-anchor="middle">🐞</text>
+<text x="189" y="425.0" font-size="16.5" font-weight="700" fill="#eef2f6" text-anchor="middle">Debugger</text>
+<text x="189" y="444.0" font-size="11.5" fill="#8b949e" text-anchor="middle" font-family="'JetBrains Mono',Menlo,Consolas,monospace" letter-spacing="0.3">Subagent</text>
+<rect id="glow-sub1" x="299.0" y="384.0" width="212" height="112" rx="20" fill="#58a6ff" opacity="0" filter="url(#glow)"/>
+<rect x="305.0" y="390.0" width="200" height="100" rx="16" fill="#12161d" stroke="#58a6ff" stroke-width="2.4" filter="url(#softshadow)"/>
+<rect x="305.0" y="404.0" width="4" height="72" rx="2" fill="#58a6ff"/>
+<circle cx="335.0" cy="420.0" r="15" fill="#58a6ff" fill-opacity="0.14" stroke="#58a6ff" stroke-opacity="0.55" stroke-width="1.3"/>
+<text x="335.0" y="426.0" font-size="16" text-anchor="middle">📄</text>
+<text x="419" y="425.0" font-size="16.5" font-weight="700" fill="#eef2f6" text-anchor="middle">Documenter</text>
+<text x="419" y="444.0" font-size="11.5" fill="#8b949e" text-anchor="middle" font-family="'JetBrains Mono',Menlo,Consolas,monospace" letter-spacing="0.3">Subagent</text>
+<rect id="glow-sub2" x="529.0" y="384.0" width="212" height="112" rx="20" fill="#3fb950" opacity="0" filter="url(#glow)"/>
+<rect x="535.0" y="390.0" width="200" height="100" rx="16" fill="#12161d" stroke="#3fb950" stroke-width="2.4" filter="url(#softshadow)"/>
+<rect x="535.0" y="404.0" width="4" height="72" rx="2" fill="#3fb950"/>
+<circle cx="565.0" cy="420.0" r="15" fill="#3fb950" fill-opacity="0.14" stroke="#3fb950" stroke-opacity="0.55" stroke-width="1.3"/>
+<text x="565.0" y="426.0" font-size="16" text-anchor="middle">🛠</text>
+<text x="649" y="425.0" font-size="16.5" font-weight="700" fill="#eef2f6" text-anchor="middle">Refactorer</text>
+<text x="649" y="444.0" font-size="11.5" fill="#8b949e" text-anchor="middle" font-family="'JetBrains Mono',Menlo,Consolas,monospace" letter-spacing="0.3">Subagent</text>
+<rect id="glow-sub3" x="759.0" y="384.0" width="212" height="112" rx="20" fill="#d29922" opacity="0" filter="url(#glow)"/>
+<rect x="765.0" y="390.0" width="200" height="100" rx="16" fill="#12161d" stroke="#d29922" stroke-width="2.4" filter="url(#softshadow)"/>
+<rect x="765.0" y="404.0" width="4" height="72" rx="2" fill="#d29922"/>
+<circle cx="795.0" cy="420.0" r="15" fill="#d29922" fill-opacity="0.14" stroke="#d29922" stroke-opacity="0.55" stroke-width="1.3"/>
+<text x="795.0" y="426.0" font-size="16" text-anchor="middle">🔗</text>
+<text x="879" y="425.0" font-size="16.5" font-weight="700" fill="#eef2f6" text-anchor="middle">Data Lineage</text>
+<text x="879" y="444.0" font-size="11.5" fill="#8b949e" text-anchor="middle" font-family="'JetBrains Mono',Menlo,Consolas,monospace" letter-spacing="0.3">Subagent</text>
+<circle cx="520" cy="600" r="8" fill="#e8b339" id="agg-dot" opacity="0.3"/>
+<circle cx="520" cy="600" r="16" fill="none" stroke="#e8b339" stroke-width="1.4" opacity="0.25"/>
+<text x="550" y="605" font-size="12" fill="#e8b339" text-anchor="start" font-style="italic" font-family="'JetBrains Mono',Menlo,monospace">aggregate results</text>
+<rect id="glow-rep" x="324.0" y="629.0" width="392" height="122" rx="20" fill="#e8b339" opacity="0" filter="url(#glow)"/>
+<rect x="330.0" y="635.0" width="380" height="110" rx="16" fill="#12161d" stroke="url(#repGrad)" stroke-width="2.8" filter="url(#softshadow)"/>
+<circle cx="360.0" cy="665.0" r="18" fill="#e8b339" fill-opacity="0.14" stroke="#e8b339" stroke-opacity="0.55" stroke-width="1.3"/>
+<text x="360.0" y="671.0" font-size="19" text-anchor="middle">📊</text>
+<text x="534" y="670.0" font-size="18.5" font-weight="700" fill="#eef2f6" text-anchor="middle">Structured Unified Report</text>
+<text x="534" y="689.0" font-size="11.5" fill="#8b949e" text-anchor="middle" font-family="'JetBrains Mono',Menlo,Consolas,monospace" letter-spacing="0.3">single response to user</text>
+<circle r="6.5" fill="#e6edf3" style="animation: pktA 11s infinite linear;" filter="url(#glow)"/>
+<circle r="6" fill="#f85149" style="animation: pktB0 11s infinite linear;" filter="url(#glow)"/>
+<circle r="6" fill="#58a6ff" style="animation: pktB1 11s infinite linear;" filter="url(#glow)"/>
+<circle r="6" fill="#3fb950" style="animation: pktB2 11s infinite linear;" filter="url(#glow)"/>
+<circle r="6" fill="#d29922" style="animation: pktB3 11s infinite linear;" filter="url(#glow)"/>
+<circle r="5.5" fill="#f85149" style="animation: pktC0 11s infinite linear;" filter="url(#glow)"/>
+<circle r="5.5" fill="#58a6ff" style="animation: pktC1 11s infinite linear;" filter="url(#glow)"/>
+<circle r="5.5" fill="#3fb950" style="animation: pktC2 11s infinite linear;" filter="url(#glow)"/>
+<circle r="5.5" fill="#d29922" style="animation: pktC3 11s infinite linear;" filter="url(#glow)"/>
+<circle r="7" fill="#e8b339" style="animation: pktD 11s infinite linear;" filter="url(#glow)"/>
+<style>
+#glow-orc{animation:glowOrc 11s infinite ease-in-out;}
+#glow-sub0{animation:glowSub0 11s infinite ease-in-out;}
+#glow-sub1{animation:glowSub1 11s infinite ease-in-out;}
+#glow-sub2{animation:glowSub2 11s infinite ease-in-out;}
+#glow-sub3{animation:glowSub3 11s infinite ease-in-out;}
+#agg-dot{animation:glowAgg 11s infinite ease-in-out;}
+#glow-rep{animation:glowRep 11s infinite ease-in-out;}
+#glow-ur{animation:glowUr 11s infinite ease-in-out;}
+#orc-ring{animation:orcSpin 7s linear infinite; transform-origin:center;}
+
+@keyframes pktA {
+  0% { opacity:0; cx:520px; cy:130.0px; }
+  2.00% { opacity:0; cx:520px; cy:130.0px; }
+  2.50% { opacity:1; cx:520px; cy:130.0px; }
+  13.00% { opacity:1; cx:520px; cy:204.0px; }
+  13.50% { opacity:0; cx:520px; cy:204.0px; }
+  100% { opacity:0; cx:520px; cy:204.0px; }
+}
+
+@keyframes glowOrc {
+  0% { opacity:0; }
+  11.00% { opacity:0; }
+  13.00% { opacity:0.85; }
+  24.00% { opacity:0.85; }
+  26.00% { opacity:0; }
+  100% { opacity:0; }
+}
+
+@keyframes pktB0 {
+  0% { opacity:0; cx:520px; cy:316.0px; }
+  24.00% { opacity:0; cx:520px; cy:316.0px; }
+  24.50% { opacity:1; cx:520px; cy:316.0px; }
+  37.00% { opacity:1; cx:175px; cy:390.0px; }
+  37.50% { opacity:0; cx:175px; cy:390.0px; }
+  100% { opacity:0; cx:175px; cy:390.0px; }
+}
+
+@keyframes glowSub0 {
+  0% { opacity:0; }
+  35.00% { opacity:0; }
+  37.00% { opacity:0.85; }
+  47.00% { opacity:0.85; }
+  49.00% { opacity:0; }
+  100% { opacity:0; }
+}
+
+@keyframes pktB1 {
+  0% { opacity:0; cx:520px; cy:316.0px; }
+  24.00% { opacity:0; cx:520px; cy:316.0px; }
+  24.50% { opacity:1; cx:520px; cy:316.0px; }
+  37.00% { opacity:1; cx:405px; cy:390.0px; }
+  37.50% { opacity:0; cx:405px; cy:390.0px; }
+  100% { opacity:0; cx:405px; cy:390.0px; }
+}
+
+@keyframes glowSub1 {
+  0% { opacity:0; }
+  35.00% { opacity:0; }
+  37.00% { opacity:0.85; }
+  47.00% { opacity:0.85; }
+  49.00% { opacity:0; }
+  100% { opacity:0; }
+}
+
+@keyframes pktB2 {
+  0% { opacity:0; cx:520px; cy:316.0px; }
+  24.00% { opacity:0; cx:520px; cy:316.0px; }
+  24.50% { opacity:1; cx:520px; cy:316.0px; }
+  37.00% { opacity:1; cx:635px; cy:390.0px; }
+  37.50% { opacity:0; cx:635px; cy:390.0px; }
+  100% { opacity:0; cx:635px; cy:390.0px; }
+}
+
+@keyframes glowSub2 {
+  0% { opacity:0; }
+  35.00% { opacity:0; }
+  37.00% { opacity:0.85; }
+  47.00% { opacity:0.85; }
+  49.00% { opacity:0; }
+  100% { opacity:0; }
+}
+
+@keyframes pktB3 {
+  0% { opacity:0; cx:520px; cy:316.0px; }
+  24.00% { opacity:0; cx:520px; cy:316.0px; }
+  24.50% { opacity:1; cx:520px; cy:316.0px; }
+  37.00% { opacity:1; cx:865px; cy:390.0px; }
+  37.50% { opacity:0; cx:865px; cy:390.0px; }
+  100% { opacity:0; cx:865px; cy:390.0px; }
+}
+
+@keyframes glowSub3 {
+  0% { opacity:0; }
+  35.00% { opacity:0; }
+  37.00% { opacity:0.85; }
+  47.00% { opacity:0.85; }
+  49.00% { opacity:0; }
+  100% { opacity:0; }
+}
+
+@keyframes pktC0 {
+  0% { opacity:0; cx:175px; cy:490.0px; }
+  47.00% { opacity:0; cx:175px; cy:490.0px; }
+  47.50% { opacity:1; cx:175px; cy:490.0px; }
+  61.00% { opacity:1; cx:520px; cy:600px; }
+  61.50% { opacity:0; cx:520px; cy:600px; }
+  100% { opacity:0; cx:520px; cy:600px; }
+}
+
+@keyframes pktC1 {
+  0% { opacity:0; cx:405px; cy:490.0px; }
+  47.00% { opacity:0; cx:405px; cy:490.0px; }
+  47.50% { opacity:1; cx:405px; cy:490.0px; }
+  61.00% { opacity:1; cx:520px; cy:600px; }
+  61.50% { opacity:0; cx:520px; cy:600px; }
+  100% { opacity:0; cx:520px; cy:600px; }
+}
+
+@keyframes pktC2 {
+  0% { opacity:0; cx:635px; cy:490.0px; }
+  47.00% { opacity:0; cx:635px; cy:490.0px; }
+  47.50% { opacity:1; cx:635px; cy:490.0px; }
+  61.00% { opacity:1; cx:520px; cy:600px; }
+  61.50% { opacity:0; cx:520px; cy:600px; }
+  100% { opacity:0; cx:520px; cy:600px; }
+}
+
+@keyframes pktC3 {
+  0% { opacity:0; cx:865px; cy:490.0px; }
+  47.00% { opacity:0; cx:865px; cy:490.0px; }
+  47.50% { opacity:1; cx:865px; cy:490.0px; }
+  61.00% { opacity:1; cx:520px; cy:600px; }
+  61.50% { opacity:0; cx:520px; cy:600px; }
+  100% { opacity:0; cx:520px; cy:600px; }
+}
+
+@keyframes glowAgg {
+  0% { opacity:0; }
+  59.00% { opacity:0; }
+  61.00% { opacity:1; }
+  65.00% { opacity:1; }
+  67.00% { opacity:0; }
+  100% { opacity:0; }
+}
+
+@keyframes pktD {
+  0% { opacity:0; cx:520px; cy:600px; }
+  65.00% { opacity:0; cx:520px; cy:600px; }
+  65.50% { opacity:1; cx:520px; cy:600px; }
+  79.00% { opacity:1; cx:520px; cy:635.0px; }
+  79.50% { opacity:0; cx:520px; cy:635.0px; }
+  100% { opacity:0; cx:520px; cy:635.0px; }
+}
+
+@keyframes glowRep {
+  0% { opacity:0; }
+  77.00% { opacity:0; }
+  79.00% { opacity:0.9; }
+  94.00% { opacity:0.9; }
+  96.00% { opacity:0; }
+  100% { opacity:0; }
+}
+
+@keyframes glowUr {
+  0% { opacity:0; }
+  0.00% { opacity:0; }
+  2.00% { opacity:0.5; }
+  2.00% { opacity:0.5; }
+  4.00% { opacity:0; }
+  100% { opacity:0; }
+}
+
+@keyframes orcSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+</style>
+</svg>

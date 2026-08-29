@@ -251,7 +251,16 @@ already-complete run was skipping the sort `finalizeRun` applies, so the two
 code paths could return findings in different order for the same run — now
 identical (verified: `JSON.stringify` equal).
 
-## 5c. Demo target has lost most of its planted bugs — needs a team decision
+## 5c. Demo target has lost most of its planted bugs — RESOLVED (Option A taken)
+
+> Resolved 2026-08-28 23:54 SAST, commit `692dc7f` (Sibusiso). Both
+> `app.py`'s header comment and `demo/expected_output.md` now consistently
+> describe the 2 bugs that actually remain (`enrich_record` None-propagation,
+> unclosed file handles) — Bobalytics counts updated to match (3 bugs, 2
+> refactorings, down from the stale 8/9). Verified: `npm run build` clean,
+> no other file references the removed bug counts.
+
+Original finding, kept for context:
 
 Checked `demo/sample-project/app.py`/`utils.py` directly against the original
 findings list. Of ~7-8 planted bugs, **5 are now fixed** — kept intentionally

@@ -12,7 +12,8 @@
 > session should follow automatically (§7 there) — pull before starting,
 > commit and push after each meaningful unit of work, not just at the end.
 >
-> Last updated: 2026-08-28, 19:24 SAST.
+> Last updated: 2026-08-29. The current implementation and tests are the
+> authority for lifecycle, HTTP, WebSocket, and filesystem behavior.
 
 ---
 
@@ -171,7 +172,13 @@ something. If 5 minutes is wrong for the actual fixture repo size once
 Mmopiemang's fixtures exist, change `TIMEOUT_MS` in `store.js` — it's the only
 place that number lives.
 
-### 5c. WebSocket drops mid-demo (not yet handled)
+### 5c. WebSocket drops mid-demo — implemented
+
+> The original notes in this section are historical. The current
+> `events-server.js`, `store.js`, and frontend implement snapshot hydration,
+> bounded sequenced replay, reconnect backoff, deduplication, and terminal
+> state recovery. See `docs/LIVE_EVENTS.md` and the backend WebSocket tests.
+
 `events-server.js` doesn't currently push any "replay missed events on
 reconnect" logic — if the browser's WS drops and reconnects, it just gets new
 events from that point forward, not the run's full history. For the live demo

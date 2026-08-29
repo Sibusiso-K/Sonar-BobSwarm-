@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createRun, subscribeToRun, BackendUnreachableError } from "../lib/api";
-import type { Finding, Report, Run, SwarmEvent, TimelineEntry, AgentRole } from "../lib/types";
+import type { ConnState, Finding, Report, Run, SwarmEvent, TimelineEntry, AgentRole } from "../lib/types";
 
 export type RoleState = {
   role: AgentRole;
@@ -16,8 +16,6 @@ const ALL_ROLES: AgentRole[] = [
   "data_lineage",
 ];
 
-type ConnState = "idle" | "connecting" | "open" | "closed" | "error";
-
 export function useSwarmRun() {
   const [run, setRun] = useState<Run | null>(null);
   const [roles, setRoles] = useState<Record<string, RoleState>>({});
@@ -29,48 +27,124 @@ export function useSwarmRun() {
   const [submitting, setSubmitting] = useState(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
-  const pushTimeline = useCallback((entry: Omit<TimelineEntry, "id">) => {
-    setTimeline((prev) => [...prev, { ...entry, id: `${Date.now()}-${Math.random()}` }]);
+  const roleFromProgress = (event: SwarmEvent & { type: "progress" }): RoleState => ({
+    role: event.subagentRole,
+    status: event.status,
+    detail: event.detail,
+  });
+
+  const timelineFromEvent = (event: SwarmEvent): Omit<TimelineEntry, "id"> | null => {
+    if (event.type === "progress") {
+      return {
+        at: event.at,
+        label: event.subagentRole,
+        detail: event.detail ?? event.status,
+        tone: event.status === "done" ? "done" : event.status === "error" ? "error" : "active",
+      };
+    }
+    if (event.type === "finding") {
+      return {
+        at: event.at,
+        label: `${event.finding.subagentRole} · finding`,
+        detail: event.finding.targetSymbol,
+        tone: event.finding.severity === "breaks" ? "error" : "active",
+      };
+    }
+    if (event.type === "run_complete") {
+      return {
+        at: event.at,
+        label: "run complete",
+        detail: `${Object.values(event.report.findingsByRole).flat().length} findings`,
+        tone: "done",
+      };
+    }
+    if (event.type === "run_error") {
+      return {
+        at: event.at,
+        label: "run error",
+        detail: event.error.message,
+        tone: "error",
+      };
+    }
+    return null;
+  };
+
+  const pushTimeline = useCallback((entry: Omit<TimelineEntry, "id">, id?: string | number) => {
+    setTimeline((prev) => {
+      const nextId = id === undefined ? `${Date.now()}-${Math.random()}` : String(id);
+      if (prev.some((item) => item.id === nextId)) return prev;
+      return [...prev, { ...entry, id: nextId }];
+    });
   }, []);
 
-  const handleEvent = useCallback(
-    (event: SwarmEvent) => {
+  const applyLiveEvent = useCallback(
+    (event: SwarmEvent, id?: string | number) => {
+      const timelineEntry = timelineFromEvent(event);
+      if (timelineEntry) pushTimeline(timelineEntry, id);
+
       if (event.type === "progress") {
-        setRoles((prev) => ({
-          ...prev,
-          [event.subagentRole]: {
-            role: event.subagentRole as AgentRole,
-            status: event.status,
-            detail: event.detail,
-          },
-        }));
-        pushTimeline({
-          at: event.at,
-          label: event.subagentRole,
-          detail: event.detail ?? event.status,
-          tone: event.status === "done" ? "done" : "active",
-        });
+        setRoles((prev) => ({ ...prev, [event.subagentRole]: roleFromProgress(event) }));
       } else if (event.type === "finding") {
-        setFindings((prev) => [...prev, event.finding]);
-        pushTimeline({
-          at: event.at,
-          label: `${event.finding.subagentRole} · finding`,
-          detail: event.finding.targetSymbol,
-          tone: event.finding.severity === "breaks" ? "error" : "active",
-        });
+        setFindings((prev) => (prev.some((finding) => finding.id === event.finding.id) ? prev : [...prev, event.finding]));
       } else if (event.type === "run_complete") {
         setReport(event.report);
-        setRun((prev) => (prev ? { ...prev, status: "complete" } : prev));
+        setRun((prev) => (prev ? { ...prev, status: "complete", completedAt: event.report.generatedAt ?? prev.completedAt } : prev));
         setSubmitting(false);
-        pushTimeline({
-          at: event.at,
-          label: "run complete",
-          detail: `${Object.values(event.report.findingsByRole).flat().length} findings`,
-          tone: "done",
-        });
+      } else if (event.type === "run_error") {
+        setReport(event.report);
+        setRun((prev) => (prev ? { ...prev, status: "error", error: event.error } : prev));
+        setError(event.error.message);
+        setSubmitting(false);
       }
     },
     [pushTimeline]
+  );
+
+  const applySnapshot = useCallback(
+    (snapshot: Extract<SwarmEvent, { type: "snapshot" }>) => {
+      setRun(snapshot.run);
+      setReport(snapshot.report);
+      setFindings(Object.values(snapshot.report.findingsByRole).flat());
+      setRoles((prev) => {
+        const next = { ...prev };
+        for (const role of ALL_ROLES) next[role] ??= { role, status: "waiting" };
+        for (const event of Object.values(snapshot.progressByRole ?? {})) {
+          if (event.type === "progress") next[event.subagentRole] = roleFromProgress(event);
+        }
+        return next;
+      });
+      const replayedTimeline = snapshot.events
+        .map((event) => {
+          const entry = timelineFromEvent(event);
+          return entry ? { ...entry, id: String(event.sequence ?? `${event.at}-${event.type}`) } : null;
+        })
+        .filter((entry): entry is TimelineEntry => entry !== null);
+      setTimeline((prev) => {
+        if (snapshot.afterSequence === 0) return replayedTimeline;
+        const existingIds = new Set(prev.map((entry) => entry.id));
+        return [...prev, ...replayedTimeline.filter((entry) => !existingIds.has(entry.id))];
+      });
+      if (snapshot.run.status === "complete" || snapshot.run.status === "error") {
+        setSubmitting(false);
+      }
+      if (snapshot.run.status === "error" && snapshot.run.error) {
+        const message = typeof snapshot.run.error === "string" ? snapshot.run.error : snapshot.run.error.message;
+        setError(message);
+      }
+    },
+    []
+  );
+
+  const handleEvent = useCallback(
+    (event: SwarmEvent) => {
+      if (event.type === "snapshot") {
+        applySnapshot(event);
+        for (const replayedEvent of event.events) applyLiveEvent(replayedEvent, replayedEvent.sequence);
+        return;
+      }
+      applyLiveEvent(event, event.sequence);
+    },
+    [applyLiveEvent, applySnapshot]
   );
 
   const start = useCallback(
@@ -93,7 +167,13 @@ export function useSwarmRun() {
         unsubscribeRef.current = subscribeToRun(newRun.id, {
           onOpen: () => setConnState("open"),
           onError: () => setConnState("error"),
-          onClose: () => setConnState("closed"),
+          onClose: () => setConnState((prev) => (prev === "open" ? "closed" : prev)),
+          onReconnecting: () => setConnState("reconnecting"),
+          onGiveUp: () => {
+            setConnState("error");
+            setError("Lost the connection to the swarm and couldn't reconnect. Try again.");
+            setSubmitting(false);
+          },
           onEvent: handleEvent,
         });
       } catch (e) {
@@ -121,6 +201,8 @@ export function useSwarmRun() {
     setError(null);
     setSubmitting(false);
   }, []);
+
+  useEffect(() => () => unsubscribeRef.current?.(), []);
 
   return {
     run,

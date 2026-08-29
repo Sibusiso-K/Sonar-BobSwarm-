@@ -1,68 +1,154 @@
 /**
- * Decompose test harness — Farheen (AI/ML Engineer)
- * Run: node orchestrator/_test_decompose.js
+ * Executable decomposition tests.
+ *
+ * Run either command; a failed assertion exits non-zero:
+ *   node orchestrator/_test_decompose.js
+ *   node --test orchestrator/_test_decompose.js
  */
-const { decompose } = require('./decompose');
+'use strict';
 
-const tests = [
-  // 1–5: single-agent triggers
-  'find all the bugs and document the API',
-  'refactor the legacy code',
-  'onboard a new developer to this project',
-  'trace the data flow through the pipeline',
-  'the app is crashing on startup',
-  // 6–10: refined keyword coverage
-  'clean up and improve the codebase',
-  'write getting started guide for new devs',
-  'what is the origin of this data',
-  'fix exceptions and optimise performance',
-  'analyse the codebase. Find all bugs, document the public API, suggest refactoring, trace the data flow, and write an onboarding guide.',
-  // 11–14: edge cases / previously unmatched
-  'review the code',
-  'security audit the application',
-  'explain the architecture',
-  'how does the data transformation work',
+const assert = require('node:assert/strict');
+const test = require('node:test');
+const {
+  AGENT_TYPES,
+  buildDispatchPayload,
+  computeConfidence,
+  decompose,
+  matchesKeyword,
+} = require('./decompose');
+
+const A = AGENT_TYPES;
+
+const routingCases = [
+  ['find all the bugs and document the API', [A.DEBUGGER, A.DOCUMENTER]],
+  ['refactor the legacy code', [A.REFACTORER]],
+  ['onboard a new developer to this project', [A.ONBOARDING]],
+  ['trace the data flow through the pipeline', [A.DATA_LINEAGE]],
+  ['the app is crashing on startup', [A.DEBUGGER]],
+  ['clean up and improve the codebase', [A.REFACTORER]],
+  ['write getting started guide for new devs', [A.ONBOARDING]],
+  ['what is the origin of this data', [A.DATA_LINEAGE]],
+  ['fix exceptions and optimise performance', [A.DEBUGGER, A.REFACTORER]],
+  [
+    'analyse the codebase. Find all bugs, document the public API, suggest refactoring, trace the data flow, and write an onboarding guide.',
+    [A.DEBUGGER, A.DOCUMENTER, A.ONBOARDING, A.DATA_LINEAGE, A.REFACTORER],
+  ],
+  ['review the code', [A.DEBUGGER, A.DOCUMENTER, A.ONBOARDING, A.DATA_LINEAGE, A.REFACTORER]],
+  ['security audit the application', [A.DEBUGGER]],
+  ['explain the architecture', [A.DOCUMENTER]],
+  ['how does the data transformation work', [A.DOCUMENTER, A.DATA_LINEAGE]],
 ];
 
-let pass = 0;
-let warn = 0;
+for (const [request, expectedAgents] of routingCases) {
+  test(`routes: ${request}`, () => {
+    const originalWarn = console.warn;
+    console.warn = () => {};
+    try {
+      const result = decompose(request, ['demo/sample-project/app.py']);
+      assert.deepEqual(result.map(({ agent }) => agent), expectedAgents);
+      for (const subtask of result) {
+        assert.ok(subtask.confidence > 0 && subtask.confidence <= 1);
+      }
+    } finally {
+      console.warn = originalWarn;
+    }
+  });
+}
 
-tests.forEach((t, i) => {
-  const result = decompose(t, ['demo/sample-project/app.py']);
-  const summary = result.map((s) => {
-    const dep = s.dependsOn.length ? ' (after:' + s.dependsOn.join(',') + ')' : '';
-    return s.agent + dep + ' conf=' + s.confidence;
-  }).join(', ');
-  console.log('Test ' + (i + 1) + ': "' + t.substring(0, 72) + '"');
-  console.log('  Agents: ' + summary);
-  console.log('');
+test('refactorer waits for debugger when both are selected', () => {
+  const result = decompose('fix bugs and refactor the code');
+  const debuggerTask = result.find(({ agent }) => agent === A.DEBUGGER);
+  const refactorerTask = result.find(({ agent }) => agent === A.REFACTORER);
+
+  assert.ok(debuggerTask);
+  assert.ok(refactorerTask);
+  assert.equal(refactorerTask.parallel, false);
+  assert.deepEqual(refactorerTask.dependsOn, [A.DEBUGGER]);
 });
 
-// --- Explicit Refactorer dependency rule verification ---
-console.log('--- Refactorer Dependency Rule Verification ---');
-const r1 = decompose('fix bugs and refactor the code', []);
-const refactorer1 = r1.find((s) => s.agent === 'refactorer');
-const debugger1   = r1.find((s) => s.agent === 'debugger');
-console.assert(refactorer1 !== undefined, 'FAIL: refactorer not present');
-console.assert(debugger1 !== undefined,   'FAIL: debugger not present');
-console.assert(refactorer1.parallel === false, 'FAIL: refactorer should be sequential');
-console.assert(refactorer1.dependsOn.includes('debugger'), 'FAIL: refactorer should depend on debugger');
-console.log('PASS: refactorer.parallel=false, dependsOn=[debugger]');
+test('standalone refactorer has no artificial dependency', () => {
+  const [refactorerTask] = decompose('refactor the code');
+  assert.equal(refactorerTask.agent, A.REFACTORER);
+  assert.equal(refactorerTask.parallel, true);
+  assert.deepEqual(refactorerTask.dependsOn, []);
+});
 
-const r2 = decompose('refactor the code', []);
-const refactorer2 = r2.find((s) => s.agent === 'refactorer');
-console.assert(refactorer2.parallel === true, 'FAIL: refactorer alone should be parallel');
-console.assert(refactorer2.dependsOn.length === 0, 'FAIL: refactorer alone should have no deps');
-console.log('PASS: refactorer alone is parallel with no deps');
+test('rejects invalid decomposition inputs', () => {
+  assert.throws(() => decompose(''), /non-empty string/);
+  assert.throws(() => decompose(null), /non-empty string/);
+  assert.throws(() => decompose('find bugs', 'app.py'), /array of file paths/);
+  assert.throws(() => decompose('find bugs', [42]), /array of file paths/);
+});
 
-// --- Confidence score verification ---
-console.log('');
-console.log('--- Confidence Score Verification ---');
-const c1 = decompose('bug crash error exception fail broken fix issue debug', []);
-const debuggerC = c1.find((s) => s.agent === 'debugger');
-console.assert(debuggerC.confidence > 0, 'FAIL: confidence should be > 0');
-console.assert(debuggerC.confidence <= 1.0, 'FAIL: confidence should be <= 1.0');
-console.log('PASS: confidence in range [0,1], value=' + debuggerC.confidence);
+test('copies context arrays so one subtask cannot mutate another', () => {
+  const sourceContext = ['demo/sample-project/app.py'];
+  const result = decompose('find bugs and document the API', sourceContext);
 
-console.log('');
-console.log('All checks complete.');
+  result[0].context.push('unexpected.py');
+  assert.deepEqual(sourceContext, ['demo/sample-project/app.py']);
+  assert.deepEqual(result[1].context, ['demo/sample-project/app.py']);
+});
+
+test('confidence measures match strength, not synonym-list length', () => {
+  assert.equal(computeConfidence('bug', ['bug']), 0.6);
+  assert.equal(computeConfidence('bug', ['bug', 'error', 'crash', 'failure', 'issue']), 0.6);
+  assert.equal(computeConfidence('bug crash error', ['bug', 'error', 'crash']), 0.9);
+  assert.equal(computeConfidence('bug crash error failure issue', ['bug', 'error', 'crash', 'failure', 'issue']), 1);
+  assert.equal(computeConfidence('documentation only', ['bug', 'error']), 0);
+});
+
+test('keyword matching respects token boundaries and common inflections', () => {
+  assert.equal(matchesKeyword('find the bugs', 'bug'), true);
+  assert.equal(matchesKeyword('the service is crashing', 'crash'), true);
+  assert.equal(matchesKeyword('tests are failing', 'fail'), true);
+  assert.equal(matchesKeyword('inspect the tissue sample', 'issue'), false);
+  assert.equal(matchesKeyword('profile without errors', 'file'), false);
+});
+
+test('dispatch payload contains the exact run, role, lifecycle, and evidence contract', () => {
+  const runId = '123e4567-e89b-42d3-a456-426614174000';
+  const [subtask] = decompose('find bugs', ['demo/sample-project/app.py']);
+  const payload = buildDispatchPayload({
+    subtask,
+    runId,
+    personaPrompt: '# Debugger persona',
+  });
+
+  assert.match(payload, new RegExp(runId));
+  assert.match(payload, /subagentRole exactly as provided: debugger/);
+  assert.match(payload, /record_progress[\s\S]+status="started"/);
+  assert.match(payload, /read_project_file/);
+  assert.match(payload, /record_finding once per distinct/);
+  assert.match(payload, /literal quoted span/);
+  assert.match(payload, /severity must be exactly breaks, warns, or informational/);
+  assert.match(payload, /status="done" exactly once/);
+  assert.match(payload, /do not call finalize_run/);
+});
+
+test('dispatch payload never accepts an invented or malformed run ID', () => {
+  const [subtask] = decompose('find bugs');
+  assert.throws(
+    () => buildDispatchPayload({ subtask, runId: 'run-123', personaPrompt: 'debugger' }),
+    /existing UUID copied from the BobSwarm dashboard/,
+  );
+});
+
+test('dependent refactorer cannot dispatch before debugger context exists', () => {
+  const runId = '123e4567-e89b-42d3-a456-426614174000';
+  const refactorerTask = decompose('fix bugs and refactor the code')
+    .find(({ agent }) => agent === A.REFACTORER);
+
+  assert.throws(
+    () => buildDispatchPayload({ subtask: refactorerTask, runId, personaPrompt: 'refactorer' }),
+    /requires completed debugger findings/,
+  );
+
+  const payload = buildDispatchPayload({
+    subtask: refactorerTask,
+    runId,
+    personaPrompt: 'refactorer',
+    dependencyContext: 'Debugger found a None-propagation failure in app.py.',
+  });
+  assert.match(payload, /DEPENDENCY CONTEXT — DEBUGGER COMPLETED/);
+  assert.match(payload, /None-propagation failure/);
+});

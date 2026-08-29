@@ -28,6 +28,57 @@ This must work fully end-to-end for the demo. Every part of the stack matters.
 
 ---
 
+## ✅ Current Integration Baseline — 2026-08-29
+
+The synchronized `main` branch now contains the complete integration baseline.
+`npm run verify` passes all orchestrator, demo, backend, frontend, lint, and
+production-build checks. The repository is intentionally still a **manual Bob
+handoff** proof of concept: the dashboard creates a pending UUID, the operator
+copies its handoff prompt into Bob, and Bob's native `spawn_subagent` calls drive
+the real MCP events. The dashboard does not claim to invoke Bob automatically.
+
+The backend now enforces `pending → running → complete|error`, makes report
+reads side-effect-free, supports bounded sequenced event replay and snapshots,
+and rejects writes after terminal state. The frontend reconnects and hydrates
+from snapshots. These are real implementation guarantees covered by tests;
+they are not pre-cached presentation events.
+
+Synthetic data generation is local-only and writes to
+`demo/sample-project/data/synthetic_input.json`. It never posts records to
+`POST /runs`; that endpoint accepts only `taskDescription`, `taskType`, and
+`repoRef`. Synthetic fixtures and replay are appropriate for zero-cost team
+rehearsals, but the submitted video must show one genuine Bob-driven run.
+
+The lead's dashboard evidence is now committed under
+`docs/bob-sessions/sibusiso/`: `01-task-prompt.png` and
+`02-bob-handoff.png`. These prove the real task-creation and operator-handoff
+states. They do not replace the required Bob MCP-panel screenshot.
+
+### Active submission blockers after the current integration pass
+
+| Owner | Remaining work that can still cost points | Evidence in this checkout |
+|---|---|---|
+| Sibusiso / lead | Capture the Bob MCP-panel `bobswarm` connected screenshot; record the genuine 90–180 second golden-path video; complete the final submission form and eligibility/disclosure confirmations. | Dashboard task, handoff, and waiting-state screenshots are now present; Bob-panel and video are still external actions. |
+| Arisha | Add her own Bob task-session screenshots and contribution log; optionally load the designed fonts before the final capture. | `docs/bob-sessions/arisha/` contains no screenshots or contribution log in this checkout. |
+| Farheen | No known implementation blocker; keep persona/routing evidence available for the final video. | Persona and routing checks pass; screenshots and contribution evidence are present. |
+| Lethabo | No known implementation blocker; use the current MCP server for the final live Bob run and keep the server restart/health check in the recording checklist. | Backend lifecycle, snapshot/replay, and live MCP evidence are present. |
+| Mmpoiemang | Prepare the short verbal demo walkthrough and confirm the final expected-output metrics match the recorded run. | Demo validation and fixture evidence pass; walkthrough remains unchecked below. |
+| Everyone | Confirm eligibility, employer/affiliation disclosure, and permission to participate before submission. | This cannot be verified from repository files and remains a team action. |
+
+### Lead next actions before submission
+
+- Capture one clean golden-path video with the dashboard UUID handoff visible,
+  Bob's parallel `spawn_subagent` calls visible, and the final report grounded
+  in literal source evidence.
+- Capture the remaining Bob MCP-panel screenshot for Sibusiso, obtain Arisha's
+  required Bob session evidence, and complete the outstanding team usage statements.
+- Restart the events server immediately before recording so port 8787 serves
+  the current checkout; verify `/health` and `/runs` first.
+- Reconcile any remaining historical notes below this section only when they
+  contradict the implementation; do not use old simulated-flow descriptions.
+
+---
+
 ## 🗂 Repo Map — Who Owns What
 
 ```
@@ -84,8 +135,8 @@ docs/
 | Git tools | Lethabo | ✅ Done | All 4 tools (`git_status`, `git_log`, `git_diff`, `git_blame`) confirmed live through MCP stdio transport in Session 4 — raw output captured, zero errors |
 | Filesystem tools | Lethabo | ✅ Done | `project_summary`, `read_project_file`, `list_project_files` all confirmed live via MCP transport across Sessions 3–4 |
 | Swarm events + findings | Lethabo | ✅ Done | Full 5-agent swarm confirmed via MCP tools in Session 4: 42 findings across 5 roles, all evidence verbatim quotes, `finalize_run` returns deterministically sorted report |
-| Frontend dashboard | Arisha | 🟡 Skeleton ready | Simulation works; needs real SSE wiring per `docs/LIVE_EVENTS.md` |
-| Swarm visualisation | Arisha | 🟡 Skeleton ready | All 5 agent cards + timeline present |
+| Frontend dashboard | Arisha | 🟢 Real, wired, live-verified | Real React build (not simulation), real WebSocket, confirmed receiving live events from an actual Bob MCP session. Remaining: font-loading bug + polish, see `docs/ARISHA_FRONTEND_POLISH.md` |
+| Swarm visualisation | Arisha | ✅ Done | All 5 agent cards + timeline + run history + live timer, all live-data-driven |
 | Demo sample project | Mmpoiemang | ✅ Done | 7 bugs planted, `run_demo.sh` written |
 | Demo validation | Mmpoiemang | ✅ Done | Full 5-agent swarm run completed; 12 defects found; HTML report + 4 screenshots in `docs/bob-sessions/mmpoiemang/`; Bobalytics metrics added |
 | End-to-end test | Sibusiso | ✅ Done | Full 5-agent swarm run completed (Session 1, 2026-08-28) — 8 bugs, 15 docstrings, 7 refactorings, 10 lineage risks, 1 onboarding guide. Report in `docs/bob-sessions/sibusiso/` |
@@ -108,7 +159,8 @@ docs/
 - [x] **Live end-to-end orchestration run complete** — 5 agents, 4 parallel + 1 sequential, full Unified Report produced and saved in `docs/bob-sessions/sibusiso/`
 - [x] `docs/bob-sessions/sibusiso/CONTRIBUTIONS.md` created — session log for D3 submission
 - [x] `orchestrator/decompose.js` confirmed correct against full-audit task (5/5 agents triggered correctly)
-- [ ] Add MCP panel screenshot to `docs/bob-sessions/sibusiso/` — verify `bobswarm` shows Connected (green) after next Bob restart
+- [x] Add dashboard task/handoff screenshots to `docs/bob-sessions/sibusiso/` — `01-task-prompt.png` and `02-bob-handoff.png`
+- [ ] Add Bob MCP panel screenshot to `docs/bob-sessions/sibusiso/` — verify `bobswarm` shows Connected (green) after a Bob restart
 
 ### Creative freedom
 The system prompt and skill are templates — you have full freedom to rewrite,
@@ -185,19 +237,43 @@ integration now runs over a separate HTTP+WS side-channel
 
 ## 👤 Arisha — Frontend Engineer
 
-### What's done
-- Full dashboard HTML (`frontend/index.html`) with agent cards, task input, results panel, timeline
-- Dark amber theme CSS (`frontend/style.css`)
-- Swarm simulation in `frontend/app.js` — `simulateSwarm()` mirrors the real agent lifecycle
+> **This section was stale** (still described the old `simulateSwarm()`
+> placeholder that caused real confusion in team chat — corrected 2026-08-28
+> 23:23 SAST). Current status and full polish plan:
+> [`docs/ARISHA_FRONTEND_POLISH.md`](docs/ARISHA_FRONTEND_POLISH.md). If
+> you're seeing a connection error locally, check
+> [`docs/LAUNCH_GUIDE.md`](docs/LAUNCH_GUIDE.md) first — it's almost always
+> the backend not running, not a wiring problem.
+
+### What's actually done
+- **Full React 19 + TypeScript + Vite build**, replacing the old placeholder
+  entirely (merged PR #3, pulled in via `git subtree` for future updates —
+  see `docs/architecture.md`). Real, not simulated.
+- **Wired to the real WebSocket** — `src/lib/api.ts` + `src/hooks/
+  useSwarmRun.ts` connect to `mcp-server/events-server.js` on `:8787`,
+  handling `progress`/`finding`/`run_complete` events exactly per
+  `docs/LIVE_EVENTS.md`. Verified live twice: once via a manual test run,
+  once via a real Bob MCP session with real findings rendering.
+- Task input → `POST /runs` → real run created, dashboard subscribes to its
+  own WebSocket automatically.
+- The copy-ready Bob handoff is now rendered in the live pending-run UI with
+  the exact UUID and repository context visible before dispatch.
+- Frontend reconnects resume with the last event sequence, hydrate from the
+  backend snapshot, deduplicate replayed findings, and render terminal errors.
+- **Run history panel + live elapsed timer** — the stretch goal from the
+  old list, done (added on top of her build, PR #4).
+- Ambient `SwarmField` background (hand-rolled animated SVG), warm dark
+  design system (Fraunces/IBM Plex Mono/Inter, gold accent, grain texture).
 
 ### What still needs doing
-- [ ] Open `frontend/index.html` in a browser and verify the simulation looks right end-to-end
-- [ ] Replace `simulateSwarm()` with real event listener once Lethabo's event schema is confirmed
-  - Listen for: `agent_started`, `agent_done`, `swarm_complete`
-  - Update agent card state + timeline on each event
-- [ ] Wire the task input to actually send the request to the orchestrator (HTTP POST or direct Bob integration)
-- [ ] Make sure the **Copy Report** button works on the final unified report
-- [ ] (Stretch) Add a run history panel — list of past swarm runs with timestamps
+- [ ] **Font loading bug** — the 3 custom fonts are declared in CSS but
+      never actually loaded (no `<link>`/`@font-face` anywhere) — every
+      browser has been silently falling back to system fonts. Fix + full
+      polish plan (positioning, wording, flow) in
+      `docs/ARISHA_FRONTEND_POLISH.md`, with a ready-to-paste Bob prompt at
+      the bottom of that doc.
+- [x] Additive polish items (evidence code-styling, severity visual weight,
+      zero-findings empty state, full-run-ID copy button) are complete.
 
 ### Creative freedom
 The UI template gives you the structure and the colour palette (dark theme, amber).
@@ -367,11 +443,11 @@ node -e "
 
 | Member | Role | Paragraph added? |
 |---|---|---|
-| Sibusiso | Lead / Orchestrator | ⬜ |
-| Lethabo | Backend Engineer | ⬜ |
-| Arisha | Frontend Engineer | ⬜ |
+| Sibusiso | Lead / Orchestrator | ✅ |
+| Lethabo | Backend Engineer | ✅ |
+| Arisha | Frontend Engineer | ✅ |
 | Farheen | AI/ML Engineer | ✅ |
-| Mmpoiemang | Data / QA Engineer | ⬜ |
+| Mmpoiemang | Data / QA Engineer | ✅ |
 
 ---
 
@@ -393,23 +469,23 @@ Last thing, Bob ran three rounds of checks on all 5 persona files, checking 43 r
 
 ### Sibusiso — Lead / Orchestrator
 
-> ⬜ *Paragraph not yet added — paste yours here.*
+For my session, I acted as the Orchestrator and gave Bob the prompt: *"Analyse demo/sample-project for bugs, document the public API, suggest refactoring improvements, trace the data flow, and create an onboarding guide."* Bob started by using `read_file` to read the orchestration protocol (`orchestrator/system_prompt.md`), all 5 agent personas, and the source files simultaneously to get the full picture. Then, Bob used `execute_command` to run `orchestrator/decompose.js`, dynamically decomposing the prompt into 5 specialized sub-tasks. Bob correctly identified dependencies and used `spawn_subagent` to dispatch 4 agents (Debugger, Documenter, Onboarding, Data Lineage) in parallel, and then dispatched the Refactorer sequentially after passing it the Debugger's findings. This resulted in a comprehensive 41-finding unified report (`docs/bob-sessions/sibusiso/unified-report-session-1.md`). Later, I also had Bob help me resolve 3 blockers before merging a PR by using file editing tools to remove tracked `__pycache__` files, fix three bugs in `app.py`, and restore stripped docstrings in `utils.py`.
 
 ---
 
 ### Lethabo — Backend Engineer
 
-> ⬜ *Paragraph not yet added — paste yours here.*
+For Session 6, I tasked Bob with validating the frontend-to-backend live bridge. My prompt was: *"Use existing runId 827af00d-9bf3-4aad-8343-40821ca4a115 created by the frontend. Do not create a second run. Dispatch the full 5-agent swarm against this runId so the already-open dashboard receives events live."* Using its tools, Bob made an HTTP `GET` to the backend to verify the pending run existed. Bob then dispatched all 5 subagents in parallel (spawn_subagent). Through the BobSwarm MCP stdio transport tools, the subagents published `record_progress` and `record_finding` events live to the WebSocket connected to the frontend. The session finalized with 41 findings from the 5 specialists with verbatim code quotes—no paraphrasing. It confirmed our dashboard architecture worked cleanly without pre-briefing the subagents.
 
 ---
 
 ### Arisha — Frontend Engineer
 
-> ⬜ *Paragraph not yet added — paste yours here.*
+To polish the UI for our final submission, I prompted Bob to: *"Read docs/ARISHA_FRONTEND_POLISH.md... Fix the font loading bug... adjust Hero.tsx positioning and wording... Reduce empty-state stacking and add auto-scroll... If time allows, add a full-run-ID copy button."* Using `replace_file_content`, Bob added the Google Fonts `<link>` tags to `index.html` to load Fraunces, IBM Plex Mono, and Inter. Bob then updated `Hero.tsx` to feature an asymmetric layout and refined the hook phrasing. To streamline the UX, Bob added a smooth auto-scroll to the Swarm stage upon dispatch and a "Copy Full Run ID" button to make bridging runs with Bob seamless during the demo, conditionally hiding empty states in `App.tsx` until a run was actively created.
 
 ---
 
 ### Mmpoiemang — Data / QA Engineer
 
-> ⬜ *Paragraph not yet added — paste yours here.*
+To validate the multi-agent QA flow, I tasked Bob with: *"Analyse the codebase at demo/sample-project. Find all bugs, document the public API, suggest refactoring improvements, trace the data flow, and create an onboarding guide."* Bob loaded the agent personas and used `read_project_file` across `app.py`, `utils.py`, and `data/input.json`. Bob successfully spawned all 5 specialized subagents. The SwarmDebugger caught all planted defects (including a silent None propagation and resource leak) while the Data Lineage mapped the failure propagation paths. This proved our automation could detect 12 defects (including criticals and highs) across files in under 5 minutes without manual test suite configuration, aggregating the output cleanly.
 

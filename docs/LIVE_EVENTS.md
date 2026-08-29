@@ -1,70 +1,118 @@
-# Live Events Integration — for Arisha (frontend)
+# Live Events and Recovery Contract
 
-> **Author:** Lethabo (Backend Engineer)
+The BobSwarm backend exposes two transports from the same process:
 
-`frontend/app.js` currently uses `simulateSwarm()` with fake timers — this is
-called out in `docs/CONTRIBUTING.md` as a known placeholder for a future real
-feed. That feed now exists: `mcp-server/events-server.js`, running alongside the
-MCP stdio server on port 8787 (override with `BOBSWARM_EVENTS_PORT`).
+- MCP stdio for Bob's Git, filesystem, lifecycle, and finding tools.
+- A loopback HTTP/WebSocket bridge for the React dashboard.
 
-I haven't touched `frontend/` — that's your owned area per `CONTRIBUTING.md`.
-This is the contract to wire against whenever you're ready to swap the
-simulation for the real thing; ping me if anything here doesn't match what you
-need.
+The bridge listens on `http://127.0.0.1:8787` by default. Configure the host,
+port, and exact browser origins with `BOBSWARM_EVENTS_HOST`,
+`BOBSWARM_EVENTS_PORT`, and `BOBSWARM_ALLOWED_ORIGINS`.
 
-## Starting a run
+## Product boundary
 
+`POST /runs` creates an observable pending run; it does not invoke IBM Bob. The
+dashboard turns the created run into a copy-ready Bob handoff prompt. Bob then
+uses that existing UUID for every MCP lifecycle call. The first progress event
+or finding moves the run from `pending` to `running`.
+
+## HTTP endpoints
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /health` | Liveness check |
+| `POST /runs` | Create a validated pending run |
+| `GET /runs` | List runs, newest first |
+| `GET /runs/:id` | Read one run |
+| `GET /runs/:id/report` | Read the current or final report without changing lifecycle state |
+| `GET /runs/:id/snapshot?after=N` | Recover authoritative state and sequenced events after `N` |
+
+Create-run body:
+
+```json
+{
+  "taskDescription": "Audit the sample project",
+  "taskType": "full_audit",
+  "repoRef": "demo/sample-project"
+}
 ```
-POST http://localhost:8787/runs
-Content-Type: application/json
 
-{ "taskDescription": "...", "taskType": "schema_impact", "repoRef": "/path/or/url" }
+`taskType` must be one of `full_audit`, `debugger`, `documenter`, `refactorer`,
+`onboarding`, or `data_lineage`. JSON bodies are limited to 32 KiB.
+
+## Strict lifecycle
+
+```text
+pending -> running -> complete
+   |          |
+   v          v
+ error      error
 ```
 
-Returns the created run: `{ id, taskDescription, taskType, repoRef, status, createdAt, completedAt }`.
+- The first progress event or finding starts the run.
+- `finalize_run` requires a running run and is idempotent after completion.
+- Progress and findings are rejected after `complete` or `error`.
+- `get_run_report` and the report HTTP endpoint never finalize a run.
+- Pending and running runs enter `error` after the configured timeout.
 
-## Live events
+## WebSocket and replay
 
+Connect with the last event sequence applied by the client:
+
+```js
+new WebSocket(`ws://127.0.0.1:8787/runs/${runId}/events?after=${lastSequence}`)
 ```
-new WebSocket(`ws://localhost:8787/runs/${runId}/events`)
-```
 
-Three message types arrive as JSON:
+Every connection receives a `snapshot` frame before new live events. It
+contains the current run, partial/final report, latest progress per role,
+sequenced replay events, and a `truncated` flag. The report and
+`progressByRole` remain authoritative even when the bounded timeline log has
+condensed older events.
 
 ```jsonc
-// subagent status change — drives the per-agent card state
-{ "type": "progress", "runId": "...", "subagentRole": "debugger", "status": "started" | "investigating" | "done", "detail": "optional string", "at": "ISO timestamp" }
+{
+  "type": "snapshot",
+  "runId": "...",
+  "run": { "status": "running" },
+  "report": { "status": "running", "isFinal": false, "findingsByRole": {} },
+  "progressByRole": { "debugger": { "status": "investigating" } },
+  "events": [],
+  "afterSequence": 4,
+  "firstAvailableSequence": 1,
+  "lastSequence": 7,
+  "truncated": false,
+  "at": "ISO timestamp"
+}
+```
 
-// one structured finding — append to the results panel as it arrives, don't wait for run_complete
-{ "type": "finding", "runId": "...", "finding": {
+Live event types are:
+
+```jsonc
+{ "type": "progress", "sequence": 1, "runId": "...", "subagentRole": "debugger", "status": "started", "detail": null, "at": "ISO timestamp" }
+
+{ "type": "finding", "sequence": 2, "runId": "...", "finding": {
     "id": "...", "subagentRole": "debugger", "targetSymbol": "...",
     "affectedPath": "...", "severity": "breaks" | "warns" | "informational",
     "evidence": "literal quoted source text", "createdAt": "ISO timestamp"
   }, "at": "ISO timestamp" }
 
-// run finished — findings are already grouped by role and deterministically sorted, don't re-sort client-side
-{ "type": "run_complete", "runId": "...", "report": { "runId": "...", "generatedAt": "...", "summary": "3 findings across 2 specialists — 1 breaks, 1 warns, 1 informational", "findingsByRole": { "debugger": [...], "...": [...] } }, "at": "ISO timestamp" }
+{ "type": "run_complete", "sequence": 3, "runId": "...", "report": {
+    "status": "complete", "isFinal": true, "summary": "...", "findingsByRole": {}
+  }, "at": "ISO timestamp" }
+
+{ "type": "run_error", "sequence": 3, "runId": "...", "error": {
+    "code": "RUN_TIMEOUT", "message": "..."
+  }, "report": { "status": "error", "isFinal": true }, "at": "ISO timestamp" }
 ```
 
-## Reading a report without subscribing
+## Local security defaults
 
-```
-GET http://localhost:8787/runs/:id/report
-```
+- The server binds to loopback, not every network interface.
+- Browser origins are allow-listed for Vite development/preview ports.
+- Responses disable caching and content sniffing.
+- WebSocket message compression is disabled and payload size is bounded.
+- Filesystem and Git tools resolve real paths so symlinks and Windows
+  junctions cannot escape `BOBSWARM_ALLOWED_ROOT`.
 
-Same shape as the `run_complete` event's `report` field. Safe to call even if
-the run is still in progress — it will contain whatever findings exist so far
-and will force-finalize (mark the run complete) as a side effect, so only call
-it when you actually want to end the run's live phase.
-
-## Suggested mapping onto the existing UI
-
-- Agent cards (per `docs/agent_personas.md`'s 5 agents) → update on `progress`
-  events keyed by `subagentRole`.
-- Results panel → append on `finding` events, grouped by `subagentRole`,
-  colour-coded by `severity` (`breaks` = red, `warns` = amber, `informational`
-  = neutral) — this is the "oh god yes" moment the working notes call for.
-- Timeline → any of the three event types, timestamped by `at`.
-
-CORS is wide open (`*`) on the events server for local dev — fine for the demo,
-flag if it needs tightening before the video recording.
+See [`mcp-server/README.md`](../mcp-server/README.md) for verification commands
+and the full backend contract.

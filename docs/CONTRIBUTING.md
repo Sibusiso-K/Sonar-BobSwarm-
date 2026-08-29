@@ -86,8 +86,13 @@ future updates in.
 ### Demo (Mmpoiemang)
 ```bash
 # Requires Python 3.10+
-pip install requests
+python demo/validate_demo.py
+# Optional local-only edge-case fixture generation; no API calls are made:
+python demo/generate_synthetic.py 5
+# macOS/Linux/Git Bash:
 bash demo/run_demo.sh
+# Windows PowerShell:
+powershell -ExecutionPolicy Bypass -File demo/run_demo.ps1
 ```
 
 ### Decomposition tests (Farheen)
@@ -112,9 +117,15 @@ Orchestrator
   ↓ writes report via    write_swarm_report
 
 Frontend
-  ← polls/streams from   orchestrator status endpoint (future)
-  ← currently simulates  swarm lifecycle locally
+  ← creates a pending run via POST /runs
+  ← receives real MCP lifecycle events through HTTP/WebSocket
+  ← reconnects with a sequenced snapshot/replay cursor
 ```
+
+The dashboard-to-Bob boundary is deliberately explicit: the dashboard creates
+the run and produces a copy-ready prompt; the operator pastes that prompt into
+Bob's `BobSwarm Orchestrator` mode. Bob performs decomposition and
+`spawn_subagent` dispatch. The dashboard never fabricates a swarm run.
 
 If you're working on the MCP server or frontend, coordinate with Sibusiso on the
 integration interface before changing tool names or event schemas.

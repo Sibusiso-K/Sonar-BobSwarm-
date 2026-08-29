@@ -11,10 +11,11 @@ export function Nav() {
       <div className="mx-auto max-w-6xl px-6 sm:px-10">
         <div className="mt-4 flex items-center justify-between rounded-full glass px-5 py-3">
           <a href="#top" className="flex items-center gap-2.5">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-60" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-gold" />
-            </span>
+            <img
+              src="/logo.png"
+              alt="BobSwarm logo"
+              className="h-6 w-6 object-contain"
+            />
             <span className="font-display text-[1.05rem] tracking-tight text-paper">
               BobSwarm
             </span>
@@ -28,9 +29,6 @@ export function Nav() {
             </a>
             <a href="#report" className="transition-colors hover:text-paper">
               Report
-            </a>
-            <a href="#history" className="transition-colors hover:text-paper">
-              History
             </a>
           </nav>
           <a

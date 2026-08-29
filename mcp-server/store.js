@@ -1,62 +1,159 @@
 /**
  * BobSwarm — In-Memory Run Store
- * Owner: Lethabo (Backend Engineer)
  *
- * Holds run state, findings, and progress events for the lifetime of the MCP
- * server process. No DB for the 48h build — a hackathon demo run doesn't need
- * to survive a restart, and this keeps setup to zero external services.
- *
- * Also the publish side of the live-events bridge: every write here fans out
- * to any WebSocket clients subscribed via events-server.js, which is what
- * replaces frontend/app.js's simulateSwarm() with real swarm activity.
+ * The store owns the run state machine as well as the event replay buffer.
+ * Keeping those concerns together makes an event and the state it describes
+ * one synchronous operation: reconnecting clients can always recover from the
+ * latest snapshot without racing a write.
  */
 
 'use strict';
 
 const crypto = require('crypto');
 
-/** @type {Map<string, Run>} */
-const runs = new Map();
+const RUN_STATUSES = Object.freeze({
+  PENDING: 'pending',
+  RUNNING: 'running',
+  COMPLETE: 'complete',
+  ERROR: 'error',
+});
 
-/** @type {Map<string, Finding[]>} */
-const findingsByRun = new Map();
-
-/** @type {Map<string, Set<import('ws').WebSocket>>} */
-const subscribers = new Map();
-
+const TERMINAL_STATUSES = new Set([RUN_STATUSES.COMPLETE, RUN_STATUSES.ERROR]);
 const VALID_SEVERITIES = new Set(['breaks', 'warns', 'informational']);
 
-function createRun({ taskDescription, taskType, repoRef }) {
+const parsedTimeoutMs = Number.parseInt(process.env.BOBSWARM_RUN_TIMEOUT_MS || '', 10);
+const DEFAULT_TIMEOUT_MS = Number.isSafeInteger(parsedTimeoutMs) && parsedTimeoutMs > 0
+  ? parsedTimeoutMs
+  : 5 * 60 * 1000;
+const parsedEventLimit = Number.parseInt(process.env.BOBSWARM_EVENT_LOG_LIMIT || '', 10);
+const EVENT_LOG_LIMIT = Number.isSafeInteger(parsedEventLimit) && parsedEventLimit > 0
+  ? parsedEventLimit
+  : 2_000;
+
+/** @type {Map<string, Run>} */
+const runs = new Map();
+/** @type {Map<string, Finding[]>} */
+const findingsByRun = new Map();
+/** @type {Map<string, Map<string, object>>} */
+const progressByRun = new Map();
+/** @type {Map<string, object[]>} */
+const eventsByRun = new Map();
+/** @type {Map<string, number>} */
+const nextSequenceByRun = new Map();
+/** @type {Map<string, Set<import('ws').WebSocket>>} */
+const subscribers = new Map();
+/** @type {Map<string, NodeJS.Timeout>} */
+const timeoutHandles = new Map();
+
+class RunStoreError extends Error {
+  constructor(message, code, statusCode) {
+    super(message);
+    this.name = 'RunStoreError';
+    this.code = code;
+    this.statusCode = statusCode;
+  }
+}
+
+function storeError(message, code, statusCode) {
+  return new RunStoreError(message, code, statusCode);
+}
+
+function clone(value) {
+  return value === undefined ? undefined : structuredClone(value);
+}
+
+function requireRun(runId) {
+  const run = runs.get(runId);
+  if (!run) {
+    throw storeError(`unknown run_id: ${runId}`, 'RUN_NOT_FOUND', 404);
+  }
+  return run;
+}
+
+function requireNonEmptyString(value, field, maxLength) {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw storeError(`${field} must be a non-empty string`, 'INVALID_INPUT', 400);
+  }
+  const normalized = value.trim();
+  if (normalized.length > maxLength) {
+    throw storeError(`${field} must be at most ${maxLength} characters`, 'INVALID_INPUT', 400);
+  }
+  return normalized;
+}
+
+function assertWritable(run, operation) {
+  if (TERMINAL_STATUSES.has(run.status)) {
+    throw storeError(
+      `cannot ${operation} after run ${run.id} reached terminal status "${run.status}"`,
+      'RUN_TERMINAL',
+      409
+    );
+  }
+}
+
+function transitionToRunning(run) {
+  if (run.status !== RUN_STATUSES.PENDING) return;
+  const now = new Date().toISOString();
+  run.status = RUN_STATUSES.RUNNING;
+  run.startedAt = now;
+  run.updatedAt = now;
+}
+
+function clearRunTimeout(runId) {
+  const handle = timeoutHandles.get(runId);
+  if (handle) clearTimeout(handle);
+  timeoutHandles.delete(runId);
+}
+
+function createRun(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    throw storeError('run input must be a JSON object', 'INVALID_INPUT', 400);
+  }
+
+  const taskDescription = requireNonEmptyString(input.taskDescription, 'taskDescription', 10_000);
+  const taskType = requireNonEmptyString(input.taskType, 'taskType', 64);
+  const repoRef = requireNonEmptyString(input.repoRef, 'repoRef', 2_048);
+  if (!/^[a-z][a-z0-9_]{0,63}$/.test(taskType)) {
+    throw storeError(
+      'taskType must be a lowercase identifier containing only letters, numbers, and underscores',
+      'INVALID_INPUT',
+      400
+    );
+  }
+
+  const now = new Date().toISOString();
   const id = crypto.randomUUID();
   const run = {
     id,
     taskDescription,
     taskType,
     repoRef,
-    status: 'pending',
-    createdAt: new Date().toISOString(),
+    status: RUN_STATUSES.PENDING,
+    createdAt: now,
+    startedAt: null,
+    updatedAt: now,
     completedAt: null,
+    error: null,
   };
+
   runs.set(id, run);
   findingsByRun.set(id, []);
-  return run;
+  progressByRun.set(id, new Map());
+  eventsByRun.set(id, []);
+  nextSequenceByRun.set(id, 1);
+  armTimeout(id);
+  return clone(run);
 }
 
 function getRun(runId) {
-  const run = runs.get(runId);
-  if (!run) throw new Error(`unknown run_id: ${runId}`);
-  return run;
+  return clone(requireRun(runId));
 }
 
-/**
- * All runs, most recent first. Ties (identical createdAt, possible if two
- * runs start in the same millisecond) break on id — determinism per doctrine,
- * not just "probably fine."
- */
+/** All runs, most recent first, with deterministic tie-breaking. */
 function listRuns() {
   return Array.from(runs.values())
     .map((run) => ({
-      ...run,
+      ...clone(run),
       findingCount: (findingsByRun.get(run.id) || []).length,
       durationMs: run.completedAt
         ? Date.parse(run.completedAt) - Date.parse(run.createdAt)
@@ -69,184 +166,293 @@ function listRuns() {
 }
 
 function recordProgress(runId, subagentRole, status, detail) {
-  const run = getRun(runId);
-  if (run.status === 'pending') {
-    run.status = 'running';
+  const run = requireRun(runId);
+  assertWritable(run, 'record progress');
+
+  const normalizedRole = requireNonEmptyString(subagentRole, 'subagentRole', 128);
+  if (!['started', 'investigating', 'done'].includes(status)) {
+    throw storeError('status must be started, investigating, or done', 'INVALID_INPUT', 400);
   }
-  const event = {
+  const normalizedDetail = detail == null
+    ? null
+    : requireNonEmptyString(detail, 'detail', 2_000);
+
+  transitionToRunning(run);
+  run.updatedAt = new Date().toISOString();
+  const event = publish(runId, {
     type: 'progress',
     runId,
-    subagentRole,
+    subagentRole: normalizedRole,
     status,
-    detail: detail || null,
-    at: new Date().toISOString(),
-  };
-  publish(runId, event);
+    detail: normalizedDetail,
+    at: run.updatedAt,
+  });
+  progressByRun.get(runId).set(normalizedRole, event);
   return event;
 }
 
-/**
- * Records one structured finding. Rejects anything without a literal evidence
- * string — no evidence, no finding, per the extract-don't-infer rule that also
- * governs the subagent persona instructions.
- */
-function recordFinding(runId, { subagentRole, targetSymbol, affectedPath, severity, evidence }) {
-  getRun(runId); // throws if unknown
-  if (!VALID_SEVERITIES.has(severity)) {
-    throw new Error(`invalid severity "${severity}" — must be one of: ${[...VALID_SEVERITIES].join(', ')}`);
+/** Records one evidence-backed, structured finding. */
+function recordFinding(runId, input) {
+  const run = requireRun(runId);
+  assertWritable(run, 'record a finding');
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    throw storeError('finding input must be an object', 'INVALID_INPUT', 400);
   }
-  if (!evidence || typeof evidence !== 'string' || evidence.trim().length === 0) {
-    throw new Error('evidence is required — quote the literal source span, do not paraphrase');
+
+  const subagentRole = requireNonEmptyString(input.subagentRole, 'subagentRole', 128);
+  const targetSymbol = requireNonEmptyString(input.targetSymbol, 'targetSymbol', 512);
+  const affectedPath = requireNonEmptyString(input.affectedPath, 'affectedPath', 2_048);
+  const evidence = requireNonEmptyString(input.evidence, 'evidence', 20_000);
+  if (!VALID_SEVERITIES.has(input.severity)) {
+    throw storeError(
+      `invalid severity "${input.severity}" — must be one of: ${[...VALID_SEVERITIES].join(', ')}`,
+      'INVALID_INPUT',
+      400
+    );
   }
+
+  transitionToRunning(run);
+  const now = new Date().toISOString();
+  run.updatedAt = now;
   const finding = {
     id: crypto.randomUUID(),
     runId,
     subagentRole,
     targetSymbol,
     affectedPath,
-    severity,
+    severity: input.severity,
     evidence,
-    createdAt: new Date().toISOString(),
+    createdAt: now,
   };
   findingsByRun.get(runId).push(finding);
-  publish(runId, { type: 'finding', runId, finding, at: finding.createdAt });
-  return finding;
+  publish(runId, { type: 'finding', runId, finding: clone(finding), at: now });
+  return clone(finding);
 }
 
-/**
- * Deterministic aggregation: group by subagentRole, sort each group by
- * (affectedPath, targetSymbol) so report ordering never depends on arrival
- * order or wall-clock timing between subagents.
- */
-function finalizeRun(runId) {
-  const run = getRun(runId);
-  run.status = 'complete';
-  run.completedAt = new Date().toISOString();
-
-  const findings = findingsByRun.get(runId) || [];
+function groupFindings(findings) {
   const byRole = {};
-  for (const f of findings) {
-    (byRole[f.subagentRole] ||= []).push(f);
+  for (const finding of findings) {
+    (byRole[finding.subagentRole] ||= []).push(clone(finding));
   }
   for (const role of Object.keys(byRole)) {
     byRole[role].sort((a, b) => {
       const pathCmp = a.affectedPath.localeCompare(b.affectedPath);
-      return pathCmp !== 0 ? pathCmp : a.targetSymbol.localeCompare(b.targetSymbol);
+      if (pathCmp !== 0) return pathCmp;
+      const symbolCmp = a.targetSymbol.localeCompare(b.targetSymbol);
+      return symbolCmp !== 0 ? symbolCmp : a.id.localeCompare(b.id);
     });
   }
-  const sortedByRole = Object.fromEntries(
-    Object.entries(byRole).sort(([a], [b]) => a.localeCompare(b))
-  );
+  return Object.fromEntries(Object.entries(byRole).sort(([a], [b]) => a.localeCompare(b)));
+}
 
-  const report = {
-    runId,
+function buildReport(run) {
+  const findings = findingsByRun.get(run.id) || [];
+  const findingsByRole = groupFindings(findings);
+  return {
+    runId: run.id,
+    status: run.status,
+    isFinal: TERMINAL_STATUSES.has(run.status),
     generatedAt: run.completedAt,
-    summary: buildSummary(findings, Object.keys(sortedByRole)),
-    findingsByRole: sortedByRole,
+    summary: buildSummary(findings, Object.keys(findingsByRole)),
+    findingsByRole,
+    error: run.error ? clone(run.error) : null,
   };
-  publish(runId, { type: 'run_complete', runId, report, at: run.completedAt });
+}
+
+/**
+ * Completes a running run. Repeated finalization is a read: it preserves the
+ * original completion timestamp and never emits a second completion event.
+ */
+function finalizeRun(runId) {
+  const run = requireRun(runId);
+  if (run.status === RUN_STATUSES.COMPLETE) return buildReport(run);
+  if (run.status === RUN_STATUSES.ERROR) {
+    throw storeError(`cannot finalize run ${runId} after it failed`, 'RUN_TERMINAL', 409);
+  }
+  if (run.status !== RUN_STATUSES.RUNNING) {
+    throw storeError(
+      `cannot finalize run ${runId} while status is "${run.status}"; record progress first`,
+      'INVALID_TRANSITION',
+      409
+    );
+  }
+
+  const now = new Date().toISOString();
+  run.status = RUN_STATUSES.COMPLETE;
+  run.updatedAt = now;
+  run.completedAt = now;
+  clearRunTimeout(runId);
+  const report = buildReport(run);
+  publish(runId, { type: 'run_complete', runId, report: clone(report), at: now });
   return report;
 }
 
-function getReport(runId) {
-  return finalizeRunIfNeeded(runId);
-}
+/** Marks an active run failed. Used by timeout handling and future adapters. */
+function failRun(runId, message, code = 'RUN_FAILED') {
+  const run = requireRun(runId);
+  if (run.status === RUN_STATUSES.ERROR) return buildReport(run);
+  if (run.status === RUN_STATUSES.COMPLETE) {
+    throw storeError(`cannot fail run ${runId} after it completed`, 'RUN_TERMINAL', 409);
+  }
 
-function finalizeRunIfNeeded(runId) {
-  const run = getRun(runId);
-  if (run.status !== 'complete') {
-    return finalizeRun(runId);
-  }
-  // Already complete: rebuild the same deterministic shape finalizeRun
-  // produces (sorted findings, generated summary) rather than a second,
-  // less-complete code path -- a GET here must match the run_complete
-  // event's shape exactly, not just approximate it.
-  const findings = findingsByRun.get(runId) || [];
-  const byRole = {};
-  for (const f of findings) {
-    (byRole[f.subagentRole] ||= []).push(f);
-  }
-  for (const role of Object.keys(byRole)) {
-    byRole[role].sort((a, b) => {
-      const pathCmp = a.affectedPath.localeCompare(b.affectedPath);
-      return pathCmp !== 0 ? pathCmp : a.targetSymbol.localeCompare(b.targetSymbol);
-    });
-  }
-  const sortedByRole = Object.fromEntries(
-    Object.entries(byRole).sort(([a], [b]) => a.localeCompare(b))
-  );
-  return {
-    runId,
-    generatedAt: run.completedAt,
-    summary: buildSummary(findings, Object.keys(sortedByRole)),
-    findingsByRole: sortedByRole,
+  const now = new Date().toISOString();
+  run.status = RUN_STATUSES.ERROR;
+  run.updatedAt = now;
+  run.completedAt = now;
+  run.error = {
+    code,
+    message: requireNonEmptyString(message, 'error message', 2_000),
   };
+  clearRunTimeout(runId);
+  const report = buildReport(run);
+  publish(runId, { type: 'run_error', runId, report: clone(report), error: clone(run.error), at: now });
+  return report;
 }
 
-/**
- * One-line, deterministic summary -- counts only, no LLM involved, so it
- * can't hallucinate and needs no doctrine caveat. Severity order is fixed
- * (breaks, warns, informational) regardless of arrival order.
- */
+/** Side-effect-free for pending, running, complete, and failed runs. */
+function getReport(runId) {
+  return buildReport(requireRun(runId));
+}
+
+/** Deterministic summary; no generated or inferred prose. */
 function buildSummary(findings, roles) {
   const bySeverity = { breaks: 0, warns: 0, informational: 0 };
-  for (const f of findings) {
-    if (f.severity in bySeverity) bySeverity[f.severity] += 1;
+  for (const finding of findings) {
+    if (finding.severity in bySeverity) bySeverity[finding.severity] += 1;
   }
   const roleCount = roles.length;
   const roleWord = roleCount === 1 ? 'specialist' : 'specialists';
   const parts = ['breaks', 'warns', 'informational']
-    .filter((sev) => bySeverity[sev] > 0)
-    .map((sev) => `${bySeverity[sev]} ${sev}`);
+    .filter((severity) => bySeverity[severity] > 0)
+    .map((severity) => `${bySeverity[severity]} ${severity}`);
   const severityPart = parts.length > 0 ? ` — ${parts.join(', ')}` : '';
   return `${findings.length} finding${findings.length === 1 ? '' : 's'} across ${roleCount} ${roleWord}${severityPart}`;
 }
 
-// ── pub/sub for the WebSocket bridge (events-server.js) ─────────────────────
+// ── persisted pub/sub for WebSocket reconnects ──────────────────────────────
 
 function subscribe(runId, ws) {
+  requireRun(runId);
   if (!subscribers.has(runId)) subscribers.set(runId, new Set());
   subscribers.get(runId).add(ws);
 }
 
 function unsubscribe(runId, ws) {
-  subscribers.get(runId)?.delete(ws);
+  const runSubscribers = subscribers.get(runId);
+  runSubscribers?.delete(ws);
+  if (runSubscribers?.size === 0) subscribers.delete(runId);
 }
 
 function publish(runId, event) {
-  const subs = subscribers.get(runId);
-  if (!subs) return;
-  const payload = JSON.stringify(event);
-  for (const ws of subs) {
-    if (ws.readyState === ws.OPEN) ws.send(payload);
+  requireRun(runId);
+  const sequence = nextSequenceByRun.get(runId) || 1;
+  nextSequenceByRun.set(runId, sequence + 1);
+  const persistedEvent = Object.freeze({ ...clone(event), sequence });
+  const eventLog = eventsByRun.get(runId);
+  eventLog.push(persistedEvent);
+  if (eventLog.length > EVENT_LOG_LIMIT) {
+    eventLog.splice(0, eventLog.length - EVENT_LOG_LIMIT);
   }
+
+  const payload = JSON.stringify(persistedEvent);
+  for (const ws of subscribers.get(runId) || []) {
+    if (ws.readyState !== 1) continue;
+    try {
+      ws.send(payload);
+    } catch {
+      unsubscribe(runId, ws);
+    }
+  }
+  return clone(persistedEvent);
 }
 
-// ── safety-net timeout: a hung Bob session shouldn't hang the demo ──────────
-// If a run has been "running" for longer than TIMEOUT_MS without finalizing,
-// force-finalize it with whatever findings exist. A live demo that always
-// renders something beats one that can freeze mid-recording.
-const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes, tune against fixture repo size
+function normalizeAfterSequence(afterSequence) {
+  if (afterSequence === undefined || afterSequence === null || afterSequence === '') return 0;
+  const value = typeof afterSequence === 'number'
+    ? afterSequence
+    : Number.parseInt(afterSequence, 10);
+  if (!Number.isSafeInteger(value) || value < 0 || String(value) !== String(afterSequence)) {
+    throw storeError('after must be a non-negative integer', 'INVALID_INPUT', 400);
+  }
+  return value;
+}
 
-function armTimeout(runId) {
-  setTimeout(() => {
-    const run = runs.get(runId);
-    if (run && run.status === 'running') {
-      console.error(`[BobSwarm store] run ${runId} timed out — force-finalizing`);
-      finalizeRun(runId);
-    }
-  }, TIMEOUT_MS).unref();
+/**
+ * Authoritative reconnect payload. The report contains all findings even if
+ * the bounded event log had to discard events older than the supplied cursor.
+ */
+function getSnapshot(runId, afterSequence = 0) {
+  const run = requireRun(runId);
+  const after = normalizeAfterSequence(afterSequence);
+  const eventLog = eventsByRun.get(runId) || [];
+  const progressByRole = Object.fromEntries(
+    Array.from(progressByRun.get(runId)?.entries() || [])
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([role, event]) => [role, clone(event)])
+  );
+  const firstAvailableSequence = eventLog[0]?.sequence || (nextSequenceByRun.get(runId) || 1);
+  const lastSequence = (nextSequenceByRun.get(runId) || 1) - 1;
+  return {
+    type: 'snapshot',
+    runId,
+    run: clone(run),
+    report: buildReport(run),
+    progressByRole,
+    events: eventLog.filter((event) => event.sequence > after).map(clone),
+    afterSequence: after,
+    firstAvailableSequence,
+    lastSequence,
+    truncated: firstAvailableSequence > 1 && after < firstAvailableSequence - 1,
+    at: new Date().toISOString(),
+  };
+}
+
+// ── safety-net timeout ──────────────────────────────────────────────────────
+
+function armTimeout(runId, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  const run = requireRun(runId);
+  if (TERMINAL_STATUSES.has(run.status)) return null;
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0) {
+    throw storeError('timeoutMs must be a positive integer', 'INVALID_INPUT', 400);
+  }
+  clearRunTimeout(runId);
+  const handle = setTimeout(() => {
+    const current = runs.get(runId);
+    if (!current || TERMINAL_STATUSES.has(current.status)) return;
+    console.error(`[BobSwarm store] run ${runId} timed out from ${current.status}`);
+    failRun(runId, `Run timed out after ${timeoutMs}ms while ${current.status}`, 'RUN_TIMEOUT');
+  }, timeoutMs);
+  handle.unref();
+  timeoutHandles.set(runId, handle);
+  return handle;
+}
+
+/** Test isolation; intentionally prefixed to discourage production use. */
+function __resetForTests() {
+  for (const handle of timeoutHandles.values()) clearTimeout(handle);
+  runs.clear();
+  findingsByRun.clear();
+  progressByRun.clear();
+  eventsByRun.clear();
+  nextSequenceByRun.clear();
+  subscribers.clear();
+  timeoutHandles.clear();
 }
 
 module.exports = {
+  RUN_STATUSES,
+  RunStoreError,
   createRun,
   getRun,
   listRuns,
   recordProgress,
   recordFinding,
   finalizeRun,
+  failRun,
   getReport,
+  getSnapshot,
   subscribe,
   unsubscribe,
   armTimeout,
+  __resetForTests,
 };

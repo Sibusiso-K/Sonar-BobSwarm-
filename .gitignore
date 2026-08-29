@@ -1,6 +1,8 @@
 # Dependencies
 node_modules/
 package-lock.json
+# Keep each app reproducible even though historical root lockfiles are ignored.
+!mcp-server/package-lock.json
 
 # Environment / secrets — never commit these, per hackathon rules on
 # credential exposure (IBM Cloud account suspension risk)
@@ -24,6 +26,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+.pytest_cache/
 
 # Bob MCP registration — machine-specific absolute cwd path, one per clone
 # location. Commit .bob/mcp.json.example instead; each person copies it and

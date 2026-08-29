@@ -4,18 +4,21 @@
   "description": "BobSwarm MCP server — exposes Git and filesystem tools to the BobSwarm orchestrator",
   "main": "server.js",
   "type": "commonjs",
+  "private": true,
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "test": "node --test test/*.test.js",
+    "check": "node --check server.js && node --check events-server.js && node --check store.js && node --check tools/filesystem.js && node --check tools/git.js && node --check tools/swarm.js && node --test test/*.test.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "simple-git": "^3.26.0",
-    "glob": "^11.0.0",
-    "ws": "^8.18.0"
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "glob": "11.1.0",
+    "simple-git": "3.36.0",
+    "ws": "8.21.3"
   },
   "engines": {
-    "node": ">=18"
+    "node": "20 || >=22"
   },
   "author": "Lethabo (Backend Engineer)",
   "license": "MIT"
