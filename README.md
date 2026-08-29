@@ -85,27 +85,12 @@ BobSwarm/
 
 ---
 
+
 ## How It Works
 
-```
-User Request (plain language)
-        │
-        ▼
-┌─────────────────────┐
-│  BobSwarm Agent     │  ← Bob Agent mode + master system prompt
-│  (Orchestrator)     │
-└────────┬────────────┘
-         │  spawn_subagent × N (parallel)
-    ┌────┴──────────────────────────────┐
-    │           │           │           │
-    ▼           ▼           ▼           ▼
- Debugger  Documenter  Refactorer  Data Lineage
- Subagent   Subagent    Subagent    Subagent
-    │           │           │           │
-    └────┬──────────────────────────────┘
-         │  aggregate results
-         ▼
-  Structured Unified Report
+<p align="center">
+  <img src="./agent-flow.svg" alt="BobSwarm orchestration flow" width="900">
+</p>
 ```
 
 ---
