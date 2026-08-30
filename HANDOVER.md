@@ -142,7 +142,7 @@ docs/
 | MCP server | Lethabo | ✅ Done | `.bob/mcp.json` written; 12 tools confirmed via Node verification; `project_summary` returns correct JSON against `demo/sample-project` |
 | Git tools | Lethabo | ✅ Done | All 4 tools (`git_status`, `git_log`, `git_diff`, `git_blame`) confirmed live through MCP stdio transport in Session 4 — raw output captured, zero errors |
 | Filesystem tools | Lethabo | ✅ Done | `project_summary`, `read_project_file`, `list_project_files` all confirmed live via MCP transport across Sessions 3–4 |
-| Swarm events + findings | Lethabo | ✅ Done | Historical Session 4 produced 42 findings. The authoritative submission run is Session 6: 41 findings across 5 roles, four first-wave specialists plus the dependent Refactorer, with deterministic finalization. |
+| Swarm events + findings | Lethabo | ✅ Done | Historical Session 4 produced 42 findings. The authoritative submission run is Session 6: 41 findings across 5 roles, all five dispatched in a single parallel turn, with deterministic finalization. |
 | Frontend dashboard | Arisha | ✅ Done | Real React build, live WebSocket data, handoff prompt, reconnect recovery, run history, error handling, responsive layout, tests, and production build are complete. |
 | Swarm visualisation | Arisha | ✅ Done | All 5 agent cards + timeline + run history + live timer, all live-data-driven |
 | Demo sample project | Mmopiemang | ✅ Done | Three verified planted defect instances remain: failed enrichment propagates `None`, plus unmanaged input and output file handles. Cross-platform validation is automated. |

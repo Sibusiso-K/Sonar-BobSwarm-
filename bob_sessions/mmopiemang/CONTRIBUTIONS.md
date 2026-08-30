@@ -51,6 +51,7 @@ the recorded task, so this log does not claim that the task ran against
 
 - Use the authoritative recorded result: 41 evidence-backed findings across
   five roles in approximately 94 seconds.
-- Do not describe all five specialists as parallel. The run used four
-  independent first-wave specialists plus one dependent Refactorer.
+- Describe the recorded run accurately: Session 6 dispatched all five
+  specialists in a single parallel turn. The Debugger-to-Refactorer
+  dependency is enforced in code, but was not exercised in that run.
 - Do not claim measured time savings. No valid blind manual baseline exists.

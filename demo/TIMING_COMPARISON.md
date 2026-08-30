@@ -14,7 +14,7 @@ guide."*
 
 | Run | Time | Method |
 |---|---|---|
-| **BobSwarm (real, recorded)** | **94 seconds** | Four independent first-wave specialists, followed by the dependent Refactorer, in a live Bob MCP session. First-wave findings overlapped within a 15s window. Source: `docs/SUBMISSION_PACKAGE.md` D2. |
+| **BobSwarm (real, recorded)** | **94 seconds** | All five specialists dispatched in a single parallel turn in a live Bob MCP session. First findings overlapped within a 15s window. Source: `docs/SUBMISSION_PACKAGE.md` D2 and `docs/bob-sessions/lethabo/CONTRIBUTIONS.md` Session 6. |
 | **Manual (this session, timed honestly)** | **60.2 seconds** | One investigator, `grep`/`Read` only, no swarm tooling. Timestamped start-to-finish, all 5 deliverables written. Evidence: `demo/manual-investigation-findings.md`, timestamps below. |
 
 ```

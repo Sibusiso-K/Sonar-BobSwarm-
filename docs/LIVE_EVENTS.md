@@ -37,8 +37,14 @@ Create-run body:
 }
 ```
 
-`taskType` must be one of `full_audit`, `debugger`, `documenter`, `refactorer`,
-`onboarding`, or `data_lineage`. JSON bodies are limited to 32 KiB.
+`taskType` must be a lowercase identifier (letters, numbers, underscores,
+starting with a letter). The dashboard only offers `full_audit`, `debugger`,
+`documenter`, `refactorer`, `onboarding`, or `data_lineage`, and `decompose()`
+only recognizes those six — an unrecognized `taskType` falls back to keyword
+routing. The store itself does not reject other well-formed values; this is
+deliberate forward-compatibility for new specialist types, not a validation
+gap (see `mcp-server/test/events-server.test.js`). JSON bodies are limited to
+32 KiB.
 
 ## Strict lifecycle
 
