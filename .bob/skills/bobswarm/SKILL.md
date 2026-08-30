@@ -39,7 +39,8 @@ Call the decomposition logic to identify sub-tasks and their agent mappings:
 // Node: orchestrator/decompose.js
 const { decompose, buildDispatchPayload } = require('./orchestrator/decompose');
 const subtasks = decompose(userRequest, contextFiles, taskType);
-// Returns: [{ agent: 'debugger', task: '...', context: [...files] }, ...]
+// Returns: [{ agent: 'debugger', task: '...', context: [...files],
+//             effort: 'light'|'standard'|'deep', rationale: '...' }, ...]
 ```
 
 When the dashboard supplies a supported `taskType`, pass it as the third
@@ -48,6 +49,14 @@ an individual specialist type selects only that specialist. Only omit it when
 there is no dashboard task type and keyword routing is intentionally desired.
 
 Or reason through decomposition manually using the keyword table in the system prompt.
+
+**State the proposed roster before dispatching.** Before loading personas, tell
+the user in your own reply which specialists `decompose()` selected, each
+one's `effort`, and its `rationale` — then proceed to dispatch. This is
+informational, not a blocking prompt: don't wait for a reply before
+continuing, the run has already started and the dashboard is watching for
+activity. If the user redirects (adds or removes a specialist, changes
+scope), adjust before calling `buildDispatchPayload`.
 
 ### 4. Load agent personas
 For each agent type identified, read the corresponding persona file:

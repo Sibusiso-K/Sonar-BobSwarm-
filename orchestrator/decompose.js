@@ -99,6 +99,43 @@ function computeConfidence(lower, keywords) {
 }
 
 /**
+ * Maps a confidence score to a coarse effort level. Deliberately coarse —
+ * this is a planning signal for the subagent, not a fine-grained knob.
+ * An explicit taskType always yields confidence 1, so it always maps to
+ * 'deep': explicit user intent warrants full depth, by design, not by accident.
+ * @param {number} confidence
+ * @returns {'light'|'standard'|'deep'}
+ */
+function effortFromConfidence(confidence) {
+  if (confidence >= 0.9) return 'deep';
+  if (confidence >= 0.6) return 'standard';
+  return 'light';
+}
+
+/**
+ * Short, deterministic, evidence-based explanation of why an agent was
+ * included — never a generated or inferred claim, matching this project's
+ * extract-don't-infer doctrine. matchedKeywords is only populated on the
+ * free-text routing path; the explicit-taskType paths are self-explanatory.
+ * @param {string} agent
+ * @param {string} [taskType]
+ * @param {string[]} [matchedKeywords]
+ * @returns {string}
+ */
+function buildRationale(agent, taskType, matchedKeywords) {
+  if (taskType === TASK_TYPES.FULL_AUDIT) {
+    return 'Full audit: all five specialists included.';
+  }
+  if (taskType && taskType === agent) {
+    return `Explicit dashboard task type: ${agent}.`;
+  }
+  if (matchedKeywords && matchedKeywords.length > 0) {
+    return `Matched keywords: ${matchedKeywords.join(', ')}.`;
+  }
+  return 'No specific match — included via full-audit fallback.';
+}
+
+/**
  * Matches a keyword or phrase on token boundaries, with a small set of common
  * English inflections on the final token. This accepts "bugs" for "bug" but
  * does not accept substring collisions such as "issue" inside "tissue".
@@ -168,6 +205,7 @@ function decompose(request, contextFiles = [], taskType) {
 
   const lower = request.toLowerCase();
   const matched = new Map(); // agent → confidence score
+  const matchedKeywordsByAgent = new Map(); // agent → keywords that actually matched (free-text routing only)
   const subtasks = [];
 
   if (taskType && taskType !== TASK_TYPES.FULL_AUDIT) {
@@ -176,8 +214,10 @@ function decompose(request, contextFiles = [], taskType) {
     Object.values(AGENT_TYPES).forEach((agent) => matched.set(agent, 1));
   } else {
     for (const { agent, keywords } of KEYWORD_MAP) {
-      if (keywords.some((keyword) => matchesKeyword(lower, keyword))) {
+      const hits = keywords.filter((keyword) => matchesKeyword(lower, keyword));
+      if (hits.length > 0) {
         matched.set(agent, computeConfidence(lower, keywords));
+        matchedKeywordsByAgent.set(agent, hits);
       }
     }
 
@@ -199,28 +239,34 @@ function decompose(request, contextFiles = [], taskType) {
 
   for (const agent of parallelAgents) {
     if (matched.has(agent)) {
+      const confidence = matched.get(agent);
       subtasks.push({
         agent,
         task: buildTaskDescription(agent, request),
         context: [...contextFiles],
         parallel: true,
         dependsOn: [],
-        confidence: matched.get(agent),
-        lowConfidenceWarning: matched.get(agent) <= 0.5,
+        confidence,
+        lowConfidenceWarning: confidence <= 0.5,
+        effort: effortFromConfidence(confidence),
+        rationale: buildRationale(agent, taskType, matchedKeywordsByAgent.get(agent)),
       });
     }
   }
 
   // Refactorer runs after debugger if both are present
   if (matched.has(AGENT_TYPES.REFACTORER)) {
+    const confidence = matched.get(AGENT_TYPES.REFACTORER);
     subtasks.push({
       agent: AGENT_TYPES.REFACTORER,
       task: buildTaskDescription(AGENT_TYPES.REFACTORER, request),
       context: [...contextFiles],
       parallel: !matched.has(AGENT_TYPES.DEBUGGER),
       dependsOn: matched.has(AGENT_TYPES.DEBUGGER) ? [AGENT_TYPES.DEBUGGER] : [],
-      confidence: matched.get(AGENT_TYPES.REFACTORER),
-      lowConfidenceWarning: matched.get(AGENT_TYPES.REFACTORER) <= 0.5,
+      confidence,
+      lowConfidenceWarning: confidence <= 0.5,
+      effort: effortFromConfidence(confidence),
+      rationale: buildRationale(AGENT_TYPES.REFACTORER, taskType, matchedKeywordsByAgent.get(AGENT_TYPES.REFACTORER)),
     });
   }
 
@@ -331,4 +377,6 @@ module.exports = {
   RUN_ID_PATTERN,
   computeConfidence,
   matchesKeyword,
+  effortFromConfidence,
+  buildRationale,
 };

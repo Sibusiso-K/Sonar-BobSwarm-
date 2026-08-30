@@ -16,6 +16,8 @@ const {
   computeConfidence,
   decompose,
   matchesKeyword,
+  effortFromConfidence,
+  buildRationale,
 } = require('./decompose');
 
 const A = AGENT_TYPES;
@@ -186,4 +188,59 @@ test('dependent refactorer cannot dispatch before debugger context exists', () =
   });
   assert.match(payload, /DEPENDENCY CONTEXT — DEBUGGER COMPLETED/);
   assert.match(payload, /None-propagation failure/);
+});
+
+// ── effort / rationale — additive fields, existing behavior above is untouched ──
+
+test('effortFromConfidence maps the fixed confidence values this system actually produces', () => {
+  assert.equal(effortFromConfidence(1), 'deep');
+  assert.equal(effortFromConfidence(0.9), 'deep');
+  assert.equal(effortFromConfidence(0.75), 'standard');
+  assert.equal(effortFromConfidence(0.6), 'standard');
+  assert.equal(effortFromConfidence(0.5), 'light');
+  assert.equal(effortFromConfidence(0), 'light');
+});
+
+test('buildRationale explains full_audit, explicit taskType, keyword match, and fallback distinctly', () => {
+  assert.match(buildRationale(A.DEBUGGER, TASK_TYPES.FULL_AUDIT), /Full audit/);
+  assert.match(buildRationale(A.DOCUMENTER, TASK_TYPES.DOCUMENTER), /Explicit dashboard task type: documenter/);
+  assert.match(buildRationale(A.DEBUGGER, undefined, ['bug', 'crash']), /Matched keywords: bug, crash/);
+  assert.match(buildRationale(A.DEBUGGER, undefined, []), /full-audit fallback/);
+  assert.match(buildRationale(A.DEBUGGER, undefined, undefined), /full-audit fallback/);
+});
+
+test('every subtask carries a well-formed effort and rationale, without changing agent routing', () => {
+  const originalWarn = console.warn;
+  console.warn = () => {};
+  try {
+    for (const [request, expectedAgents] of routingCases) {
+      const result = decompose(request, ['demo/sample-project/app.py']);
+      assert.deepEqual(result.map(({ agent }) => agent), expectedAgents, `routing unchanged for: ${request}`);
+      for (const subtask of result) {
+        assert.ok(['light', 'standard', 'deep'].includes(subtask.effort), `${request} -> ${subtask.agent} effort`);
+        assert.equal(subtask.effort, effortFromConfidence(subtask.confidence));
+        assert.equal(typeof subtask.rationale, 'string');
+        assert.ok(subtask.rationale.length > 0, `${request} -> ${subtask.agent} rationale`);
+      }
+    }
+  } finally {
+    console.warn = originalWarn;
+  }
+});
+
+test('explicit task type yields deep effort and states the explicit choice as its rationale', () => {
+  const [task] = decompose('find bugs, document the API, and trace the data flow', [], TASK_TYPES.DOCUMENTER);
+  assert.equal(task.effort, 'deep');
+  assert.match(task.rationale, /Explicit dashboard task type: documenter/);
+});
+
+test('full audit yields deep effort and a full-audit rationale for every agent', () => {
+  const result = decompose('write only onboarding notes', [], TASK_TYPES.FULL_AUDIT);
+  assert.ok(result.every((task) => task.effort === 'deep'));
+  assert.ok(result.every((task) => /Full audit/.test(task.rationale)));
+});
+
+test('an unclassified fallback yields light effort for every agent', () => {
+  const result = decompose('please inspect this repository');
+  assert.ok(result.every((task) => task.effort === 'light'));
 });
