@@ -17,8 +17,15 @@ const { registerGitTools } = require('./tools/git');
 const { registerFilesystemTools } = require('./tools/filesystem');
 const { registerSwarmTools } = require('./tools/swarm');
 const { startEventsServer } = require('./events-server');
+const store = require('./store');
 
 async function main() {
+  // Rehydrate any runs persisted from a prior process, if BOBSWARM_PERSIST_PATH
+  // is set — a no-op otherwise. Must happen before startEventsServer() below
+  // so a dashboard reconnecting right after restart sees restored state
+  // immediately instead of racing an empty store.
+  store.loadPersistedStateFromDisk();
+
   const server = new McpServer({
     name: 'bobswarm-mcp-server',
     version: '1.0.0',

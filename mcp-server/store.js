@@ -10,6 +10,8 @@
 'use strict';
 
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 const RUN_STATUSES = Object.freeze({
   PENDING: 'pending',
@@ -29,6 +31,12 @@ const parsedEventLimit = Number.parseInt(process.env.BOBSWARM_EVENT_LOG_LIMIT ||
 const EVENT_LOG_LIMIT = Number.isSafeInteger(parsedEventLimit) && parsedEventLimit > 0
   ? parsedEventLimit
   : 2_000;
+
+// Unset by default: persistence is opt-in only, so nothing about existing
+// behavior (including test hermeticity) changes unless this is explicitly set.
+const PERSIST_PATH = process.env.BOBSWARM_PERSIST_PATH || null;
+const PERSIST_DEBOUNCE_MS = 250;
+let persistTimer = null;
 
 /** @type {Map<string, Run>} */
 const runs = new Map();
@@ -134,6 +142,7 @@ function createRun(input) {
     updatedAt: now,
     completedAt: null,
     error: null,
+    diagram: null,
   };
 
   runs.set(id, run);
@@ -142,6 +151,7 @@ function createRun(input) {
   eventsByRun.set(id, []);
   nextSequenceByRun.set(id, 1);
   armTimeout(id);
+  schedulePersistToDisk();
   return clone(run);
 }
 
@@ -256,14 +266,18 @@ function buildReport(run) {
     summary: buildSummary(findings, Object.keys(findingsByRole)),
     findingsByRole,
     error: run.error ? clone(run.error) : null,
+    diagram: run.diagram ?? null,
   };
 }
 
 /**
  * Completes a running run. Repeated finalization is a read: it preserves the
  * original completion timestamp and never emits a second completion event.
+ * An optional mermaid `diagram` string may be attached at finalization time —
+ * finalize_run is the only tool call in the swarm lifecycle positioned to
+ * summarize the whole run, so this is the one place a diagram can be set.
  */
-function finalizeRun(runId) {
+function finalizeRun(runId, options) {
   const run = requireRun(runId);
   if (run.status === RUN_STATUSES.COMPLETE) return buildReport(run);
   if (run.status === RUN_STATUSES.ERROR) {
@@ -277,10 +291,12 @@ function finalizeRun(runId) {
     );
   }
 
+  const diagram = options?.diagram == null ? null : requireNonEmptyString(options.diagram, 'diagram', 50_000);
   const now = new Date().toISOString();
   run.status = RUN_STATUSES.COMPLETE;
   run.updatedAt = now;
   run.completedAt = now;
+  if (diagram !== null) run.diagram = diagram;
   clearRunTimeout(runId);
   const report = buildReport(run);
   publish(runId, { type: 'run_complete', runId, report: clone(report), at: now });
@@ -363,6 +379,7 @@ function publish(runId, event) {
       unsubscribe(runId, ws);
     }
   }
+  schedulePersistToDisk();
   return clone(persistedEvent);
 }
 
@@ -407,6 +424,97 @@ function getSnapshot(runId, afterSequence = 0) {
   };
 }
 
+// ── optional disk persistence (survives a process restart) ─────────────────
+//
+// Gated entirely behind BOBSWARM_PERSIST_PATH — unset by default, so this
+// section has zero effect (and zero fs calls) unless explicitly opted into.
+// It exists to survive a *backend process restart*; reload-within-a-live-
+// session already works via the frontend's own localStorage run-id + the
+// WebSocket snapshot replay above, and is unaffected by any of this.
+
+function schedulePersistToDisk() {
+  if (!PERSIST_PATH) return;
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(writePersistedStateSync, PERSIST_DEBOUNCE_MS);
+  persistTimer.unref();
+}
+
+/** Never throws — a disk hiccup must not take down the process serving Bob's live tool calls. */
+function writePersistedStateSync() {
+  try {
+    const snapshot = {
+      version: 1,
+      savedAt: new Date().toISOString(),
+      runs: Array.from(runs.entries()),
+      findingsByRun: Array.from(findingsByRun.entries()),
+      progressByRun: Array.from(progressByRun.entries())
+        .map(([runId, roleMap]) => [runId, Array.from(roleMap.entries())]),
+      eventsByRun: Array.from(eventsByRun.entries()),
+      nextSequenceByRun: Array.from(nextSequenceByRun.entries()),
+    };
+    fs.mkdirSync(path.dirname(PERSIST_PATH), { recursive: true });
+    const tmpPath = `${PERSIST_PATH}.tmp`;
+    fs.writeFileSync(tmpPath, JSON.stringify(snapshot));
+    fs.renameSync(tmpPath, PERSIST_PATH);
+  } catch (error) {
+    console.error('[BobSwarm store] failed to persist state to disk (will retry on next mutation):', error.message);
+  }
+}
+
+/**
+ * Rehydrates the store from disk on startup. Returns false (not an error) on
+ * a fresh install with no file yet, or on a corrupt file — either way the
+ * store just starts empty rather than failing to boot.
+ */
+function loadPersistedStateFromDisk() {
+  if (!PERSIST_PATH) return false;
+  let raw;
+  try {
+    raw = fs.readFileSync(PERSIST_PATH, 'utf8');
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.error('[BobSwarm store] could not read persisted state, starting empty:', error.message);
+    }
+    return false;
+  }
+
+  let snapshot;
+  try {
+    snapshot = JSON.parse(raw);
+  } catch (error) {
+    console.error('[BobSwarm store] persisted state file is corrupt, starting empty:', error.message);
+    return false;
+  }
+
+  runs.clear();
+  findingsByRun.clear();
+  progressByRun.clear();
+  eventsByRun.clear();
+  nextSequenceByRun.clear();
+
+  for (const [id, run] of snapshot.runs || []) runs.set(id, run);
+  for (const [id, findings] of snapshot.findingsByRun || []) findingsByRun.set(id, findings);
+  for (const [id, roleEntries] of snapshot.progressByRun || []) {
+    progressByRun.set(id, new Map(roleEntries));
+  }
+  for (const [id, events] of snapshot.eventsByRun || []) eventsByRun.set(id, events);
+  for (const [id, seq] of snapshot.nextSequenceByRun || []) nextSequenceByRun.set(id, seq);
+
+  let rearmed = 0;
+  for (const run of runs.values()) {
+    if (!TERMINAL_STATUSES.has(run.status)) {
+      armTimeout(run.id);
+      rearmed += 1;
+    }
+  }
+
+  console.error(
+    `[BobSwarm store] rehydrated ${runs.size} run(s) from disk` +
+    (rearmed > 0 ? ` (${rearmed} in-flight, timeout re-armed)` : '')
+  );
+  return true;
+}
+
 // ── safety-net timeout ──────────────────────────────────────────────────────
 
 function armTimeout(runId, timeoutMs = DEFAULT_TIMEOUT_MS) {
@@ -429,6 +537,8 @@ function armTimeout(runId, timeoutMs = DEFAULT_TIMEOUT_MS) {
 
 /** Test isolation; intentionally prefixed to discourage production use. */
 function __resetForTests() {
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = null;
   for (const handle of timeoutHandles.values()) clearTimeout(handle);
   runs.clear();
   findingsByRun.clear();
@@ -454,5 +564,6 @@ module.exports = {
   subscribe,
   unsubscribe,
   armTimeout,
+  loadPersistedStateFromDisk,
   __resetForTests,
 };

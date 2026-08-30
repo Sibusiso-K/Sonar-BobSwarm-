@@ -33,3 +33,7 @@ venv/
 # location. Commit .bob/mcp.json.example instead; each person copies it and
 # fills in their own path (see docs/CRITICAL_DECISIONS.md §5a).
 .bob/mcp.json
+
+# Optional local run-state persistence (BOBSWARM_PERSIST_PATH) — real task
+# descriptions and evidence text, machine-local only, never committed.
+mcp-server/.data/

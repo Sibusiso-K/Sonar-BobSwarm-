@@ -64,10 +64,13 @@ function registerSwarmTools(server) {
       description: 'Marks a running run complete and returns the aggregated, deterministically-sorted report. Safe to retry: repeated calls return the original final report without emitting another completion event.',
       inputSchema: {
         runId: z.string(),
+        diagram: z.string().optional().describe(
+          'Optional mermaid diagram source summarizing the run architecture/flow. Only set this from content you actually generated during the run — never fabricate a diagram to fill this field.'
+        ),
       },
     },
-    async ({ runId }) => {
-      const report = store.finalizeRun(runId);
+    async ({ runId, diagram }) => {
+      const report = store.finalizeRun(runId, { diagram });
       return { content: [{ type: 'text', text: JSON.stringify(report, null, 2) }] };
     }
   );
