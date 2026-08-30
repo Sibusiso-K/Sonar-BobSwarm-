@@ -62,9 +62,21 @@ Open `http://localhost:5173`. The backend binds to
 `http://127.0.0.1:8787`. Verify `http://127.0.0.1:8787/health` returns a JSON
 response with `"status":"ok"`.
 
+Then run the judge-day operational check:
+
+```bash
+npm run demo:preflight
+```
+
+It verifies the local Bob MCP path, backend, frontend, run-history cleanliness,
+Git state, and each member's root submission evidence. Runtime failures block a
+recording; evidence and stale-history gaps are reported as warnings so they can
+be closed deliberately.
+
 ## Run the live workflow
 
-1. In the dashboard, submit:
+1. In the dashboard, click **Load sample audit** to populate the exact golden
+   task, repository, and task type, then submit:
 
    > Audit `demo/sample-project` end to end. Find defects, document the public
    > API, recommend safe refactoring, trace the data flow, and produce an

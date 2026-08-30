@@ -38,6 +38,11 @@ BobSwarm uses IBM Bob Agent mode, parallel tasks, subagents, custom modes, skill
 
 ## Three-minute video storyboard
 
+The detailed operator script and Arcade capture guidance are in
+`docs/JUDGE_DEMO_RUNBOOK.md`. The final cut should preserve this proof order:
+problem, IBM Bob execution, real handoff, parallel/dependent workflow, literal
+evidence, measured result, and scale.
+
 The live product section must occupy at least 90 seconds. Keep the browser, Bob, and terminal text large enough to read at normal playback speed.
 
 | Time | Visual | Narration goal |

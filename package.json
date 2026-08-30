@@ -4,7 +4,8 @@
   "private": true,
   "description": "One-command verification for the BobSwarm IBM Bob hackathon proof of concept",
   "scripts": {
-    "verify": "node scripts/verify.mjs"
+    "verify": "node scripts/verify.mjs",
+    "demo:preflight": "node scripts/demo-preflight.mjs"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { ArrowRight, Loader2, Terminal, FolderGit2 } from "lucide-react";
+import { ArrowRight, Loader2, Terminal, FolderGit2, Sparkles } from "lucide-react";
 import type { TaskType } from "../../lib/types";
 
 const TASK_TYPES: { value: TaskType; label: string; hint: string; color: string }[] = [
@@ -11,6 +11,13 @@ const TASK_TYPES: { value: TaskType; label: string; hint: string; color: string 
   { value: "onboarding", label: "Onboarding", hint: "map the repo for a newcomer", color: "#4bb894" },
   { value: "data_lineage", label: "Data lineage", hint: "trace where data comes from", color: "#e08a4f" },
 ];
+
+const GOLDEN_DEMO_INPUT = {
+  taskDescription:
+    "Audit demo/sample-project end to end. Find defects, document the public API, recommend safe refactoring, trace the data flow, and produce an onboarding guide.",
+  taskType: "full_audit" as TaskType,
+  repoRef: "demo/sample-project",
+};
 
 export function TaskForm({
   onSubmit,
@@ -73,13 +80,27 @@ export function TaskForm({
         className="pointer-events-none absolute inset-0 rounded-[28px]"
       />
       <div className="relative rounded-[22px] bg-void-soft/40 p-5 sm:p-6">
-        <label
-          htmlFor="taskDescription"
-          className="mb-3 flex items-center justify-center gap-2 text-center text-xs font-medium uppercase tracking-[0.14em] text-gold-soft"
-        >
-          <Terminal className="h-3.5 w-3.5" />
-          Describe the task
-        </label>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <label
+            htmlFor="taskDescription"
+            className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.14em] text-gold-soft"
+          >
+            <Terminal className="h-3.5 w-3.5" />
+            Describe the task
+          </label>
+          <button
+            type="button"
+            onClick={() => {
+              setTaskDescription(GOLDEN_DEMO_INPUT.taskDescription);
+              setTaskType(GOLDEN_DEMO_INPUT.taskType);
+              setRepoRef(GOLDEN_DEMO_INPUT.repoRef);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-full border border-gold-dim/50 bg-gold/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-gold-soft transition-colors hover:border-gold/70 hover:bg-gold/15"
+          >
+            <Sparkles className="h-3 w-3" />
+            Load sample audit
+          </button>
+        </div>
         <textarea
           id="taskDescription"
           value={taskDescription}
