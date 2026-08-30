@@ -14,8 +14,8 @@
 
 BobSwarm is an on-demand, multi-agent orchestrator built on IBM Bob 2.0.
 A developer describes any complex engineering task in plain language.
-BobSwarm decomposes it, spawns a swarm of specialist subagents that run **in parallel**,
-and returns a single structured report.
+BobSwarm decomposes it, starts four independent specialist subagents **in parallel**,
+then runs the dependent Refactorer with Debugger context and returns one structured report.
 
 **The end-to-end flow:**
 ```
@@ -70,7 +70,7 @@ states. They do not replace the required Bob MCP-panel screenshot.
 | Arisha | Add the required root `bob_sessions/arisha/` consumption-summary screenshot and exported task history; optionally load the designed fonts before the final capture. | Supporting screenshots and contribution log are present under `docs/bob-sessions/arisha/`; official exports remain outstanding. |
 | Farheen | No known implementation blocker; keep persona/routing evidence available for the final video. | Persona and routing checks pass; screenshots and contribution evidence are present. |
 | Lethabo | No known implementation blocker; use the current MCP server for the final live Bob run and keep the server restart/health check in the recording checklist. | Backend lifecycle, snapshot/replay, and live MCP evidence are present. |
-| Mmpoiemang | Prepare the short verbal demo walkthrough and confirm the final expected-output metrics match the recorded run. | Demo validation and fixture evidence pass; walkthrough remains unchecked below. |
+| Mmopiemang | Prepare the short verbal demo walkthrough and confirm the final expected-output metrics match the recorded run. | Demo validation and fixture evidence pass; walkthrough remains unchecked below. |
 | Everyone | Confirm eligibility, employer/affiliation disclosure, and permission to participate before submission. | This cannot be verified from repository files and remains a team action. |
 
 ### Lead next actions before submission
@@ -116,11 +116,11 @@ frontend/
   app.js                     ← Arisha
 
 demo/
-  sample-project/app.py      ← Mmpoiemang
-  sample-project/utils.py    ← Mmpoiemang
-  sample-project/data/       ← Mmpoiemang
-  run_demo.sh                ← Mmpoiemang
-  expected_output.md         ← Mmpoiemang
+  sample-project/app.py      ← Mmopiemang
+  sample-project/utils.py    ← Mmopiemang
+  sample-project/data/       ← Mmopiemang
+  run_demo.sh                ← Mmopiemang
+  expected_output.md         ← Mmopiemang
 
 docs/
   architecture.md            ← Sibusiso
@@ -142,12 +142,12 @@ docs/
 | MCP server | Lethabo | ✅ Done | `.bob/mcp.json` written; 12 tools confirmed via Node verification; `project_summary` returns correct JSON against `demo/sample-project` |
 | Git tools | Lethabo | ✅ Done | All 4 tools (`git_status`, `git_log`, `git_diff`, `git_blame`) confirmed live through MCP stdio transport in Session 4 — raw output captured, zero errors |
 | Filesystem tools | Lethabo | ✅ Done | `project_summary`, `read_project_file`, `list_project_files` all confirmed live via MCP transport across Sessions 3–4 |
-| Swarm events + findings | Lethabo | ✅ Done | Full 5-agent swarm confirmed via MCP tools in Session 4: 42 findings across 5 roles, all evidence verbatim quotes, `finalize_run` returns deterministically sorted report |
-| Frontend dashboard | Arisha | 🟢 Real, wired, live-verified | Real React build (not simulation), real WebSocket, confirmed receiving live events from an actual Bob MCP session. Remaining: font-loading bug + polish, see `docs/ARISHA_FRONTEND_POLISH.md` |
+| Swarm events + findings | Lethabo | ✅ Done | Historical Session 4 produced 42 findings. The authoritative submission run is Session 6: 41 findings across 5 roles, four first-wave specialists plus the dependent Refactorer, with deterministic finalization. |
+| Frontend dashboard | Arisha | ✅ Done | Real React build, live WebSocket data, handoff prompt, reconnect recovery, run history, error handling, responsive layout, tests, and production build are complete. |
 | Swarm visualisation | Arisha | ✅ Done | All 5 agent cards + timeline + run history + live timer, all live-data-driven |
-| Demo sample project | Mmpoiemang | ✅ Done | 7 bugs planted, `run_demo.sh` written |
-| Demo validation | Mmpoiemang | ✅ Done | Full 5-agent swarm run completed; 12 defects found; HTML report + 4 screenshots in `docs/bob-sessions/mmpoiemang/`; Bobalytics metrics added |
-| End-to-end test | Sibusiso | ✅ Done | Full 5-agent swarm run completed (Session 1, 2026-08-28) — 8 bugs, 15 docstrings, 7 refactorings, 10 lineage risks, 1 onboarding guide. Report in `docs/bob-sessions/sibusiso/` |
+| Demo sample project | Mmopiemang | ✅ Done | Three verified planted defect instances remain: failed enrichment propagates `None`, plus unmanaged input and output file handles. Cross-platform validation is automated. |
+| Demo validation | Mmopiemang | ✅ Done | The authoritative run produced 41 evidence-backed findings in ~94 seconds. Official Bob evidence is under `bob_sessions/mmopiemang/`; supporting dashboard evidence remains under `docs/bob-sessions/mmopiemang/`. |
+| End-to-end test | Sibusiso | ✅ Done | Historical Session 1 produced the archived 8-bug report. The authoritative submission metrics come from the later frontend-linked 41-finding run documented in `docs/SUBMISSION_PACKAGE.md`. |
 
 > **Update this table when your status changes. Be specific — "works on my machine" is not ✅ Done.**
 
@@ -318,7 +318,7 @@ strengthen the demo, add it — just follow the extension guide in `docs/agent_p
 
 ---
 
-## 👤 Mmpoiemang — Data / QA Engineer
+## 👤 Mmopiemang — Data / QA Engineer
 
 ### What's done
 - Sample broken project (`demo/sample-project/`) with 7 planted bugs across `app.py` and `utils.py`
@@ -352,7 +352,7 @@ These are the seams where components connect. **Coordinate before changing these
 | MCP tool names | Lethabo → Sibusiso | The exact tool names the orchestrator calls | Lethabo |
 | Event schema | Lethabo → Arisha | `progress` / `finding` / `run_complete` payload (v1 shipped, open to revision) | Implemented by Lethabo — see `docs/LIVE_EVENTS.md`. Confirm with Arisha before she wires against it |
 | Report format | Sibusiso → Arisha | The markdown structure of the Unified Report | Sibusiso (already defined in `system_prompt.md`) |
-| Demo input | Mmpoiemang → everyone | The files the swarm runs against | Mmpoiemang |
+| Demo input | Mmopiemang → everyone | The files the swarm runs against | Mmopiemang |
 
 ---
 
@@ -377,7 +377,7 @@ open frontend/index.html
 start frontend/index.html
 ```
 
-### Demo (Mmpoiemang)
+### Demo (Mmopiemang)
 ```bash
 # Requires Python 3.10+ and pip install requests
 bash demo/run_demo.sh
@@ -455,7 +455,7 @@ node -e "
 | Lethabo | Backend Engineer | ✅ |
 | Arisha | Frontend Engineer | ✅ |
 | Farheen | AI/ML Engineer | ✅ |
-| Mmpoiemang | Data / QA Engineer | ✅ |
+| Mmopiemang | Data / QA Engineer | ✅ |
 
 ---
 
@@ -493,7 +493,7 @@ To polish the UI for our final submission, I prompted Bob to: *"Read docs/ARISHA
 
 ---
 
-### Mmpoiemang — Data / QA Engineer
+### Mmopiemang — Data / QA Engineer
 
 To validate the multi-agent QA flow, I tasked Bob with: *"Analyse the codebase at demo/sample-project. Find all bugs, document the public API, suggest refactoring improvements, trace the data flow, and create an onboarding guide."* Bob loaded the agent personas and used `read_project_file` across `app.py`, `utils.py`, and `data/input.json`. Bob successfully spawned four independent specialized subagents, then the Refactorer after the Debugger. The SwarmDebugger caught the planted defects (including silent None propagation and a resource leak) while the Data Lineage mapped the failure propagation paths. This historical session demonstrated the workflow and aggregation; its 12-defect count is not the authoritative final-run metric.
 

@@ -196,7 +196,7 @@ tools get called, in what order, whether subagents run in parallel, and whether
 - `severity` must be exactly `"breaks"`, `"warns"`, or `"informational"` —
   any other string throws in the store
 - Expected bugs in `demo/sample-project/`: 7 planted bugs across `app.py` and
-  `utils.py` (per `HANDOVER.md` Mmpoiemang section)
+  `utils.py` (per `HANDOVER.md` Mmopiemang section)
 
 ---
 

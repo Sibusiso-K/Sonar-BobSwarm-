@@ -1,5 +1,10 @@
 # Sibusiso — Bob Session Contributions Log
 
+> Historical session evidence retained for auditability. The fixture changed
+> after this session, so its 8-bug count is not a current product metric. Use
+> the authoritative 41-finding frontend-linked run in
+> `docs/SUBMISSION_PACKAGE.md` for final submission claims.
+
 > Raw material for the D3 "how IBM Bob was used" written statement.
 > One entry per session, written immediately after.
 

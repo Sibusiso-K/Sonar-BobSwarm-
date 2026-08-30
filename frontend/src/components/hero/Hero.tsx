@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
 import { MessageSquareText, Users, FileCheck2, ChevronRight } from "lucide-react";
 import { LivingSwarmField, type SwarmAnchor } from "../field/LivingSwarmField";
 import { TaskForm } from "./TaskForm";
@@ -8,7 +8,7 @@ import type { TaskType } from "../../lib/types";
 function FlowSteps() {
   const steps = [
     { icon: MessageSquareText, label: "Describe", color: "#e7c37a" },
-    { icon: Users, label: "Swarm reads in parallel", color: "#b4a9e8" },
+    { icon: Users, label: "Parallel first wave", color: "#b4a9e8" },
     { icon: FileCheck2, label: "Unified report", color: "#5fa8d9" },
   ];
   return (
@@ -37,10 +37,12 @@ function FlowSteps() {
 
 /** Unlabeled vertical "wing" of drifting particles, floating beside the centered task box. */
 function SwarmWing({ anchors, delay = 0 }: { anchors: SwarmAnchor[]; delay?: number }) {
+  const reduceMotion = useReducedMotion();
+
   return (
     <motion.div
       aria-hidden
-      animate={{ y: [0, -16, 0] }}
+      animate={reduceMotion ? undefined : { y: [0, -16, 0] }}
       transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay }}
       className="relative hidden h-[420px] w-[200px] shrink-0 xl:block"
       style={{
@@ -53,7 +55,7 @@ function SwarmWing({ anchors, delay = 0 }: { anchors: SwarmAnchor[]; delay?: num
       <LivingSwarmField
         anchors={anchors}
         active
-        particleCount={100}
+        particleCount={48}
         className="absolute inset-0 h-full w-full"
       />
     </motion.div>
@@ -81,6 +83,7 @@ export function Hero({
   error: string | null;
 }) {
   const sectionRef = useRef<HTMLElement | null>(null);
+  const reduceMotion = useReducedMotion();
   const mx = useMotionValue(0.5);
   const my = useMotionValue(0.5);
   const smoothX = useSpring(mx, { stiffness: 60, damping: 20 });
@@ -96,8 +99,10 @@ export function Hero({
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     const rect = sectionRef.current?.getBoundingClientRect();
     if (!rect) return;
-    mx.set((e.clientX - rect.left) / rect.width);
-    my.set((e.clientY - rect.top) / rect.height);
+    if (!reduceMotion) {
+      mx.set((e.clientX - rect.left) / rect.width);
+      my.set((e.clientY - rect.top) / rect.height);
+    }
   };
 
   return (
@@ -110,7 +115,7 @@ export function Hero({
       <LivingSwarmField
         anchors={[]}
         active={false}
-        particleCount={90}
+        particleCount={60}
         className="pointer-events-none absolute inset-0 h-full w-full opacity-70"
       />
       <motion.div
@@ -155,11 +160,10 @@ export function Hero({
             transition={{ duration: 0.6, delay: 0.1 }}
             className="mt-5 max-w-lg text-balance text-base text-paper-dim sm:text-lg"
           >
-            Describe an engineering task in plain language. A debugger, documenter, refactorer,
-            onboarding guide, and data-lineage tracer read your repo in parallel and hand back one
-            unified report , every finding backed by real quoted source, not a paraphrased guess.
+            Describe an engineering task in plain language. Four independent specialists start
+            together; the Refactorer follows the Debugger with its findings. They hand back one
+            unified report—every finding backed by quoted source, not a paraphrased guess.
           </motion.p>
-          
         </motion.div>
 
         <div
@@ -181,10 +185,10 @@ export function Hero({
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold/70" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-gold" />
               </span>
-              swarm · 5 agents live
+              swarm · four-plus-one
             </span>
             <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-stone/70">
-              parallel
+              dependency-aware
             </span>
           </div>
 
@@ -210,7 +214,7 @@ export function Hero({
           <LivingSwarmField
             anchors={SWARM_ANCHORS}
             active
-            particleCount={220}
+            particleCount={120}
             className="absolute inset-0 h-full w-full rounded-3xl"
           />
         </div>

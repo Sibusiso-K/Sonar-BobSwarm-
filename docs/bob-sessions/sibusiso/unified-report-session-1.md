@@ -1,4 +1,9 @@
 # BobSwarm Unified Report
+
+> **Archived historical output.** This report describes an earlier fixture
+> revision and must not be used as the current defect count. The authoritative
+> submission result is the later frontend-linked 41-finding run documented in
+> `docs/SUBMISSION_PACKAGE.md`.
 **Task:** Analyse demo/sample-project for bugs, document the public API, suggest refactoring improvements, trace the data flow, and create an onboarding guide.
 **Agents dispatched:** debugger, documenter, onboarding, data_lineage (parallel) · refactorer (sequential after debugger)
 **Orchestrated by:** Sibusiso (Lead / Orchestrator)

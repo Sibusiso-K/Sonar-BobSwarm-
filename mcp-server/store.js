@@ -486,19 +486,71 @@ function loadPersistedStateFromDisk() {
     return false;
   }
 
+  let restored;
+  try {
+    if (!snapshot || snapshot.version !== 1) throw new Error('unsupported snapshot version');
+    const entryMap = (value, field) => {
+      if (!Array.isArray(value)) throw new Error(`${field} must be an entry array`);
+      for (const entry of value) {
+        if (!Array.isArray(entry) || entry.length !== 2 || typeof entry[0] !== 'string') {
+          throw new Error(`${field} contains an invalid entry`);
+        }
+      }
+      return new Map(value);
+    };
+
+    const nextRuns = entryMap(snapshot.runs, 'runs');
+    const nextFindings = entryMap(snapshot.findingsByRun, 'findingsByRun');
+    const progressEntries = entryMap(snapshot.progressByRun, 'progressByRun');
+    const nextEvents = entryMap(snapshot.eventsByRun, 'eventsByRun');
+    const nextSequences = entryMap(snapshot.nextSequenceByRun, 'nextSequenceByRun');
+    const nextProgress = new Map();
+
+    for (const [id, run] of nextRuns) {
+      if (!run || run.id !== id || !Object.values(RUN_STATUSES).includes(run.status)) {
+        throw new Error(`runs contains an invalid run for ${id}`);
+      }
+      if (!Array.isArray(nextFindings.get(id))) throw new Error(`missing findings for ${id}`);
+      if (!Array.isArray(nextEvents.get(id))) throw new Error(`missing events for ${id}`);
+      const sequence = nextSequences.get(id);
+      if (!Number.isSafeInteger(sequence) || sequence < 1) {
+        throw new Error(`invalid next sequence for ${id}`);
+      }
+      const roleEntries = progressEntries.get(id);
+      if (!Array.isArray(roleEntries)) throw new Error(`missing progress for ${id}`);
+      nextProgress.set(id, entryMap(roleEntries, `progressByRun.${id}`));
+      if (run.diagram === undefined) run.diagram = null;
+    }
+
+    const knownRunIds = new Set(nextRuns.keys());
+    for (const map of [nextFindings, progressEntries, nextEvents, nextSequences]) {
+      if ([...map.keys()].some((id) => !knownRunIds.has(id))) {
+        throw new Error('snapshot contains state for an unknown run');
+      }
+    }
+
+    restored = {
+      runs: nextRuns,
+      findings: nextFindings,
+      progress: nextProgress,
+      events: nextEvents,
+      sequences: nextSequences,
+    };
+  } catch (error) {
+    console.error('[BobSwarm store] persisted state is invalid, starting empty:', error.message);
+    return false;
+  }
+
   runs.clear();
   findingsByRun.clear();
   progressByRun.clear();
   eventsByRun.clear();
   nextSequenceByRun.clear();
-
-  for (const [id, run] of snapshot.runs || []) runs.set(id, run);
-  for (const [id, findings] of snapshot.findingsByRun || []) findingsByRun.set(id, findings);
-  for (const [id, roleEntries] of snapshot.progressByRun || []) {
-    progressByRun.set(id, new Map(roleEntries));
-  }
-  for (const [id, events] of snapshot.eventsByRun || []) eventsByRun.set(id, events);
-  for (const [id, seq] of snapshot.nextSequenceByRun || []) nextSequenceByRun.set(id, seq);
+  for (const [id, run] of restored.runs) runs.set(id, run);
+  for (const [id, findings] of restored.findings) findingsByRun.set(id, findings);
+  for (const [id, roleMap] of restored.progress) progressByRun.set(id, roleMap);
+  for (const [id, events] of restored.events) eventsByRun.set(id, events);
+  for (const [id, sequence] of restored.sequences) nextSequenceByRun.set(id, sequence);
 
   let rearmed = 0;
   for (const run of runs.values()) {

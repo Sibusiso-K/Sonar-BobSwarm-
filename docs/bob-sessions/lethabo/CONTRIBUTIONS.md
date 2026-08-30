@@ -57,7 +57,7 @@
    `data/input.json`) — confirmed correct.
 
 7. **Pulled from `origin/main`** before writing any files — found one new
-   commit from Mmpoiemang (`Fix owner's name in expected_output.md`, adding
+   commit from Mmopiemang (`Fix owner's name in expected_output.md`, adding
    the Bobalytics section). Incorporated cleanly before committing.
 
 8. **Updated team docs** — `docs/CRITICAL_DECISIONS.md` §5a (was "unconfirmed",

@@ -1,7 +1,7 @@
 # Contribution Log — Arisha (Frontend Engineer)
 
 > Note: My primary contribution to BobSwarm is the frontend dashboard 
-> (React + Vite app in `frontend-react/`) — documented in commit history 
+> (React + Vite app in `frontend/`, imported through the documented subtree workflow) — documented in commit history
 > and HANDOVER.md. This log captures a separate Bob orchestration session 
 > I ran to verify and demonstrate Bob's end-to-end swarm behavior for 
 > submission proof purposes.

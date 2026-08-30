@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { AlertTriangle, CheckCircle2, Check, Clipboard, LayoutGrid } from "lucide-react";
-import { ROLE_META } from "../swarm/RoleCard";
+import { ROLE_META } from "../swarm/roleMeta";
 import { buildFindingFollowUpPrompt } from "../../lib/handoff";
 import type { AgentRole, Finding, Report, Run, Severity } from "../../lib/types";
 

@@ -11,7 +11,7 @@
 | Orchestrator / Bob config | **Sibusiso** | `orchestrator/system_prompt.md`, `.bob/custom_modes.yaml`, `.bob/skills/bobswarm/SKILL.md` |
 | Backend / MCP Server | **Lethabo** | `mcp-server/` |
 | Frontend / Dashboard | **Arisha** | `frontend/` |
-| QA / Demo / Data | **Mmpoiemang** | `demo/` |
+| QA / Demo / Data | **Mmopiemang** | `demo/` |
 | Agent personas / Decomposition | **Farheen** | `agents/`, `orchestrator/decompose.js` |
 
 **Rule:** Before touching another team member's files, ping them first.
@@ -83,7 +83,7 @@ Pulled in via `git subtree` from her own repo (github.com/Arisha004/frontend)
 — see `docs/architecture.md`'s Frontend Dashboard section for how to pull her
 future updates in.
 
-### Demo (Mmpoiemang)
+### Demo (Mmopiemang)
 ```bash
 # Requires Python 3.10+
 python demo/validate_demo.py

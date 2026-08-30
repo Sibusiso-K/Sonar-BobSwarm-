@@ -1,16 +1,8 @@
 import { useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { Bug, BookOpen, Wrench, Compass, GitBranch, Circle, CheckCircle2, XCircle } from "lucide-react";
-import type { AgentRole } from "../../lib/types";
+import { Circle, CheckCircle2, XCircle } from "lucide-react";
 import type { RoleState } from "../../hooks/useSwarmRun";
-
-export const ROLE_META: Record<AgentRole, { label: string; icon: typeof Bug }> = {
-  debugger: { label: "Debugger", icon: Bug },
-  documenter: { label: "Documenter", icon: BookOpen },
-  refactorer: { label: "Refactorer", icon: Wrench },
-  onboarding: { label: "Onboarding", icon: Compass },
-  data_lineage: { label: "Data lineage", icon: GitBranch },
-};
+import { ROLE_META } from "./roleMeta";
 
 const STATUS_LABEL: Record<RoleState["status"], string> = {
   waiting: "Waiting",

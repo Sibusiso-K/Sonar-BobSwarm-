@@ -86,7 +86,7 @@ something genuinely useful to explain later.
 | `sibusiso/` | Sibusiso | Lead / Orchestrator |
 | `lethabo/` | Lethabo | Backend Engineer |
 | `arisha/` | Arisha | Frontend Engineer |
-| `mmopiemang/` | Mmpoiemang | Data / QA Engineer |
+| `mmopiemang/` | Mmopiemang | Data / QA Engineer |
 | `farheen/` | Farheen | AI/ML Engineer |
 
 ---

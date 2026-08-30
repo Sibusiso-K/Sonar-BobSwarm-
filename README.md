@@ -1,7 +1,3 @@
-
-![BobSwarm](bobswarm_logo.gif)
-
----
 # 🐝 BobSwarm — On-Demand Multi-Agent Orchestrator
 
 > **IBM Bob 2.0 Hackathon Project**
@@ -9,14 +5,15 @@
 
 ---
 
-## Preview
+## Running dashboard
 
 <p align="center">
-  <img src="./landingpagemockupswarm.png" alt="BobSwarm conceptual landing-page design mockup" width="900">
+  <img src="./docs/bob-sessions/sibusiso/02-bob-handoff.png" alt="Real BobSwarm dashboard showing the Bob handoff and tracked run" width="900">
 </p>
 
-> The image above is a conceptual design mockup. The running React dashboard
-> and live evidence are documented below and in `docs/SUBMISSION_PACKAGE.md`.
+> This is the running React dashboard after creating a real tracked run. The
+> generated prompt carries the exact run UUID into IBM Bob. Supporting live
+> evidence is documented below and in `docs/SUBMISSION_PACKAGE.md`.
 
 ## What is BobSwarm?
 
@@ -78,11 +75,11 @@ BobSwarm/
 │   └── src/lib/                    # api.ts (REST/WS client), types.ts (shared contract)
 │
 ├── demo/
-│   ├── sample-project/            # Sample broken codebase for demo (Mmpoiemang)
+│   ├── sample-project/            # Sample broken codebase for demo (Mmopiemang)
 │   │   ├── app.py
 │   │   └── utils.py
-│   ├── run_demo.sh                # Demo script (Mmpoiemang)
-│   └── expected_output.md        # Expected swarm output for validation (Mmpoiemang)
+│   ├── run_demo.sh                # Demo script (Mmopiemang)
+│   └── expected_output.md        # Expected swarm output for validation (Mmopiemang)
 │
 └── docs/
     ├── architecture.md            # System architecture

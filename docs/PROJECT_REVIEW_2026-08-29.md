@@ -1,10 +1,10 @@
 # BobSwarm Current-State Review
 
-> Historical review retained for auditability. The authoritative current
-> status is the integration baseline at the top of `HANDOVER.md`; older notes
-> about missing snapshots and the dashboard handoff UI have been superseded by
-> the current implementation. Remaining evidence gaps are still intentionally
-> listed below.
+> **Archived point-in-time review. Do not use its scores, open items, or metrics
+> as current submission claims.** The authoritative current sources are
+> `docs/SUBMISSION_PACKAGE.md`, `docs/COMPETITION_ACTIONS_2026-08-29.md`, and
+> the integration baseline at the top of `HANDOVER.md`. This file remains only
+> as an audit record of issues found at commit `158a075`.
 
 **Prepared for:** Sibusiso — Lead / Orchestrator  
 **Review date:** 29 August 2026  
@@ -180,7 +180,7 @@ The immediate risk is now submission readiness rather than feature volume. Requi
 
 **Status: Good persona and routing prototype, insufficient automated verification and incomplete MCP integration.**
 
-## 5. Mmpoiemang — Data / QA Engineer
+## 5. Mmopiemang — Data / QA Engineer
 
 ### What is genuinely complete
 
@@ -201,7 +201,7 @@ The immediate risk is now submission readiness rather than feature volume. Requi
 
 5. **Bug counts and labels remain confusing.** The expected table lists two high-severity findings, while Bobalytics says three bugs. Source comments use old `BUG 1`, `BUG 3`, and `BUG 4` numbering after the decision to keep only two defect classes.
 
-6. **Submission work remains.** Mmpoiemang's Bob usage statement is blank and the 60-second verbal demo walkthrough remains unchecked.
+6. **Submission work remains.** Mmopiemang's Bob usage statement is blank and the 60-second verbal demo walkthrough remains unchecked.
 
 ### Current status
 
@@ -258,7 +258,7 @@ The deadline recorded in the repository is **Sunday, 30 August 2026 at 16:00 SAS
 | Lethabo | 2 | Missing | Add usage paragraph |
 | Arisha | 0 | Missing | Add screenshots, contribution log, and usage paragraph |
 | Farheen | 5 | Complete | No submission evidence gap identified |
-| Mmpoiemang | 4 | Missing | Add usage paragraph and rehearse demo walkthrough |
+| Mmopiemang | 4 | Missing | Add usage paragraph and rehearse demo walkthrough |
 
 ## Documentation drift to fix
 
@@ -282,7 +282,7 @@ The deadline recorded in the repository is **Sunday, 30 August 2026 at 16:00 SAS
 1. Restart the stale Node backend so port 8787 serves the current code; verify `GET /runs` returns `[]` or a run list.
 2. Perform one clean manual end-to-end run using the frontend-generated UUID and capture it on video.
 3. Capture your missing screenshots and obtain Arisha's screenshots/contribution log.
-4. Obtain Lethabo, Arisha, and Mmpoiemang's usage paragraphs.
+4. Obtain Lethabo, Arisha, and Mmopiemang's usage paragraphs.
 5. Reconcile the stale handover, launch guide, polish guide, and demo counts.
 6. Produce the problem/solution statement and final Bob usage statement.
 7. Record the video before attempting risky architectural work.

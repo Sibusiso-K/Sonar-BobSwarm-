@@ -9,7 +9,7 @@ export function buildBobHandoffPrompt(run: Run): string {
     `Task type: ${run.taskType}`,
     `Task: ${run.taskDescription}`,
     "",
-    "Use the BobSwarm orchestrator with the existing run ID above. Dispatch the required specialist subagents in parallel, record progress and literal evidence-backed findings against this exact run, and finalize it only after every specialist reports back.",
+    "Use the BobSwarm orchestrator with the existing run ID above. Dispatch independent specialists in parallel, honor declared dependencies (including Refactorer after Debugger in a full audit), record progress and literal evidence-backed findings against this exact run, and finalize it only after every specialist reports back.",
   ].join("\n");
 }
 

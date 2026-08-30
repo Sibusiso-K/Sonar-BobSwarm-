@@ -20,6 +20,8 @@ test("Bob handoff prompt preserves the exact existing run context", () => {
   assert.match(prompt, /Repository: acme\/checkout/);
   assert.match(prompt, /Task type: full_audit/);
   assert.match(prompt, /Task: Audit checkout retries/);
+  assert.match(prompt, /Dispatch independent specialists in parallel/);
+  assert.match(prompt, /Refactorer after Debugger/);
   assert.match(prompt, /finalize it only after every specialist reports back/);
 });
 

@@ -127,6 +127,8 @@ export function LivingSwarmField({
     const container = canvas.parentElement;
     if (!container) return;
 
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const rect = container.getBoundingClientRect();
@@ -139,12 +141,14 @@ export function LivingSwarmField({
     };
     resize();
 
-    const ro = new ResizeObserver(resize);
+    const ro = new ResizeObserver(() => {
+      resize();
+      if (prefersReducedMotion) raf = requestAnimationFrame(tick);
+    });
     ro.observe(container);
 
     let raf = 0;
     let last = performance.now();
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const tick = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.05);
@@ -157,7 +161,7 @@ export function LivingSwarmField({
 
       ctx.clearRect(0, 0, w, h);
       if (w === 0 || h === 0) {
-        raf = requestAnimationFrame(tick);
+        if (!prefersReducedMotion) raf = requestAnimationFrame(tick);
         return;
       }
 
@@ -286,7 +290,7 @@ export function LivingSwarmField({
       }
       ctx.shadowBlur = 0;
 
-      raf = requestAnimationFrame(tick);
+      if (!prefersReducedMotion) raf = requestAnimationFrame(tick);
     };
 
     raf = requestAnimationFrame(tick);

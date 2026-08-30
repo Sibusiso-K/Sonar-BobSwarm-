@@ -14,7 +14,7 @@ guide."*
 
 | Run | Time | Method |
 |---|---|---|
-| **BobSwarm (real, recorded)** | **94 seconds** | Five parallel specialists, live Bob MCP session. First findings overlapping within a 15s window. Source: `docs/SUBMISSION_PACKAGE.md` D2. |
+| **BobSwarm (real, recorded)** | **94 seconds** | Four independent first-wave specialists, followed by the dependent Refactorer, in a live Bob MCP session. First-wave findings overlapped within a 15s window. Source: `docs/SUBMISSION_PACKAGE.md` D2. |
 | **Manual (this session, timed honestly)** | **60.2 seconds** | One investigator, `grep`/`Read` only, no swarm tooling. Timestamped start-to-finish, all 5 deliverables written. Evidence: `demo/manual-investigation-findings.md`, timestamps below. |
 
 ```
@@ -32,8 +32,8 @@ codebase" means. What got measured is closer to *recall-and-transcribe
 speed* than *investigation speed* — I wasn't finding the bugs, I already
 knew where they were.
 
-**Implausible results are defects until disproven, and a manual investigator
-being faster than a 5-agent parallel swarm is implausible on its face** for
+**Implausible results are defects until disproven, and a warmed-up manual investigator
+being faster than a dependency-aware swarm is not credible cold-start evidence** for
 a genuine cold-start comparison. The honest conclusion is: **this specific
 60.2-second number is not usable as evidence of anything except that I,
 personally, remember this codebase well right now.** It should not appear
@@ -91,8 +91,8 @@ with no swarm access during their attempt.
 CONTRIBUTIONS.md` for references to the fixture files.
 - **Farheen** — zero references. Her actual work (`decompose.js`, personas)
   never touched `app.py`/`utils.py` content.
-- **Arisha** — no session log exists yet for her at all
-  (`docs/bob-sessions/arisha/` is empty).
+- **Arisha** — now has a session log, but she had already seen the fixture before
+  her approximately eight-minute manual investigation, so her result is not blind.
 
 ### Arisha's Manual Investigation
 
@@ -105,9 +105,10 @@ The investigation took about 8 minutes. However, the code had already been seen 
 A valid manual timing comparison would require someone who has not seen the fixture before.
 
 
-Either is a real candidate for the genuine blind run — Farheen is the safer
-bet specifically, since her work never had reason to reference the bugs
-even indirectly. If nobody on the team qualifies as genuinely unfamiliar by
+Farheen remains the only documented candidate for a genuine blind run, since
+her routing and persona work did not require reading the fixture contents. Her
+eligibility still needs direct confirmation before timing begins. If nobody on
+the team qualifies as genuinely unfamiliar by
 the time this matters, the honest fallback is to say so explicitly in D2
 rather than fabricate a blind condition that doesn't exist — a stated
 limitation is compliant with the rules; an uncalibrated claim is not.

@@ -198,7 +198,7 @@ written:** Sibusiso ran a full 5-agent live session (`docs/bob-sessions/sibusiso
 20:55 SAST) — genuinely strong output (8 bugs, 7 refactor recs, full lineage
 map, all evidence-backed). Sibusiso's own log still lists "verify record_finding
 flows through stdio to the dashboard" as open, consistent with everything
-above. **Separately, Mmopiemang's session log (`docs/bob-sessions/mmpoiemang/`,
+above. **Separately, Mmopiemang's session log (`docs/bob-sessions/mmopiemang/`,
 pushed 20:11–20:26 SAST) states subagents "called `record_finding` for their
 domain."** Checked this against the timeline and the generated report:
 

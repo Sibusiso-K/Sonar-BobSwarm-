@@ -45,8 +45,10 @@ paths, client data, and personal information before committing it.
   export artifacts below.
 - [ ] Add `bob_sessions/arisha/<task>-consumption-summary.png`.
 - [ ] Add the matching exported `bob_sessions/arisha/<task>-history.md`.
-- [ ] Add a short `docs/bob-sessions/arisha/CONTRIBUTIONS.md` that points to
-  the compliant exports and explains what Bob did during frontend work.
+- [x] Add `docs/bob-sessions/arisha/CONTRIBUTIONS.md` explaining what Bob did
+  during frontend work.
+- [ ] Once the two official exports above land, link them from Arisha's
+  contribution log.
 - [ ] Capture the real dashboard during an active Bob-driven run and after
   completion. Show agent statuses, timeline, severity, paths, symbols, and
   literal evidence. Do not use the conceptual mockup as proof of execution.
@@ -68,6 +70,9 @@ paths, client data, and personal information before committing it.
 - [x] Label `landingpagemockupbobswarm.png` as a **conceptual design mockup**.
 - [ ] Place a real completed-product screenshot beside or above the conceptual
   mockup before final submission.
+- [ ] Confirm authorship, generation method, and usage rights for every visual
+  marked **Pending confirmation** in `docs/DATA_SOURCES.md`. Do not use an
+  unconfirmed visual in the final submission.
 - [ ] Treat the broad Figma/Claude/Lovable brief in `UI_UX_DEEP_CRITIQUE.md` as
   post-evidence exploration. Do not replace the real React application or risk
   the final capture for a large redesign.
@@ -152,20 +157,21 @@ paths, client data, and personal information before committing it.
 
 ### P0 — required evidence
 
-- [ ] Add consumption-summary screenshots and matching exported task-history
+- [x] Add consumption-summary screenshots and matching exported task-history
   Markdown files under `bob_sessions/mmopiemang/`.
-- [ ] Re-run the final fixture validation against the exact commit used in the
-  video and record the command/result in the contribution log.
-- [ ] Reconcile expected defect counts with the final fixture and recorded run.
+- [x] Revalidate commit `13de5a3` with `npm run verify` and record the result in
+  the contribution log. The Bob export does not identify its exact Git commit,
+  so no unsupported commit-to-task claim is made.
+- [x] Reconcile expected defect counts with the final fixture and recorded run.
 
 ### P1 — claims and measurement
 
-- [ ] Remove the unsupported `2–4 hours` manual-investigation claim from
-  `docs/bob-sessions/mmopiemang/CONTRIBUTIONS.md` unless measured evidence exists.
+- [x] Confirm the unsupported `2–4 hours` manual-investigation claim is absent
+  from `bob_sessions/mmopiemang/CONTRIBUTIONS.md`.
 - [ ] Run a genuinely blind manual baseline using the same five-deliverable
   prompt, or explicitly state that no valid baseline was available. Do not use
   the existing 60.2-second recall run as speed evidence.
-- [ ] Make the authoritative QA claim match the final recorded run. Do not mix
+- [x] Make the authoritative QA claim match the final recorded run. Do not mix
   historical `8 bugs`, `12 defects`, `42 findings`, and current `41 findings`
   without dates and clear labels.
 - [x] Update `docs/DATA_SOURCES.md` to include `synthetic_input.json`, how it was
@@ -176,7 +182,7 @@ paths, client data, and personal information before committing it.
 These remain with Sibusiso; teammates should supply evidence, not silently edit
 the final claims.
 
-- [ ] Create/verify the root `bob_sessions/` structure and reject incomplete or
+- [x] Create/verify the root `bob_sessions/` structure and reject incomplete or
   unsafe exports before merging.
 - [ ] Add Sibusiso's own consumption-summary screenshot and exported task history.
 - [ ] Record one genuine 90–180 second golden-path video: dashboard run creation,

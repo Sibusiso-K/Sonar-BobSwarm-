@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node --experimental-strip-types --test tests/errors.test.ts tests/events.test.ts tests/handoff.test.ts",
+    "test": "node --experimental-strip-types --test tests/copy.test.ts tests/errors.test.ts tests/events.test.ts tests/handoff.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {
