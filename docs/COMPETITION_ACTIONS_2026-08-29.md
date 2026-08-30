@@ -103,18 +103,30 @@ paths, client data, and personal information before committing it.
   Markdown files under `bob_sessions/lethabo/`. Done at commit `dd8480e`:
   `bob_sessions/lethabo/01-task-consumption-summary.png` +
   `01-task-history.md`.
-- [ ] Capture one clean MCP-panel screenshot with `bobswarm` connected. Avoid a
+- [x] Capture one clean MCP-panel screenshot with `bobswarm` connected. Avoid a
   frame containing failed commands, stale warnings, or unrelated dirty files.
   The existing `docs/bob-sessions/lethabo/02-mcp-panel-connected-tasks-complete.png`
-  does not qualify — a failed `git pull --rebase` command is visible in the
-  same frame. Needs a clean retake.
-- [ ] Immediately before the final recording, restart the current backend and
+  didn't qualify (a failed `git pull --rebase` was visible in the same frame),
+  but a clean one already existed in the 2026-08-30 golden-path recording
+  (`bandicam 2026-08-30 01-41-50-977.mp4`, ~00:02) — extracted that frame
+  directly rather than retaking live. Saved as
+  `bob_sessions/lethabo/02-mcp-panel-connected.png`.
+- [~] Immediately before the final recording, restart the current backend and
   verify `/health`, `/runs`, MCP tool visibility, and port 8787 ownership.
+  Dry run completed 2026-08-30 ~04:30: fresh `npm start` instance verified
+  `/health` (ok) and `/runs` (clean, empty), then killed to leave port 8787
+  free for Bob's own spawned process to claim without contention — running
+  a manual instance *and* Bob's own at the same time is the dual-store bug
+  from earlier tonight. MCP tool visibility itself needs Bob open, which
+  wasn't done this pass. **Still needs a final repeat immediately before
+  the actual recording**, per the item's own wording — this proves the
+  procedure works, it isn't a substitute for the final pass.
 
 ### P1 — final technical checks
 
 - [ ] Support Sibusiso's final run and confirm the exact same dashboard UUID is
   used by every `record_progress`, `record_finding`, and `finalize_run` call.
+  Genuinely blocked, not avoided — there's no run to check until he starts one.
 - [x] Confirm the recorded run follows the intended four-plus-one dependency
   model instead of dispatching Refactorer concurrently with Debugger.
   Confirmed on a real end-to-end run (`2026-08-30`, screen-recorded):
@@ -128,8 +140,13 @@ paths, client data, and personal information before committing it.
   creates two disconnected in-memory stores (`unknown_run_id` errors) —
   don't run it manually while Bob is connected, Bob's own spawned process
   already serves the dashboard bridge on 8787.
-- [ ] Confirm terminal WebSocket connections are cleaned up and no stale process
-  serves an older build during the demo.
+- [~] Confirm terminal WebSocket connections are cleaned up and no stale process
+  serves an older build during the demo. Swept all node.exe processes
+  2026-08-30 ~04:30: only the frontend Vite dev server was running (which
+  hot-reloads on every change, so it's never a "stale build" concern by
+  construction), zero stray backend instances. Holds only as long as
+  nobody starts another manual `npm start` — worth a repeat sweep right
+  before the actual recording, same as the item above.
 
 ## Mmopiemang — QA, metrics, and data compliance
 
