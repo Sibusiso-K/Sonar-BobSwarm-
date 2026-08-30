@@ -113,6 +113,20 @@ the time this matters, the honest fallback is to say so explicitly in D2
 rather than fabricate a blind condition that doesn't exist — a stated
 limitation is compliant with the rules; an uncalibrated claim is not.
 
+### Farheen's submitted investigation — declaration pending
+
+Farheen submitted a manual report with the same five requested deliverables:
+`demo/farheen-manual-investigation-findings.md` (original supporting document:
+`demo/farheen-manual-investigation-report.docx`). Her recorded interval is
+**2026-08-30 02:55:00–04:40:09**, or **6,309 seconds (1:45:09)**.
+
+Its defect analysis and screenshots are useful supporting material. It is not
+yet a valid cold-start comparison because the report itself does not establish
+that the participant was unfamiliar with the fixture, did not use AI/swarm
+assistance, started timing before first inspection, and completed the exact
+golden prompt under the stated rules. Obtain that written declaration before
+adding it to the comparison table, D2, D3, pitch, or video.
+
 ## The harness, for whoever runs the real version
 
 1. Start a timestamp the moment you open `app.py` for the first time (or as
