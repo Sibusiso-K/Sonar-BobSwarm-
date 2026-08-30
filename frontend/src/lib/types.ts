@@ -64,6 +64,8 @@ export interface Report {
   summary: string;
   findingsByRole: Record<string, Finding[]>;
   error?: RunError | string | null;
+  /** Optional mermaid diagram source, set via finalize_run. Shown as raw source, not rendered. */
+  diagram?: string | null;
 }
 
 export interface TimelineEntry {

@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Check, Clipboard, ExternalLink } from "lucide-react";
 import { buildBobHandoffPrompt } from "../../lib/handoff";
 import type { Run } from "../../lib/types";
@@ -18,6 +19,14 @@ export function BobHandoff({ run }: { run: Run }) {
       setCopyResult({ runId: run.id, state: "error" });
     }
   };
+
+  useEffect(() => {
+    copyPrompt();
+    // Auto-copy once per new run, not on every prompt/copyPrompt identity
+    // change (run.id is a stable primitive; run itself gets a new object
+    // reference on every status update, which would re-fire this).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [run.id]);
 
   return (
     <div className="glass-strong mt-4 rounded-2xl border-gold-dim/40 p-4">
@@ -61,13 +70,23 @@ export function BobHandoff({ run }: { run: Run }) {
         </a>
       </div>
 
-      <p className="mt-2 min-h-4 text-xs text-stone-dim" aria-live="polite">
-        {copyState === "error"
-          ? "Clipboard access was blocked. Select the prompt above and copy it manually."
-          : copyState === "copied"
-            ? "Ready. Switch to Bob and paste the prompt to begin orchestration."
-            : "This explicit handoff keeps Bob in control of subagent orchestration."}
-      </p>
+      <div className="mt-2 min-h-4 text-xs text-stone-dim" aria-live="polite">
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={copyState}
+            initial={{ opacity: 0, y: -2 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {copyState === "error"
+              ? "Clipboard access was blocked. Select the prompt above and copy it manually."
+              : copyState === "copied"
+                ? "Copied automatically — switch to Bob and paste to begin orchestration."
+                : "This explicit handoff keeps Bob in control of subagent orchestration."}
+          </motion.p>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

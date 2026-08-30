@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Nav } from "./components/layout/Nav";
 import { Hero } from "./components/hero/Hero";
 import { BobHandoff } from "./components/hero/BobHandoff";
@@ -5,11 +6,12 @@ import { SwarmStage } from "./components/swarm/SwarmStage";
 import { ReportView } from "./components/report/ReportView";
 import { RunHistory } from "./components/history/RunHistory";
 import { useSwarmRun } from "./hooks/useSwarmRun";
-import type { RunSummary, TaskType } from "./lib/types";
+import type { AgentRole, RunSummary, TaskType } from "./lib/types";
 
 function App() {
   const { run, roles, timeline, report, connState, error, submitting, start, resume, reset } = useSwarmRun();
   const hasRun = run !== null;
+  const [selectedRole, setSelectedRole] = useState<AgentRole | null>(null);
 
   const handleStart = (input: { taskDescription: string; taskType: TaskType; repoRef: string }) => {
     start(input);
@@ -20,6 +22,7 @@ function App() {
   };
 
   const handleOpenRun = (summary: RunSummary) => {
+    setSelectedRole(null);
     resume(summary.id);
     requestAnimationFrame(() => {
       document.getElementById("swarm")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -27,6 +30,7 @@ function App() {
   };
 
   const handleNewRun = () => {
+    setSelectedRole(null);
     reset();
     requestAnimationFrame(() => {
       document.getElementById("run")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -55,8 +59,21 @@ function App() {
             cards under the hero. */}
         {hasRun ? (
           <>
-            <SwarmStage run={run} roles={roles} timeline={timeline} connState={connState} onNewRun={handleNewRun} />
-            <ReportView report={report} />
+            <SwarmStage
+              run={run}
+              roles={roles}
+              timeline={timeline}
+              connState={connState}
+              onNewRun={handleNewRun}
+              selectedRole={selectedRole}
+              onSelectRole={setSelectedRole}
+            />
+            <ReportView
+              report={report}
+              run={run}
+              selectedRole={selectedRole}
+              onSelectRole={setSelectedRole}
+            />
           </>
         ) : (
           <section id="swarm" className="border-t border-line px-6 py-16 sm:px-10">

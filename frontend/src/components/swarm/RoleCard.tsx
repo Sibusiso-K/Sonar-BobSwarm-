@@ -4,7 +4,7 @@ import { Bug, BookOpen, Wrench, Compass, GitBranch, Circle, CheckCircle2, XCircl
 import type { AgentRole } from "../../lib/types";
 import type { RoleState } from "../../hooks/useSwarmRun";
 
-const ROLE_META: Record<AgentRole, { label: string; icon: typeof Bug }> = {
+export const ROLE_META: Record<AgentRole, { label: string; icon: typeof Bug }> = {
   debugger: { label: "Debugger", icon: Bug },
   documenter: { label: "Documenter", icon: BookOpen },
   refactorer: { label: "Refactorer", icon: Wrench },
@@ -30,7 +30,15 @@ const STATUS_GLOW: Record<RoleState["status"], string> = {
   error: "0 0 28px -6px rgba(224, 101, 79, 0.55)",
 };
 
-export function RoleCard({ state }: { state: RoleState }) {
+export function RoleCard({
+  state,
+  selected = false,
+  onSelect,
+}: {
+  state: RoleState;
+  selected?: boolean;
+  onSelect?: () => void;
+}) {
   const meta = ROLE_META[state.role];
   const Icon = meta.icon;
   const active = state.status === "started" || state.status === "investigating";
@@ -55,6 +63,14 @@ export function RoleCard({ state }: { state: RoleState }) {
     my.set(0.5);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onSelect) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onSelect();
+    }
+  };
+
   return (
     <motion.div
       ref={ref}
@@ -63,8 +79,15 @@ export function RoleCard({ state }: { state: RoleState }) {
       animate={{ opacity: 1, y: 0 }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onClick={onSelect}
+      onKeyDown={handleKeyDown}
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      aria-pressed={onSelect ? selected : undefined}
       style={{ rotateX, rotateY, transformPerspective: 900, boxShadow: STATUS_GLOW[state.status] }}
       className={`glass relative flex flex-col gap-3 rounded-2xl p-4 transition-[border-color,box-shadow] duration-500 ${
+        onSelect ? "cursor-pointer" : ""
+      } ${selected ? "ring-2 ring-gold/60" : ""} ${
         active ? "border-violet/40" : done ? "border-gold-dim/60" : failed ? "border-breaks/40" : ""
       }`}
     >

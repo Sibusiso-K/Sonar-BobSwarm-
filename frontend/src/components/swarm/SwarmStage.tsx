@@ -6,7 +6,7 @@ import { Timeline } from "./Timeline";
 import { LivingSwarmField, type SwarmAnchor } from "../field/LivingSwarmField";
 import { useElapsedTime } from "../../hooks/useElapsedTime";
 import type { RoleState } from "../../hooks/useSwarmRun";
-import type { ConnState } from "../../lib/types";
+import type { AgentRole, ConnState } from "../../lib/types";
 import type { Run, TimelineEntry } from "../../lib/types";
 
 function formatElapsed(ms: number): string {
@@ -40,12 +40,16 @@ export function SwarmStage({
   timeline,
   connState,
   onNewRun,
+  selectedRole = null,
+  onSelectRole,
 }: {
   run: Run | null;
   roles: Record<string, RoleState>;
   timeline: TimelineEntry[];
   connState: ConnState;
   onNewRun?: () => void;
+  selectedRole?: AgentRole | null;
+  onSelectRole?: (role: AgentRole | null) => void;
 }) {
   const roleList = Object.values(roles);
   const fieldRef = useRef<HTMLDivElement | null>(null);
@@ -186,7 +190,15 @@ export function SwarmStage({
                       else cardRefs.current.delete(r.role);
                     }}
                   >
-                    <RoleCard state={r} />
+                    <RoleCard
+                      state={r}
+                      selected={selectedRole === r.role}
+                      onSelect={
+                        onSelectRole
+                          ? () => onSelectRole(selectedRole === r.role ? null : r.role)
+                          : undefined
+                      }
+                    />
                   </div>
                 ))}
               </motion.div>
