@@ -99,10 +99,15 @@ paths, client data, and personal information before committing it.
 
 ### P0 — required evidence
 
-- [ ] Add consumption-summary screenshots and matching exported task-history
-  Markdown files under `bob_sessions/lethabo/`.
+- [x] Add consumption-summary screenshots and matching exported task-history
+  Markdown files under `bob_sessions/lethabo/`. Done at commit `dd8480e`:
+  `bob_sessions/lethabo/01-task-consumption-summary.png` +
+  `01-task-history.md`.
 - [ ] Capture one clean MCP-panel screenshot with `bobswarm` connected. Avoid a
   frame containing failed commands, stale warnings, or unrelated dirty files.
+  The existing `docs/bob-sessions/lethabo/02-mcp-panel-connected-tasks-complete.png`
+  does not qualify — a failed `git pull --rebase` command is visible in the
+  same frame. Needs a clean retake.
 - [ ] Immediately before the final recording, restart the current backend and
   verify `/health`, `/runs`, MCP tool visibility, and port 8787 ownership.
 
@@ -110,8 +115,19 @@ paths, client data, and personal information before committing it.
 
 - [ ] Support Sibusiso's final run and confirm the exact same dashboard UUID is
   used by every `record_progress`, `record_finding`, and `finalize_run` call.
-- [ ] Confirm the recorded run follows the intended four-plus-one dependency
+- [x] Confirm the recorded run follows the intended four-plus-one dependency
   model instead of dispatching Refactorer concurrently with Debugger.
+  Confirmed on a real end-to-end run (`2026-08-30`, screen-recorded):
+  Debugger, Documenter, Onboarding, and Data lineage started together and
+  ran in parallel; Refactorer stayed in "Waiting" until Debugger finished,
+  then ran on its own. See `demo/TIMING_COMPARISON.md` for the full
+  breakdown. Also surfaced two real bugs along the way, both fixed and
+  pushed: the `BobSwarm Orchestrator` custom mode had never loaded in Bob
+  (`id` vs. `slug` schema mismatch, commit `5d2efcc`), and running
+  `npm start` in `mcp-server/` manually alongside Bob's own MCP connection
+  creates two disconnected in-memory stores (`unknown_run_id` errors) —
+  don't run it manually while Bob is connected, Bob's own spawned process
+  already serves the dashboard bridge on 8787.
 - [ ] Confirm terminal WebSocket connections are cleaned up and no stale process
   serves an older build during the demo.
 

@@ -39,6 +39,48 @@ a genuine cold-start comparison. The honest conclusion is: **this specific
 personally, remember this codebase well right now.** It should not appear
 in D2, the video, or anywhere the "measurable impact" claim is made.
 
+## Second recorded BobSwarm run — dependency-model verification (2026-08-30)
+
+A separate, later end-to-end run, screen-recorded start to finish
+(`bandicam 2026-08-30 01-41-50-977.mp4`). This is a **second BobSwarm-side
+data point, not a manual/blind baseline** — it does not close the gap
+below. Its purpose was verifying the four-plus-one dependency model
+(Lethabo's P1 item in `docs/COMPETITION_ACTIONS_2026-08-29.md`), and it
+incidentally re-confirms the swarm produces literal evidence-quoted
+findings on a clean run.
+
+**Read directly from the dashboard, not narrated:**
+- Debugger, Documenter, Onboarding, and Data lineage went from "Waiting"
+  to "Done" together — genuinely parallel.
+- Refactorer stayed in "Waiting" for the entire first wave and only
+  started once Debugger finished — the intended dependency, not a
+  concurrent dispatch.
+- Debugger card: 3 breaks, 3 warns, 1 informational (7 findings).
+- Refactorer card: 1 breaks, 3 warns (4 findings).
+- Bob's own "Run finished" message reported 24 findings across all five
+  specialists — Documenter/Onboarding/Data lineage's individual
+  breakdowns weren't separately confirmed against the dashboard cards, so
+  treat the per-role split for those three as unverified until checked
+  against the exported task history.
+- Handoff was a single paste of the full multi-line prompt into Bob, no
+  retry needed, prompt appeared intact on the first attempt.
+- Cost: ~$0.11 / 42.7k tokens at roughly the run's midpoint (from Bob's
+  own panel).
+
+**Not yet confirmed, flagged rather than guessed:**
+- The exact run ID: two independent reads of the recording (one manual,
+  one via Gemini video analysis) disagreed on the UUID's remainder past
+  the shared `2a4099cc` prefix. Rather than pick one, this should be
+  pulled from Bob's own **exported task history** for that session
+  (`Export task history`, same mechanism as the `bob_sessions/*/…-history.md`
+  evidence files) — that log contains the literal `run_id` string Bob
+  used in every tool call, which is authoritative where a screen
+  recording isn't.
+- Precise elapsed-time-per-specialist: approximate timestamps were read
+  off the recording's on-screen clock, not off a machine-readable log.
+  Good enough to confirm parallel-vs-sequential behavior; not precise
+  enough to quote as a benchmark number.
+
 ## What's actually needed before this rubric criterion can honestly claim 5/5
 
 A **genuinely blind timed run** — someone who has not read `app.py`/
