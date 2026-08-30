@@ -62,3 +62,27 @@ the timer started; used no Bob, BobSwarm, MCP tooling, or other AI assistance;
 started timing before opening the fixture; completed the same five-deliverable
 golden prompt; and stopped timing only after writing the full report. Until
 then, this is a promising candidate baseline, not verified comparative evidence.
+
+## Farheen written declaration — response required
+
+Farheen: please reply below with **Yes** or **No** to every statement, then
+add your name and the date. A missing answer or a qualified answer keeps this
+timing out of D2, D3, the pitch, and the video.
+
+1. I had **not** read `demo/sample-project/app.py` or
+   `demo/sample-project/utils.py` before the timer started. **Answer:**
+2. I used **no** IBM Bob, BobSwarm, MCP tool, other AI tool, or AI assistance
+   during this investigation. **Answer:**
+3. I started timing before opening or inspecting the fixture. **Answer:**
+4. I completed the golden prompt's five deliverables: defects, public API,
+   safe refactoring recommendations, data-flow tracing, and an onboarding
+   guide. **Answer:**
+5. I stopped timing only after writing the complete report. **Answer:**
+
+**Name:**
+
+**Date:**
+
+**Status rule:** Only a complete all-Yes declaration, signed by Farheen, may
+change this result from *promising, not verified* to a verified blind manual
+baseline.
